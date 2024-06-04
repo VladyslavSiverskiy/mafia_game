@@ -5,15 +5,16 @@ import com.vsiverskyi.service.GameService;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
+import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
 import javafx.stage.Stage;
 import net.rgielen.fxweaver.core.FxWeaver;
 import net.rgielen.fxweaver.core.FxmlView;
@@ -59,37 +60,56 @@ public class SelectionController implements Initializable {
         this.stage = StarterController.primaryStage;
         stage.setScene(new Scene(selectionAP));
         stage.setMaximized(true);
-//        roleName.setText();
         gameStatisticsList = gameService.getGameInfo(currentGameId).getGameStatistics();
         roleName.setText(gameStatisticsList.get(0).getRole().getTitle());
 
         int totalPlayers = gameStatisticsList.size();
-
-        totalPlayers = 16;
-
+        totalPlayers = 17;
 
         double centerX = selectionPane.getWidth() / 2;
         double centerY = selectionPane.getHeight() / 2;
         double radius = Math.min(centerX, centerY) - 5;
-
         double startAngle = Math.PI / 1.8 ;
 
-        System.out.println(totalPlayers);
-        for (int i = 0; i < totalPlayers + 2; i++) {
+        for (int i = 0; i < totalPlayers + 2; i++) { //
             double angle = startAngle + 2 * Math.PI * i / (totalPlayers + 2);
             double x = centerX + radius * Math.cos(angle);
             double y = centerY + radius * Math.sin(angle);
+
+            // Create a panel to represent each player
+            VBox playerPanel = new VBox();
+            playerPanel.setAlignment(Pos.CENTER);
+            playerPanel.setLayoutX(x - 50); // Offset to center panel
+            playerPanel.setLayoutY(y - 50); // Offset to center panel
+            playerPanel.setSpacing(5); // Adjust spacing as needed
+
+            // Avatar (You may replace this with an ImageView)
+            Circle avatar = new Circle(18, Color.LIGHTGRAY); // Example avatar
+            playerPanel.getChildren().add(avatar);
+
+            // Selection of nickname from a list (You may replace this with a ComboBox)
+            ComboBox<String> nicknameComboBox = new ComboBox<>();
+            // Add nicknames to the ComboBox
+            nicknameComboBox.getItems().addAll("Nickname 1", "Nickname 2", "Nickname 3"); // Example nicknames
+            nicknameComboBox.getSelectionModel().selectFirst(); // Select the first nickname by default
+            nicknameComboBox.setStyle("-fx-font-size: 12px;");
+            playerPanel.getChildren().add(nicknameComboBox);
+
+            // Add the player panel to the selectionPane
+            selectionPane.getChildren().add(playerPanel);
+
+
             Button button = new Button(String.valueOf(i));
-            button.setLayoutX(x - 25); // Offset to center button
-            button.setLayoutY(y - 25); // Offset to center button
+            button.setLayoutX(x - 25);
+            button.setLayoutY(y - 25);
             button.setOnAction(event -> handleButtonClick());
             if (i == 0 || i == totalPlayers + 1) {
+                playerPanel.setVisible(false);
                 button.setVisible(false);
             }
             selectionPane.getChildren().add(button);
+
         }
-
-
         startVoting.setOnAction(actionEvent -> fxWeaver.loadController(PresentationController.class).show());
     }
 
