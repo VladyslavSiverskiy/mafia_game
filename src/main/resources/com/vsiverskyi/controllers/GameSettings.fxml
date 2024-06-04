@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Spinner?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.shape.Rectangle?>
+
+<AnchorPane fx:id="anchorPane" prefHeight="400.0" prefWidth="600.0" style="-fx-background-color: #161616;" xmlns="http://javafx.com/javafx/19" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vsiverskyi.controllers.GameSettingsController">
+   <children>
+      <Spinner fx:id="playersAmountSpinner" editable="true" layoutX="290.0" layoutY="80.0" prefHeight="25.0" prefWidth="172.0" />
+      <Label layoutX="132.0" layoutY="84.0" text="Введіть кількість гравців:" textFill="WHITE" />
+      <Label layoutX="132.0" layoutY="146.0" prefHeight="17.0" prefWidth="151.0" text="Введіть кількість мафії:" textFill="WHITE" />
+      <Label layoutX="133.0" layoutY="192.0" prefHeight="17.0" prefWidth="134.0" text="Введіть кількість лікарів:" textFill="WHITE" />
+      <Button layoutX="251.0" layoutY="324.0" mnemonicParsing="false" onAction="#startGame" style="-fx-background-color: #161616;" text="Розпочати гру!" textFill="WHITE" />
+      <Label layoutX="133.0" layoutY="255.0" prefHeight="17.0" prefWidth="134.0" text="Секунд на хід" textFill="WHITE" />
+      <Spinner fx:id="doctorsAmountSpinner" layoutX="290.0" layoutY="188.0" prefHeight="25.0" prefWidth="172.0" />
+      <Rectangle arcHeight="5.0" arcWidth="5.0" fill="#293037" height="6.0" layoutX="200.0" layoutY="117.0" stroke="BLACK" strokeType="INSIDE" width="200.0" />
+      <Rectangle arcHeight="5.0" arcWidth="5.0" fill="#293037" height="6.0" layoutX="200.0" layoutY="230.0" stroke="BLACK" strokeType="INSIDE" width="200.0" />
+      <Spinner fx:id="secondsPerMoveSpinner" layoutX="290.0" layoutY="251.0" prefHeight="25.0" prefWidth="172.0" />
+      <Spinner fx:id="mafiaAmountSpinner" layoutX="290.0" layoutY="142.0" />
+   </children>
+</AnchorPane>
