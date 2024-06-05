@@ -1,7 +1,10 @@
 package com.vsiverskyi.controllers;
 
+import com.vsiverskyi.exception.NoGameWithSuchIdException;
 import com.vsiverskyi.model.GameStatistics;
+import com.vsiverskyi.model.enums.ERoleOrder;
 import com.vsiverskyi.service.GameService;
+import com.vsiverskyi.service.GameStatisticsService;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
@@ -23,6 +26,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Controller;
 
 import java.net.URL;
+import java.util.Comparator;
 import java.util.List;
 import java.util.ResourceBundle;
 
@@ -32,6 +36,8 @@ public class SelectionController implements Initializable {
 
     @Autowired
     private GameService gameService;
+    @Autowired
+    private GameStatisticsService gameStatisticsService;
     @Autowired
     private FxWeaver fxWeaver;
     public static Long currentGameId;
@@ -60,11 +66,17 @@ public class SelectionController implements Initializable {
         this.stage = StarterController.primaryStage;
         stage.setScene(new Scene(selectionAP));
         stage.setMaximized(true);
-        gameStatisticsList = gameService.getGameInfo(currentGameId).getGameStatistics();
-        roleName.setText(gameStatisticsList.get(0).getRole().getTitle());
 
+        try {
+            gameStatisticsList = gameStatisticsService.getGameStatisticsByGameId(currentGameId);
+        }catch (NoGameWithSuchIdException e) {
+            Alert alert = new Alert(Alert.AlertType.ERROR, e.getMessage());
+            alert.show();
+        }
+        System.out.println(gameStatisticsList);
+
+        roleName.setText(gameStatisticsList.get(0).getRole().getTitle());
         int totalPlayers = gameStatisticsList.size();
-        totalPlayers = 17;
 
         double centerX = selectionPane.getWidth() / 2;
         double centerY = selectionPane.getHeight() / 2;
@@ -75,7 +87,6 @@ public class SelectionController implements Initializable {
             double angle = startAngle + 2 * Math.PI * i / (totalPlayers + 2);
             double x = centerX + radius * Math.cos(angle);
             double y = centerY + radius * Math.sin(angle);
-
             // Create a panel to represent each player
             VBox playerPanel = new VBox();
             playerPanel.setAlignment(Pos.CENTER);
@@ -93,6 +104,10 @@ public class SelectionController implements Initializable {
             nicknameComboBox.getItems().addAll("Nickname 1", "Nickname 2", "Nickname 3"); // Example nicknames
             nicknameComboBox.getSelectionModel().selectFirst(); // Select the first nickname by default
             nicknameComboBox.setStyle("-fx-font-size: 12px;");
+            nicknameComboBox.getSelectionModel().selectedItemProperty().addListener((options, oldValue, newValue) -> {
+                System.out.println(newValue);
+                gameStatisticsService.setInGameNickname();
+            });
             playerPanel.getChildren().add(nicknameComboBox);
 
             // Add the player panel to the selectionPane
@@ -108,7 +123,6 @@ public class SelectionController implements Initializable {
                 button.setVisible(false);
             }
             selectionPane.getChildren().add(button);
-
         }
         startVoting.setOnAction(actionEvent -> fxWeaver.loadController(PresentationController.class).show());
     }

@@ -1,5 +1,6 @@
 package com.vsiverskyi.model;
 
+import com.vsiverskyi.model.enums.ERoleOrder;
 import com.vsiverskyi.model.enums.ETeam;
 import jakarta.persistence.*;
 import lombok.*;
@@ -23,6 +24,8 @@ public class Role {
     @Column
     @Enumerated(EnumType.STRING)
     private ETeam team;
+    @Column
+    private String roleNameConstant;
 
     @Override
     public String toString() {
@@ -30,6 +33,7 @@ public class Role {
                "id=" + id +
                ", title='" + title + '\'' +
                ", team=" + team +
+               ", roleNameConstant=" + roleNameConstant +
                '}';
     }
 }

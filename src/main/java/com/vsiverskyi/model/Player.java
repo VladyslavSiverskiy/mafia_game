@@ -19,6 +19,8 @@ public class Player {
     private String surname;
     @Column
     private String city;
+    @Column(unique = true)
+    private String nickname;
     @Column
     private Short age;
     @OneToMany(mappedBy = "player")

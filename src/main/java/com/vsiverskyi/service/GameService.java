@@ -4,6 +4,7 @@ import com.vsiverskyi.model.Game;
 import com.vsiverskyi.model.GameStatistics;
 import com.vsiverskyi.model.Role;
 import com.vsiverskyi.model.enums.EGameStatus;
+import com.vsiverskyi.model.enums.ERoleOrder;
 import com.vsiverskyi.repository.GameRepository;
 import com.vsiverskyi.repository.GameStatisticsRepository;
 import com.vsiverskyi.repository.RoleRepository;
@@ -32,12 +33,15 @@ public class GameService {
         // TODO: взяти ролі з репозиторію відповідно до ключа мапи
         Role mafiaRole = Role.builder()
                 .title("Мафія")
+                .roleNameConstant(ERoleOrder.MAFIA.toString())
                 .build();
         Role donRole = Role.builder()
                 .title("Дон")
+                .roleNameConstant(ERoleOrder.DON.toString())
                 .build();
         Role doctorRole = Role.builder()
                 .title("Лікар")
+                .roleNameConstant(ERoleOrder.DOCTOR.toString())
                 .build();
 
         roleRepository.save(mafiaRole);
