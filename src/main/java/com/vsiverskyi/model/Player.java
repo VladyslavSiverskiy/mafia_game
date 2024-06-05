@@ -1,10 +1,14 @@
 package com.vsiverskyi.model;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.List;
 
 @Entity
+@Getter
+@Setter
 @Table(name = "players")
 public class Player {
 
@@ -12,15 +16,13 @@ public class Player {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
     @Column(unique = true)
-    private String username;
+    private String nickname;
     @Column
     private String name;
     @Column
     private String surname;
     @Column
     private String city;
-    @Column(unique = true)
-    private String nickname;
     @Column
     private Short age;
     @OneToMany(mappedBy = "player")
@@ -30,7 +32,7 @@ public class Player {
     public String toString() {
         return "Player{" +
                "id=" + id +
-               ", username='" + username + '\'' +
+               ", nickname='" + nickname + '\'' +
                ", name='" + name + '\'' +
                ", surname='" + surname + '\'' +
                ", city='" + city + '\'' +

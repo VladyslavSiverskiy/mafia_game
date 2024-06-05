@@ -2,19 +2,16 @@ package com.vsiverskyi.controllers;
 
 import com.vsiverskyi.exception.NoGameWithSuchIdException;
 import com.vsiverskyi.model.GameStatistics;
-import com.vsiverskyi.model.enums.ERoleOrder;
+import com.vsiverskyi.model.Player;
 import com.vsiverskyi.service.GameService;
 import com.vsiverskyi.service.GameStatisticsService;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
@@ -23,16 +20,14 @@ import net.rgielen.fxweaver.core.FxWeaver;
 import net.rgielen.fxweaver.core.FxmlView;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Controller;
 
 import java.net.URL;
-import java.util.Comparator;
 import java.util.List;
 import java.util.ResourceBundle;
 
 @Component
-@FxmlView("Selection.fxml")
-public class SelectionController implements Initializable {
+@FxmlView("SelectionRole.fxml")
+public class SelectionRoleController implements Initializable {
 
     @Autowired
     private GameService gameService;
@@ -40,15 +35,13 @@ public class SelectionController implements Initializable {
     private GameStatisticsService gameStatisticsService;
     @Autowired
     private FxWeaver fxWeaver;
-    public static Long currentGameId;
     private Stage stage;
     private Scene scene;
     private Parent root;
-
     @FXML
-    private AnchorPane selectionAP;
+    private AnchorPane selectionRoleAP;
     @FXML
-    private AnchorPane selectionPane;
+    private AnchorPane selectionRolePane;
     @FXML
     private Label roleName;
     @FXML
@@ -59,33 +52,24 @@ public class SelectionController implements Initializable {
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         this.stage = StarterController.primaryStage;
-        stage.setScene(new Scene(selectionAP));
+        stage.setScene(new Scene(selectionRoleAP));
         stage.setMaximized(true);
         try {
-            gameStatisticsList = gameStatisticsService.getGameStatisticsByGameId(currentGameId);
+            gameStatisticsList = gameStatisticsService.getGameStatisticsByGameId(SelectionController.currentGameId);
         }catch (NoGameWithSuchIdException e) {
             Alert alert = new Alert(Alert.AlertType.ERROR, e.getMessage());
             alert.show();
         }
-//        System.out.println(gameStatisticsList);
-//        roleName.setText(gameStatisticsList.get(0).getRole().getTitle());
+
         int totalPlayers = gameStatisticsList.size();
-        displayPlayers(totalPlayers);
+        displayRolePlayers(totalPlayers);
 
-        startVoting.setOnAction(actionEvent -> fxWeaver.loadController(SelectionRoleController.class).show());
+        startVoting.setOnAction(actionEvent -> fxWeaver.loadController(PresentationController.class).show());
     }
 
-//    private void handleButtonClick() {
-//        roleName.setText(gameStatisticsList.get(++currentPlayerIndex).getRole().getTitle());
-//    }
-
-    public void show() {
-        stage.show();
-    }
-
-    public void displayPlayers(int totalPlayers) {
-        double centerX = selectionPane.getWidth() / 2;
-        double centerY = selectionPane.getHeight() / 2;
+    public void displayRolePlayers(int totalPlayers) {
+        double centerX = selectionRolePane.getWidth() / 2;
+        double centerY = selectionRolePane.getHeight() / 2;
         double radius = Math.min(centerX, centerY) - 5;
         double startAngle = Math.PI / 1.8 ;
 
@@ -93,40 +77,37 @@ public class SelectionController implements Initializable {
             double angle = startAngle + 2 * Math.PI * i / (totalPlayers + 2);
             double x = centerX + radius * Math.cos(angle);
             double y = centerY + radius * Math.sin(angle);
+
             // Create a panel to represent each player
             VBox playerPanel = new VBox();
             playerPanel.setAlignment(Pos.CENTER);
             playerPanel.setLayoutX(x - 50); // Offset to center panel
             playerPanel.setLayoutY(y - 50); // Offset to center panel
             playerPanel.setSpacing(5); // Adjust spacing as needed
-            // Avatar (You may replace this with an ImageView)
+
             Circle avatar = new Circle(18, Color.LIGHTGRAY); // Example avatar
             playerPanel.getChildren().add(avatar);
-            // Selection of nickname from a list (You may replace this with a ComboBox)
-            ComboBox<String> nicknameComboBox = new ComboBox<>();
-            // Add nicknames to the ComboBox
-            nicknameComboBox.getItems().addAll("Nickname 1", "Nickname 2", "Nickname 3", "ORest", "Іван"); // Example nicknames
-            nicknameComboBox.setTooltip(new Tooltip());
-            nicknameComboBox.getSelectionModel().isEmpty(); // Select the first nickname by default
 
-            //TODO: можливо дописати умову (якщо Player != null) тоді брати його nickname
-//            nicknameComboBox.getSelectionModel().select(); // Select the first nickname by default
-            nicknameComboBox.setStyle("-fx-font-size: 12px;");
-            new ComboBoxAutoComplete<String>(nicknameComboBox);
-            int finalI = i;
-            nicknameComboBox.getSelectionModel().selectedItemProperty().addListener((options, oldValue, newValue) -> {
-                System.out.println(newValue);
-                if (finalI > 0 && finalI < totalPlayers + 1) {
-                    gameStatisticsService.setInGameNickname(gameStatisticsList.get(finalI - 1), newValue);
-                }
-            });
-            playerPanel.getChildren().add(nicknameComboBox);
-            // Add the player panel to the selectionPane
-            selectionPane.getChildren().add(playerPanel);
+            Player player = null;
+            System.out.println(i);
+            if (i > 0 && i < totalPlayers + 1) {
+                player = gameStatisticsList.get(i-1)
+                        .getPlayer();
+            }
+            Label nicknameLabel = new Label();
+            if (player != null && player.getNickname() != null) {
+                nicknameLabel.setText(player.getNickname());
+            } else {
+                nicknameLabel.setText("Незнайомець"); // You can set a default text if player or nickname is null
+            }
+            nicknameLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #ffffff");
+            playerPanel.getChildren().add(nicknameLabel);
 
+            selectionRolePane.getChildren().add(playerPanel);
             Button button = new Button(String.valueOf(i));
-            button.setLayoutX(x - 25);
-            button.setLayoutY(y - 25);
+
+            button.setLayoutX(x - 46);
+            button.setLayoutY(y - 33);
             button.setStyle("-fx-background-color: #161616; -fx-text-fill: #ffffff;  -fx-border-color: #ffffff; -fx-border-radius: 5px;");
 //            button.setOnAction(event -> handleButtonClick());
 //            button.setDisable(true);
@@ -134,9 +115,11 @@ public class SelectionController implements Initializable {
                 playerPanel.setVisible(false);
                 button.setVisible(false);
             }
-            selectionPane.getChildren().add(button);
+            selectionRolePane.getChildren().add(button);
         }
     }
 
-
+    public void show() {
+        stage.show();
+    }
 }

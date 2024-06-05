@@ -25,8 +25,10 @@ public class GameStatisticsService {
     private final RoleRepository roleRepository;
     private final GameStatisticsRepository gameStatisticsRepository;
 
-    public GameStatistics setInGameNickname() {
-        return null;
+    public GameStatistics setInGameNickname(GameStatistics gameStatistics, String inGameNickname) {
+        // TODO: Mb need to add some other func cases
+        gameStatistics.setInGameNickname(inGameNickname);
+        return gameStatisticsRepository.save(gameStatistics);
     }
 
     public List<GameStatistics> getGameStatisticsByGameId(Long currentGameId) throws NoGameWithSuchIdException {

@@ -12,7 +12,7 @@
       <Label layoutX="132.0" layoutY="84.0" text="Введіть кількість гравців:" textFill="WHITE" />
       <Label layoutX="132.0" layoutY="146.0" prefHeight="17.0" prefWidth="151.0" text="Введіть кількість мафії:" textFill="WHITE" />
       <Label layoutX="133.0" layoutY="192.0" prefHeight="17.0" prefWidth="134.0" text="Введіть кількість лікарів:" textFill="WHITE" />
-      <Button layoutX="251.0" layoutY="324.0" mnemonicParsing="false" onAction="#startGame" style="-fx-background-color: #161616;" text="Розпочати гру!" textFill="WHITE" />
+      <Button layoutX="251.0" layoutY="324.0" mnemonicParsing="false" onAction="#startGame" style="-fx-background-color: #161616; -fx-border-color: #ffffff; -fx-border-radius: 5px;" text="Розпочати гру!" textFill="WHITE" />
       <Label layoutX="133.0" layoutY="255.0" prefHeight="17.0" prefWidth="134.0" text="Секунд на хід" textFill="WHITE" />
       <Spinner fx:id="doctorsAmountSpinner" layoutX="290.0" layoutY="188.0" prefHeight="25.0" prefWidth="172.0" />
       <Rectangle arcHeight="5.0" arcWidth="5.0" fill="#293037" height="6.0" layoutX="200.0" layoutY="117.0" stroke="BLACK" strokeType="INSIDE" width="200.0" />
