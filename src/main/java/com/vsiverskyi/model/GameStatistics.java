@@ -31,7 +31,7 @@ public class GameStatistics {
     private Integer points;
 
     @Column
-    private Boolean inGame; // true якщо живий, false - ні
+    private boolean inGame; // true якщо живий, false - ні
     @Column
     private String inGameNickname; // нікнейм в грі, ще може бути прикріплений nickname в Player
 

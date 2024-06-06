@@ -12,6 +12,6 @@
             <Font name="Lucida Console" size="18.0" />
          </font></Label>
       <Button fx:id="startVoting" layoutX="109.0" layoutY="687.0" mnemonicParsing="false" style="-fx-background-color: #161616; -fx-border-color: #ffffff; -fx-border-radius: 5px;" text="Перейти до вибору ролей" textFill="WHITE" />
-      <AnchorPane fx:id="selectionPane" layoutX="335.0" layoutY="72.0" prefHeight="700.0" prefWidth="878.0" />
+      <AnchorPane fx:id="selectionPane" layoutX="335.0" layoutY="57.0" prefHeight="700.0" prefWidth="878.0" />
    </children>
 </AnchorPane>

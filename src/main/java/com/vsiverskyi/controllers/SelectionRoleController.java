@@ -72,6 +72,7 @@ public class SelectionRoleController implements Initializable {
         double centerY = selectionRolePane.getHeight() / 2;
         double radius = Math.min(centerX, centerY) - 5;
         double startAngle = Math.PI / 1.8 ;
+        System.out.println(GameSettingsController.roleIdPerGameList);
 
         for (int i = 0; i < totalPlayers + 2; i++) { //
             double angle = startAngle + 2 * Math.PI * i / (totalPlayers + 2);
@@ -87,21 +88,9 @@ public class SelectionRoleController implements Initializable {
 
             Circle avatar = new Circle(18, Color.LIGHTGRAY); // Example avatar
             playerPanel.getChildren().add(avatar);
-
-            Player player = null;
-            System.out.println(i);
             if (i > 0 && i < totalPlayers + 1) {
-                player = gameStatisticsList.get(i-1)
-                        .getPlayer();
+                playerPanel.getChildren().add(createNicknameLabel(i));
             }
-            Label nicknameLabel = new Label();
-            if (player != null && player.getNickname() != null) {
-                nicknameLabel.setText(player.getNickname());
-            } else {
-                nicknameLabel.setText("Незнайомець"); // You can set a default text if player or nickname is null
-            }
-            nicknameLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #ffffff");
-            playerPanel.getChildren().add(nicknameLabel);
 
             selectionRolePane.getChildren().add(playerPanel);
             Button button = new Button(String.valueOf(i));
@@ -109,7 +98,9 @@ public class SelectionRoleController implements Initializable {
             button.setLayoutX(x - 46);
             button.setLayoutY(y - 33);
             button.setStyle("-fx-background-color: #161616; -fx-text-fill: #ffffff;  -fx-border-color: #ffffff; -fx-border-radius: 5px;");
-//            button.setOnAction(event -> handleButtonClick());
+            int finalI = i;
+            button.setOnAction(event -> new Alert(Alert.AlertType.INFORMATION,
+                    "Player number " + finalI + " with index " + (finalI - 1)).show());
 //            button.setDisable(true);
             if (i == 0 || i == totalPlayers + 1) {
                 playerPanel.setVisible(false);
@@ -121,5 +112,20 @@ public class SelectionRoleController implements Initializable {
 
     public void show() {
         stage.show();
+    }
+
+    private Label createNicknameLabel(int i) { // When value of button is "1", then get element with 0 index
+        GameStatistics currentGamer = gameStatisticsList.get(i-1);
+        Player player = currentGamer.getPlayer();
+        Label nicknameLabel = new Label();
+        if (player != null) {
+            nicknameLabel.setText(player.getNickname());
+        } else if (currentGamer.getInGameNickname() != null) {
+            nicknameLabel.setText(currentGamer.getInGameNickname());
+        } else {
+            nicknameLabel.setText("Незнайомець");
+        }
+        nicknameLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #ffffff");
+        return nicknameLabel;
     }
 }

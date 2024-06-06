@@ -1,14 +1,27 @@
 package com.vsiverskyi.model.enums;
 
 public enum ERoleOrder {
-    DON,
-    MAFIA,
-    SHERYF,
-    DOCTOR,
-    LEDY,
-    MANIAK,
-    STRILOCHNYK,
-    BOMBA;
+    UNDEFINED("Undefined"),
+    DON("Дон"),
+    MAFIA("Мафія"),
+    SHERYF("Шериф"),
+    DOCTOR("Лікар"),
+    LEDY("Леді"),
+    MANIAK("Маніяк"),
+    STRILOCHNYK("Стрілочник"),
+    BOMBA("Бомба"),
+    ZATYCHKA("Затичка"),
+    PEACE("Мирний");
+
+    ERoleOrder(final String title) {
+        this.title = title;
+    }
+
+    private String title;
+
+    public String getTitle() {
+        return title;
+    }
 
     public static ERoleOrder fromName(String name) {
         for (ERoleOrder role : values()) {
@@ -16,6 +29,6 @@ public enum ERoleOrder {
                 return role;
             }
         }
-        throw new IllegalArgumentException("No enum constant for name: " + name);
+        return UNDEFINED;
     }
 }

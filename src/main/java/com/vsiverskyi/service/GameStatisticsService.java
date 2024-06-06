@@ -35,7 +35,12 @@ public class GameStatisticsService {
         Game game = gameRepository.findById(currentGameId).orElseThrow(() ->
                 new NoGameWithSuchIdException(ExceptionConstants.NO_GAME_WITH_SUCH_ID + currentGameId));
         return game.getGameStatistics().stream()
-                .sorted(Comparator.comparing(gs -> ERoleOrder.fromName(gs.getRole().getRoleNameConstant())))
+                .sorted(Comparator.comparing(gs -> {
+                    if (gs.getRole() == null) {
+                        return ERoleOrder.UNDEFINED;
+                    }
+                    return ERoleOrder.fromName(gs.getRole().getRoleNameConstant());
+                }))
                 .collect(Collectors.toList());
     }
 }
