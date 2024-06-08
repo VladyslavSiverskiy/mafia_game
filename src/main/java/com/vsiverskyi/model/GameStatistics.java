@@ -34,7 +34,8 @@ public class GameStatistics {
     private boolean inGame; // true якщо живий, false - ні
     @Column
     private String inGameNickname; // нікнейм в грі, ще може бути прикріплений nickname в Player
-
+    @Column
+    private Integer inGameNumber; // Номер гравця у грі
     @Override
     public String toString() {
         return "GameStatistics{" +

@@ -30,6 +30,7 @@ public class GameService {
     private final GameRepository gameRepository;
     private final RoleRepository roleRepository;
     private final GameStatisticsRepository gameStatisticsRepository;
+    private int playerNumber = 1;
 
     public Game getGameInfo(Long id) {
         return gameRepository.findById(id).get();
@@ -69,8 +70,8 @@ public class GameService {
         }
 
         List<Integer> rolesIdToReturnList = new ArrayList<>();
-        rolesIdToReturnList.addAll(returnPeaceSidePlayersId(playersAmount - mafiaAmount, peaceRolesToAdd, game));
         rolesIdToReturnList.addAll(returnMafiaSidePlayersId(mafiaAmount, game));
+        rolesIdToReturnList.addAll(returnPeaceSidePlayersId(playersAmount - mafiaAmount, peaceRolesToAdd, game));
         return rolesIdToReturnList;
     }
     private List<Integer> returnPeaceSidePlayersId(int peaceAmount, List<String> additionalPeaceRoles, Game game) {
@@ -85,6 +86,7 @@ public class GameService {
                                     new NoRoleWithSuchTitleException(ExceptionConstants.NO_ROLE_WITH_SUCH_TITLE + roleTitle));
             GameStatistics peacePlayer = GameStatistics.builder()
                     .game(game)
+                    .inGameNumber(playerNumber++)
                     .inGame(true)
                     .points(0)
                     .build();
@@ -109,6 +111,7 @@ public class GameService {
             GameStatistics peacePlayer = GameStatistics.builder()
                     .game(game)
                     .inGame(true)
+                    .inGameNumber(playerNumber++)
                     .points(0)
                     .build();
             gameStatisticsRepository.save(peacePlayer);
@@ -124,13 +127,18 @@ public class GameService {
         List<Integer> mafiaRoleIdList = new ArrayList<>();
         GameStatistics donPlayer = GameStatistics.builder()
                 .game(game)
+                .inGameNumber(playerNumber++)
                 .inGame(true)
+                .points(0)
                 .build();
         gameStatisticsRepository.save(donPlayer);
         mafiaRoleIdList.add(donRole.getId());
         for (int i = 0; i < mafiaAmount - 1; i++) { // - 1 бо дона забираємо
             GameStatistics mafiaPlayer = GameStatistics.builder()
                     .game(game)
+                    .inGameNumber(playerNumber++)
+                    .inGame(true)
+                    .points(0)
                     .build();
             gameStatisticsRepository.save(mafiaPlayer);
             mafiaRoleIdList.add(mafiaRole.getId());

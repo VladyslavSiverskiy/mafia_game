@@ -67,17 +67,12 @@ public class SelectionController implements Initializable {
             Alert alert = new Alert(Alert.AlertType.ERROR, e.getMessage());
             alert.show();
         }
-//        System.out.println(gameStatisticsList);
-//        roleName.setText(gameStatisticsList.get(0).getRole().getTitle());
+        System.out.println(GameSettingsController.roleIdPerGameList);
         int totalPlayers = gameStatisticsList.size();
         displayPlayers(totalPlayers);
-
+        System.out.println(selectionPane.getChildren());
         startVoting.setOnAction(actionEvent -> fxWeaver.loadController(SelectionRoleController.class).show());
     }
-
-//    private void handleButtonClick() {
-//        roleName.setText(gameStatisticsList.get(++currentPlayerIndex).getRole().getTitle());
-//    }
 
     public void show() {
         stage.show();
@@ -115,9 +110,8 @@ public class SelectionController implements Initializable {
             new ComboBoxAutoComplete<String>(nicknameComboBox);
             int finalI = i;
             nicknameComboBox.getSelectionModel().selectedItemProperty().addListener((options, oldValue, newValue) -> {
-                System.out.println(newValue);
                 if (finalI > 0 && finalI < totalPlayers + 1) {
-                    gameStatisticsService.setInGameNickname(gameStatisticsList.get(finalI - 1), newValue);
+                    gameStatisticsService.setInGameNickname(currentGameId, finalI, newValue);
                 }
             });
             playerPanel.getChildren().add(nicknameComboBox);
@@ -128,8 +122,7 @@ public class SelectionController implements Initializable {
             button.setLayoutX(x - 25);
             button.setLayoutY(y - 25);
             button.setStyle("-fx-background-color: #161616; -fx-text-fill: #ffffff;  -fx-border-color: #ffffff; -fx-border-radius: 5px;");
-//            button.setOnAction(event -> handleButtonClick());
-//            button.setDisable(true);
+
             if (i == 0 || i == totalPlayers + 1) {
                 playerPanel.setVisible(false);
                 button.setVisible(false);

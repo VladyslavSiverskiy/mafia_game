@@ -1,0 +1,35 @@
+.list-view {
+    -fx-background-color: #161616;
+    -fx-control-inner-background: #161616;
+    -fx-background-insets: 0;
+}
+
+.list-view .scroll-bar:horizontal {
+    -fx-opacity: 0;
+    -fx-pref-height: 0;
+    -fx-min-height: 0;
+    -fx-max-height: 0;
+}
+
+.list-cell {
+    -fx-background-color: #161616;
+    -fx-padding: 10;
+    -fx-text-fill: white;
+}
+
+.list-cell:odd {
+    -fx-background-color: #161616;
+    -fx-text-fill: white;
+}
+
+.list-cell:even {
+    -fx-background-color: #151515;
+    -fx-text-fill: white;
+}
+
+.text-field {
+    -fx-max-width: 30;
+    -fx-padding: 5;
+    -fx-text-fill: white;
+}
+

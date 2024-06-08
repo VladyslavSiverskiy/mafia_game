@@ -25,8 +25,9 @@ public class GameStatisticsService {
     private final RoleRepository roleRepository;
     private final GameStatisticsRepository gameStatisticsRepository;
 
-    public GameStatistics setInGameNickname(GameStatistics gameStatistics, String inGameNickname) {
+    public GameStatistics setInGameNickname(long gameId, int playerNumber, String inGameNickname) {
         // TODO: Mb need to add some other func cases
+        GameStatistics gameStatistics = gameStatisticsRepository.findByGame_IdAndAndInGameNumber(gameId, playerNumber);
         gameStatistics.setInGameNickname(inGameNickname);
         return gameStatisticsRepository.save(gameStatistics);
     }

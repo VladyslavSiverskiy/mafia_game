@@ -11,7 +11,17 @@
             <font>
                 <Font name="Lucida Console" size="18.0" />
             </font></Label>
-        <Button fx:id="startVoting" layoutX="109.0" layoutY="687.0" mnemonicParsing="false" style="-fx-background-color: #161616; -fx-border-color: #ffffff; -fx-border-radius: 5px;" text="Перейти до вибору ролей" textFill="WHITE" />
+        <Button fx:id="startVoting" layoutX="109.0" layoutY="687.0" mnemonicParsing="false" style="-fx-background-color: #161616; -fx-border-color: #ffffff; -fx-border-radius: 5px;" text="Перейти до обговорення" textFill="WHITE" />
         <AnchorPane fx:id="selectionRolePane" layoutX="335.0" layoutY="72.0" prefHeight="700.0" prefWidth="878.0" />
+      <AnchorPane fx:id="selectedRolesAp" layoutX="73.0" layoutY="242.0" prefHeight="410.0" prefWidth="261.0" style="-fx-border-color: #ffffff; -fx-border-radius: 5px; -fx-background-color: #161616;" />
+      <AnchorPane layoutX="73.0" layoutY="110.0" prefHeight="103.0" prefWidth="261.0" style="-fx-border-color: #ffffff; -fx-border-radius: 5px;">
+         <children>
+            <Label fx:id="roleTitle" layoutX="98.0" layoutY="36.0" textFill="WHITE">
+               <font>
+                  <Font name="System Bold" size="21.0" />
+               </font>
+            </Label>
+         </children>
+      </AnchorPane>
     </children>
 </AnchorPane>

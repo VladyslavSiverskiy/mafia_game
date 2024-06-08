@@ -54,6 +54,8 @@ public class PresentationController implements Initializable {
     public void initialize(URL url, ResourceBundle resourceBundle) {
         this.stage = StarterController.primaryStage;
         stage.setScene(new Scene(presentationAp));
+
+
         // Create time line to lower remaining duration every second:
         Timeline countDownTimeLine = new Timeline(new KeyFrame(Duration.seconds(1), (ActionEvent event) ->
                 secondsLeft.setText(String.valueOf(secondsTillEnd--))));
