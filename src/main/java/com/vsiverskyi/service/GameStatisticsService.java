@@ -44,4 +44,11 @@ public class GameStatisticsService {
                 }))
                 .collect(Collectors.toList());
     }
+
+    public List<GameStatistics> getGameStatisticsByGameIdSortedByInGameNumber(Long currentGameId) throws NoGameWithSuchIdException {
+        return getGameStatisticsByGameId(currentGameId).stream()
+                .sorted(Comparator.comparing(GameStatistics::getInGameNumber))
+                .collect(Collectors.toList());
+    }
+
 }

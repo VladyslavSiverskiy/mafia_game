@@ -81,18 +81,16 @@ public class SelectionRoleController implements Initializable {
         try {
             // get list of gamers and sort them by their number
             gameStatisticsList = gameStatisticsService
-                    .getGameStatisticsByGameId(SelectionController.currentGameId).stream()
-                    .sorted(Comparator.comparing(GameStatistics::getInGameNumber))
-                    .collect(Collectors.toList());
+                    .getGameStatisticsByGameIdSortedByInGameNumber(SelectionController.currentGameId);
             //init map keys
             for (GameStatistics gameStatistics : gameStatisticsList) {
                 playerIdRoleIdMap.put(gameStatistics.getInGameNumber(), null);
             }
             //init roles
             roles = roleService.getRoleListFromListOfRoleId(GameSettingsController.roleIdPerGameList);
+
             //show buttons
-            int totalPlayers = gameStatisticsList.size();
-            displayRolePlayers(totalPlayers);
+            displayRolePlayers(gameStatisticsList.size());
 
             // start selection process
             currentRole = roles.get(roleSelectionIndex++);
