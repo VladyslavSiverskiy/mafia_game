@@ -51,4 +51,10 @@ public class GameStatisticsService {
                 .collect(Collectors.toList());
     }
 
+    public GameStatistics deletePlayerAfterVoting(Long gameId, int inGameNumber) {
+        GameStatistics gameStatistics = gameStatisticsRepository.findByGame_IdAndAndInGameNumber(gameId, inGameNumber);
+        gameStatistics.setInGame(false);
+        gameStatistics = gameStatisticsRepository.save(gameStatistics);
+        return gameStatistics;
+    }
 }

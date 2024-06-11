@@ -58,7 +58,8 @@ public class PresentationController implements Initializable {
     private Label presentationPlayerId;
     @FXML
     private Button startVoting;
-
+    @FXML
+    private Button skip;
     private List<GameStatistics> gameStatisticsList;
     //set the delay as 0
     private int secondsPerPresentation = 5;
@@ -80,10 +81,12 @@ public class PresentationController implements Initializable {
 
         displayRolePlayers(gameStatisticsList.size());
         startVoting.setOnAction(actionEvent -> startPresentation(0));
+        skip.setOnAction(event -> fxWeaver.loadController(VotingController.class).show());
     }
 
     private void startPresentation(int index) {
         if (index > gameStatisticsList.size() - 1) {
+            // TODO: поміняти не нормальні змінні, а не в коді
             secondsTillEnd = 50;
             Timeline countDownTimeLine = new Timeline(new KeyFrame(Duration.seconds(1), (ActionEvent event) -> {
                 secondsLeft.setText(String.valueOf(secondsTillEnd--));
@@ -186,7 +189,6 @@ public class PresentationController implements Initializable {
         button.setOnMouseExited(e -> button.setStyle(IDLE_BUTTON_STYLE));
         return button;
     }
-
 
     public void show() {
         stage.show();
