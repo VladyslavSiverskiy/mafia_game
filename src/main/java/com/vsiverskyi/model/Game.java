@@ -1,6 +1,7 @@
 package com.vsiverskyi.model;
 
 import com.vsiverskyi.model.enums.EGameStatus;
+import com.vsiverskyi.model.enums.ETeam;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -19,17 +20,16 @@ public class Game {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
     @Column(name = "last_update")
     private LocalDateTime lastUpdate;
-
     @Column
     @Enumerated(EnumType.STRING)
     private EGameStatus gameStatus;
-
+    @Column
+    @Enumerated(EnumType.STRING)
+    private ETeam winnerSide;
     @Column
     private Integer playersAmount;
-
     @OneToMany(mappedBy = "game",fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private List<GameStatistics> gameStatistics;
 

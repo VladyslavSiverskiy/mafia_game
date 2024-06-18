@@ -24,6 +24,7 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 import lombok.RequiredArgsConstructor;
+import net.rgielen.fxweaver.core.FxWeaver;
 import net.rgielen.fxweaver.core.FxmlView;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -44,6 +45,8 @@ public class VotingController implements Initializable {
     private GameService gameService;
     @Autowired
     private GameStatisticsService gameStatisticsService;
+    @Autowired
+    private FxWeaver fxWeaver;
     private Stage stage;
     private Scene scene;
     private Parent root;
@@ -152,6 +155,7 @@ public class VotingController implements Initializable {
             //тут можливо ще зробити сервіс, який буде перевіряти чи гру закінчено, і дьоргати його методи
             Alert alert = new Alert(Alert.AlertType.INFORMATION, "Кінець голосування");
             alert.show();
+            fxWeaver.loadController(NightStageController.class).show();
         } else {
             giveVoice(++currentVoterIndex);
         }
@@ -164,9 +168,7 @@ public class VotingController implements Initializable {
         List<Integer> playersIdWithMaxVotes = findPlayersWithMaxVotesAmount(playerIdVotesMap);
         Integer playerInGameNumberToDelete;
         if (playersIdWithMaxVotes.size() > 1) {
-            // new window with roulette
             playerInGameNumberToDelete = showRouletteWindow(playersIdWithMaxVotes);
-            System.out.println(playerInGameNumberToDelete);
         } else {
             playerInGameNumberToDelete = playersIdWithMaxVotes.get(0);
         }

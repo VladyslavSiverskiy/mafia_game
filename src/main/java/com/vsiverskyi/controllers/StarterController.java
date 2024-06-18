@@ -26,7 +26,7 @@ import java.util.ResourceBundle;
 @Component
 @RequiredArgsConstructor
 @FxmlView("Starter.fxml")
-public class StarterController  {
+public class StarterController {
 
     //variables to manipulate javaFx elements
     private Stage stage;
@@ -36,23 +36,10 @@ public class StarterController  {
     private final FxWeaver fxWeaver;
     @FXML
     Button start_btn;
+
     @FXML
     public void openGameSettingsPage(ActionEvent actionEvent) throws IOException {
-/*
-        root = FXMLLoader.load(getClass().getResource("/pages/GameSettings.fxml"));
-        stage = (Stage) ((Node)actionEvent.getSource()).getScene().getWindow();
-        scene = new Scene(root);
-        stage.setScene(scene);
-        stage.getStyle();
-        stage.show();
-*/
         primaryStage = (Stage) start_btn.getScene().getWindow();
-       fxWeaver.loadController(GameSettingsController.class).show();
-
-//        Scene scene = new Scene(root);
-//        scene.getStylesheets().add(getClass().getResource("/style/loginPage.css").toExternalForm());
-//        stage.setScene(scene);
-//        stage.getStyle();
-//        stage.show();
+        fxWeaver.loadController(GameSettingsController.class).show();
     }
 }

@@ -29,13 +29,14 @@ public class GameStatistics {
     private Role role;
     @Column
     private Integer points;
-
     @Column
     private boolean inGame; // true якщо живий, false - ні
     @Column
     private String inGameNickname; // нікнейм в грі, ще може бути прикріплений nickname в Player
     @Column
     private Integer inGameNumber; // Номер гравця у грі
+    @Column
+    private Boolean skipNextVoting;
     @Override
     public String toString() {
         return "GameStatistics{" +

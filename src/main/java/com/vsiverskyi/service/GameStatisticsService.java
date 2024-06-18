@@ -32,6 +32,21 @@ public class GameStatisticsService {
         return gameStatisticsRepository.save(gameStatistics);
     }
 
+    public GameStatistics killPlayer(long gameId, int playerToKillInGameNumber) {
+        GameStatistics gameStatistics = gameStatisticsRepository
+                .findByGame_IdAndAndInGameNumber(gameId, playerToKillInGameNumber);
+        gameStatistics.setInGame(false);
+        return gameStatistics;
+    }
+
+    public GameStatistics healPlayer(long gameId, int playerToKillInGameNumber) {
+        GameStatistics gameStatistics = gameStatisticsRepository
+                .findByGame_IdAndAndInGameNumber(gameId, playerToKillInGameNumber);
+        gameStatistics.setInGame(false);
+        return gameStatistics;
+    }
+
+
     public List<GameStatistics> getGameStatisticsByGameId(Long currentGameId) throws NoGameWithSuchIdException {
         Game game = gameRepository.findById(currentGameId).orElseThrow(() ->
                 new NoGameWithSuchIdException(ExceptionConstants.NO_GAME_WITH_SUCH_ID + currentGameId));
@@ -56,5 +71,13 @@ public class GameStatisticsService {
         gameStatistics.setInGame(false);
         gameStatistics = gameStatisticsRepository.save(gameStatistics);
         return gameStatistics;
+    }
+
+    public Boolean checkIfDonIsAlive(long currentGameId) {
+        List<GameStatistics> gameStatisticsList =  gameRepository.findById(currentGameId).get().getGameStatistics();
+        GameStatistics donRole = gameStatisticsList.stream()
+                .filter(gameStatistics -> gameStatistics.getRole().getRoleNameConstant()
+                        .equals(ERoleOrder.DON.name())).toList().get(0);
+        return donRole.isInGame();
     }
 }

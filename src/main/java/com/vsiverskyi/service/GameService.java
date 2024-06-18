@@ -12,6 +12,7 @@ import com.vsiverskyi.model.enums.ETeam;
 import com.vsiverskyi.repository.GameRepository;
 import com.vsiverskyi.repository.GameStatisticsRepository;
 import com.vsiverskyi.repository.RoleRepository;
+import com.vsiverskyi.utils.ActionLogger;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +29,7 @@ import java.util.stream.Collectors;
 public class GameService {
 
     private final GameRepository gameRepository;
+    private final GameStatisticsService gameStatisticsService;
     private final RoleRepository roleRepository;
     private final GameStatisticsRepository gameStatisticsRepository;
     private int playerNumber = 1;
@@ -153,5 +155,34 @@ public class GameService {
         }
 
         return mafiaRoleIdList;
+    }
+
+    public boolean checkIfGameIsOver(Long gameId) {
+        // Гра закінчується якщо виграла мафія (або рівно мафії і мирних, або мафів більше)
+        // Або всіх мафій вбили
+        return false;
+    }
+
+    public ActionLogger doMafiaSelectionMove(long gameId, int playerToKillInGameNumber) {
+        ActionLogger logger = new ActionLogger();
+        logger.setActionText(" обрала гравця № " + playerToKillInGameNumber);
+        logger.setLocalDateTime(LocalDateTime.now());
+        return logger;
+    }
+
+    public ActionLogger doMafiaKillMove(long gameId, int playerToKillInGameNumber) {
+        gameStatisticsService.killPlayer(gameId, playerToKillInGameNumber);
+        ActionLogger logger = new ActionLogger();
+        logger.setActionText("Мафія вистрілила у гравця № " + playerToKillInGameNumber);
+        logger.setLocalDateTime(LocalDateTime.now());
+        return logger;
+    }
+
+    public ActionLogger doDoctorMove(long gameId, int playerToHealInGameNumber) {
+        gameStatisticsService.healPlayer(gameId, playerToHealInGameNumber);
+        ActionLogger logger = new ActionLogger();
+        logger.setActionText("Лікар лікує гравця № " + playerToHealInGameNumber);
+        logger.setLocalDateTime(LocalDateTime.now());
+        return logger;
     }
 }

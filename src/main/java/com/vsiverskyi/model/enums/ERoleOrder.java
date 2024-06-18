@@ -2,8 +2,8 @@ package com.vsiverskyi.model.enums;
 
 public enum ERoleOrder {
     UNDEFINED("Undefined"),
-    DON("Дон"),
     MAFIA("Мафія"),
+    DON("Дон"),
     SHERYF("Шериф"),
     DOCTOR("Лікар"),
     LEDY("Леді"),

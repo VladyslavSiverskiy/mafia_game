@@ -136,11 +136,20 @@ public class GameSettingsController implements Initializable {
         label.setStyle("-fx-text-fill: #ffffff; -fx-font-size: 14px");
         CheckBox checkBox = new CheckBox();
         settingsState.put(text, checkBox.isSelected());
+
+        Spinner<Integer> roleAmountSpinner = new Spinner<>();
+        SpinnerValueFactory<Integer> roleAmountSpinnerValueFactory = new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 10, 1);
+        roleAmountSpinner.setValueFactory(roleAmountSpinnerValueFactory);
+        roleAmountSpinner.setDisable(true);
+
         checkBox.selectedProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue == true) {
                 selectedPlayersAmount++;
+                roleAmountSpinner.setDisable(false);
             } else {
                 selectedPlayersAmount--;
+                roleAmountSpinner.setDisable(true);
+                roleAmountSpinner.getValueFactory().setValue(1); // Reset spinner value to 1
             }
             if (selectedPlayersAmount + mafiaAmountSpinner.getValue() >= currentPlayersAmount) {
                 playersAmountSpinnerValueFactory.setValue(++currentPlayersAmount);
@@ -151,7 +160,7 @@ public class GameSettingsController implements Initializable {
         HBox row = new HBox();
         row.setAlignment(Pos.CENTER_LEFT);
         row.setSpacing(15);
-        row.getChildren().addAll(label, checkBox);
+        row.getChildren().addAll(label, checkBox, roleAmountSpinner);
         return row;
     }
 }
