@@ -45,7 +45,10 @@ public class GameEndingController implements Initializable {
         stage.setFullScreen(true);
         Game game = gameService.getGameInfo(SelectionController.currentGameId);
         winnerTitleLabel.setText(game.getWinnerSide().getTitle());
-        toStarterPage.setOnAction(ev ->  fxWeaver.loadController(StarterController.class).show());
+        toStarterPage.setOnAction(ev -> {
+            StarterController.primaryStage = (Stage) toStarterPage.getScene().getWindow();
+            fxWeaver.loadController(StarterController.class).show();
+        });
     }
 
     public void show() {

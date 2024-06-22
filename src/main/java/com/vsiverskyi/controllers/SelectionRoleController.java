@@ -1,6 +1,5 @@
 package com.vsiverskyi.controllers;
 
-import com.vsiverskyi.exception.CantStartGameException;
 import com.vsiverskyi.exception.ExceptionConstants;
 import com.vsiverskyi.exception.NoGameWithSuchIdException;
 import com.vsiverskyi.exception.NoRoleWithSuchTitleException;
@@ -10,7 +9,6 @@ import com.vsiverskyi.model.Role;
 import com.vsiverskyi.service.GameService;
 import com.vsiverskyi.service.GameStatisticsService;
 import com.vsiverskyi.service.RoleService;
-import com.vsiverskyi.utils.StyleConstants;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -32,19 +30,20 @@ import org.springframework.stereotype.Component;
 
 import java.net.URL;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static com.vsiverskyi.utils.StyleConstants.HOVERED_BUTTON_STYLE;
 import static com.vsiverskyi.utils.StyleConstants.IDLE_BUTTON_STYLE;
 
 @Component
 @FxmlView("SelectionRole.fxml")
-public class SelectionRoleController implements Initializable {
+public class SelectionRoleController implements Initializable,DisplayedPlayersController {
 
     @Autowired
     private GameService gameService;
     @Autowired
     private RoleService roleService;
+    @Autowired
+    private PenaltyController penaltyController;
     @Autowired
     private GameStatisticsService gameStatisticsService;
     @Autowired
@@ -81,7 +80,7 @@ public class SelectionRoleController implements Initializable {
     private Map<Integer, Button> playerButtonsMap = new HashMap<>(); // Map to store buttons
     private Map<Integer, Label> playerRoleLabelsMap = new HashMap<>(); // Map to store labels
     private Map<Integer, Integer> yellowCardsMap = new HashMap<>(); // Map to store yellow cards count
-    private Set<Integer> redCardedPlayers = new HashSet<>(); // Set to store players with red cards
+//    private Set<Integer> redCardedPlayers = new HashSet<>(); // Set to store players with red cards
 
     private Role currentRole;
     private int roleSelectionIndex = 0;
@@ -119,7 +118,7 @@ public class SelectionRoleController implements Initializable {
             technicalDefeatMafia.setOnAction(e -> assignTechnicalDefeat("MAFIA"));
 
             // Initialize player card list view
-            initializePlayerCardList();
+            penaltyController.initializePlayerCardList(gameStatisticsList, stage,this, playerCardListView);
 
             // Create ListView for roles
             ListView<String> roleListView = new ListView<>();
@@ -205,7 +204,8 @@ public class SelectionRoleController implements Initializable {
 
     }
 
-    private void displayRolePlayers(int totalPlayers) {
+    @Override
+    public void displayRolePlayers(int totalPlayers) {
         double centerX = selectionRolePane.getWidth() / 2;
         double centerY = selectionRolePane.getHeight() / 2;
         double radius = Math.min(centerX, centerY) - 3;
@@ -294,72 +294,38 @@ public class SelectionRoleController implements Initializable {
         fxWeaver.loadController(GameEndingController.class).show();
     }
 
-    private void initializePlayerCardList() {
-        ObservableList<HBox> playerCards = FXCollections.observableArrayList();
-
-        for (GameStatistics gs : gameStatisticsList) {
-            HBox playerCardRow = new HBox(10);
-            Label playerLabel = new Label("Гравець " + gs.getInGameNumber());
-            Button yellowCardButton = new Button();
-            yellowCardButton.setStyle("-fx-background-color: yellow; -fx-width: 15px; -fx-height: 20px;");
-
-            Button redCardButton = new Button();
-            redCardButton.setStyle("-fx-background-color: red; -fx-width: 15px; -fx-min-height: 20px;");
-
-            int playerNumber = gs.getInGameNumber();
-            yellowCardButton.setOnAction(e -> giveYellowCard(playerNumber, yellowCardButton, redCardButton));
-            redCardButton.setOnAction(e -> giveRedCard(playerNumber, yellowCardButton, redCardButton));
-            // Create a Region to act as a spacer
-            Region spacer = new Region();
-            HBox.setHgrow(spacer, Priority.ALWAYS);
-
-            playerCardRow.getChildren().addAll(playerLabel, spacer, yellowCardButton, redCardButton);
-            playerCards.add(playerCardRow);
-        }
-
-        playerCardListView.setItems(playerCards);
-    }
-
-
-    private void giveYellowCard(int playerNumber, Button yellowButton, Button redButton) {
-        // Get the current number of yellow cards from the database
-        GameStatistics gs = gameStatisticsService.getGameStatisticsByGameIdSortedByInGameNumber(SelectionController.currentGameId)
-                .stream()
-                .filter(stat -> stat.getInGameNumber() == playerNumber)
-                .findFirst()
-                .orElse(null);
-
-        if (gs != null) {
-            System.out.println(gs);
-            int yellowCards = gs.getYellowCards();
-            yellowCards++;
-            gs.setYellowCards(yellowCards);
-
-            // Save the updated yellow card count back to the database
-            gameStatisticsService.updateYellowCards(gs.getGame().getId(), gs.getInGameNumber(), yellowCards);
-
-            if (yellowCards >= 4) {
-                giveRedCard(playerNumber, yellowButton, redButton);
-            } else {
-                Alert alert = new Alert(Alert.AlertType.INFORMATION, "Гравець " + playerNumber + " отримав жовту картку");
-                alert.initOwner(this.stage);
-                alert.show();
-                displayRolePlayers(gameStatisticsList.size());
-            }
-        }
-    }
-
-    private void giveRedCard(int playerNumber, Button yellowButton, Button redButton) {
-        redCardedPlayers.add(playerNumber);
-        yellowButton.setDisable(true);
-        redButton.setDisable(true);
-        gameStatisticsService.removePlayerFromGame(SelectionController.currentGameId, playerNumber);
-        Alert alert = new Alert(Alert.AlertType.INFORMATION, "Гравець " + playerNumber + " отримав червону картку");
-        alert.initOwner(stage);
-        alert.show();
-        displayRolePlayers(gameStatisticsList.size());
-        //TODO: Check if game is over
-    }
+//    private void initializePlayerCardList() {
+//        ObservableList<HBox> playerCards = FXCollections.observableArrayList();
+//
+//        for (GameStatistics gs : gameStatisticsList) {
+//            HBox playerCardRow = new HBox(10);
+//            Label playerLabel = new Label("Гравець " + gs.getInGameNumber());
+//            Button yellowCardButton = new Button();
+//            yellowCardButton.setStyle("-fx-background-color: yellow; -fx-width: 15px; -fx-height: 20px;");
+//
+//            Button redCardButton = new Button();
+//            redCardButton.setStyle("-fx-background-color: red; -fx-width: 15px; -fx-min-height: 20px;");
+//
+//            int playerNumber = gs.getInGameNumber();
+//            yellowCardButton.setOnAction(e -> {
+//                penaltyController.giveYellowCard(playerNumber, yellowCardButton, redCardButton, stage);
+//                displayRolePlayers(gameStatisticsList.size());
+//            });
+//            redCardButton.setOnAction(e -> {
+//                penaltyController.giveRedCard(playerNumber, yellowCardButton, redCardButton, stage);
+//                displayRolePlayers(gameStatisticsList.size());
+//                //TODO: Check if game is over
+//            });
+//            // Create a Region to act as a spacer
+//            Region spacer = new Region();
+//            HBox.setHgrow(spacer, Priority.ALWAYS);
+//
+//            playerCardRow.getChildren().addAll(playerLabel, spacer, yellowCardButton, redCardButton);
+//            playerCards.add(playerCardRow);
+//        }
+//
+//        playerCardListView.setItems(playerCards);
+//    }
 
     private VBox createPlayerPanel(double x, double y) {
         VBox playerPanel = new VBox();

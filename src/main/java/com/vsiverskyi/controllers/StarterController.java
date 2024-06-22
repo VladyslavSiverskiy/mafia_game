@@ -44,6 +44,10 @@ public class StarterController {
     }
 
     public void show() {
-        stage.show();
+        Parent root = fxWeaver.loadView(StarterController.class);
+        Scene scene = new Scene(root);
+        primaryStage.setScene(scene);
+        primaryStage.show();
+
     }
 }
