@@ -42,4 +42,8 @@ public class StarterController {
         primaryStage = (Stage) start_btn.getScene().getWindow();
         fxWeaver.loadController(GameSettingsController.class).show();
     }
+
+    public void show() {
+        stage.show();
+    }
 }

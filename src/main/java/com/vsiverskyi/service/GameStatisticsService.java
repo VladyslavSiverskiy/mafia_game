@@ -39,6 +39,16 @@ public class GameStatisticsService {
         return gameStatistics;
     }
 
+    /**
+     * This method is used in penalty system, when player gets red card
+     * */
+    public GameStatistics removePlayerFromGame(long gameId, int playerToKillInGameNumber) {
+        GameStatistics gameStatistics = gameStatisticsRepository
+                .findByGame_IdAndAndInGameNumber(gameId, playerToKillInGameNumber);
+        gameStatistics.setInGame(false);
+        return gameStatistics;
+    }
+
     public GameStatistics healPlayer(long gameId, int playerToKillInGameNumber) {
         GameStatistics gameStatistics = gameStatisticsRepository
                 .findByGame_IdAndAndInGameNumber(gameId, playerToKillInGameNumber);
@@ -79,5 +89,13 @@ public class GameStatisticsService {
                 .filter(gameStatistics -> gameStatistics.getRole().getRoleNameConstant()
                         .equals(ERoleOrder.DON.name())).toList().get(0);
         return donRole.isInGame();
+    }
+
+    public void updateYellowCards(Long gameId, int inGameNumber, int yellowCards) {
+        GameStatistics gameStatistics = gameStatisticsRepository.findByGame_IdAndAndInGameNumber(gameId, inGameNumber);
+        if (gameStatistics != null) {
+            gameStatistics.setYellowCards(yellowCards);
+            gameStatisticsRepository.save(gameStatistics);
+        }
     }
 }

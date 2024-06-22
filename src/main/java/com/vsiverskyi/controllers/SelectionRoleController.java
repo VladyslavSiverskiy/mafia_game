@@ -15,15 +15,15 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
+import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
 import net.rgielen.fxweaver.core.FxWeaver;
 import net.rgielen.fxweaver.core.FxmlView;
@@ -62,11 +62,27 @@ public class SelectionRoleController implements Initializable {
     private Label roleTitle;
     @FXML
     private Button startVoting;
+    @FXML
+    private VBox adminMenu;
+    @FXML
+    private Label selectedPlayerLabel;
+    @FXML
+    private Button technicalDefeatPeaceful;
+    @FXML
+    private Button technicalDefeatMafia;
+    @FXML
+    private Button fullScreen;
+    @FXML
+    private ListView<HBox> playerCardListView;
     private List<GameStatistics> gameStatisticsList;
     private List<Role> roles;
     private ObservableList<String> assignedRolesList = FXCollections.observableArrayList();
     private Map<Integer, Role> playerIdRoleIdMap = new HashMap<>();
     private Map<Integer, Button> playerButtonsMap = new HashMap<>(); // Map to store buttons
+    private Map<Integer, Label> playerRoleLabelsMap = new HashMap<>(); // Map to store labels
+    private Map<Integer, Integer> yellowCardsMap = new HashMap<>(); // Map to store yellow cards count
+    private Set<Integer> redCardedPlayers = new HashSet<>(); // Set to store players with red cards
+
     private Role currentRole;
     private int roleSelectionIndex = 0;
 
@@ -78,6 +94,8 @@ public class SelectionRoleController implements Initializable {
 
         stage.setScene(scene);
         stage.setMaximized(true);
+        stage.setFullScreen(true);
+        fullScreen.setOnAction(ev -> stage.setFullScreen(true));
         try {
             // get list of gamers and sort them by their number
             gameStatisticsList = gameStatisticsService
@@ -95,6 +113,13 @@ public class SelectionRoleController implements Initializable {
             // start selection process
             currentRole = roles.get(roleSelectionIndex++);
             roleTitle.setText(currentRole.getTitle());
+
+            // Initialize technical defeat buttons
+            technicalDefeatPeaceful.setOnAction(e -> assignTechnicalDefeat("PEACE"));
+            technicalDefeatMafia.setOnAction(e -> assignTechnicalDefeat("MAFIA"));
+
+            // Initialize player card list view
+            initializePlayerCardList();
 
             // Create ListView for roles
             ListView<String> roleListView = new ListView<>();
@@ -168,13 +193,13 @@ public class SelectionRoleController implements Initializable {
                     c++;
                 }
             }
-            if(c > 0) {
+            if (c > 0) {
                 new Alert(Alert.AlertType.INFORMATION, "Не всі ролі було розподілено").show();
             } else {
                 roleService.applyRoles(SelectionController.currentGameId, playerIdRoleIdMap);
                 fxWeaver.loadController(PresentationController.class).show();
             }
-        }catch (RuntimeException ex) {
+        } catch (RuntimeException ex) {
             new Alert(Alert.AlertType.ERROR, ex.getMessage());
         }
 
@@ -183,7 +208,7 @@ public class SelectionRoleController implements Initializable {
     private void displayRolePlayers(int totalPlayers) {
         double centerX = selectionRolePane.getWidth() / 2;
         double centerY = selectionRolePane.getHeight() / 2;
-        double radius = Math.min(centerX, centerY) - 5;
+        double radius = Math.min(centerX, centerY) - 3;
         double startAngle = Math.PI / 1.8;
 
         for (int i = 0; i < totalPlayers + 2; i++) { //
@@ -191,24 +216,149 @@ public class SelectionRoleController implements Initializable {
             double x = centerX + radius * Math.cos(angle);
             double y = centerY + radius * Math.sin(angle);
 
+            GameStatistics gameStatistics = null;
+            if (i != 0 && i != totalPlayers + 1) {
+                int finalI1 = i;
+                gameStatisticsList = gameStatisticsService
+                        .getGameStatisticsByGameIdSortedByInGameNumber(SelectionController.currentGameId);
+                gameStatistics = gameStatisticsList
+                        .stream()
+                        .filter(gs -> gs.getInGameNumber() == finalI1).findFirst().get();
+            }
             // Create a panel to represent each player
-            VBox playerPanel = createPlayerPanel(x, y);
             Circle avatar = new Circle(18, Color.LIGHTGRAY); // Example avatar
-            playerPanel.getChildren().add(avatar);
+            VBox playerPanel = createPlayerPanel(x, y);
+            // Create an HBox to hold the avatar and other elements
+            HBox avatarContainer = new HBox();
+            avatarContainer.setAlignment(Pos.CENTER_LEFT); // Align content to the left
+            avatarContainer.setSpacing(10); // Adjust spacing as needed
+            avatarContainer.setPadding(new Insets(0, 0, 0, 10)); // Add padding from the left side
+            avatarContainer.getChildren().add(avatar);
+            int yellowCardsIterator = Objects.isNull(gameStatistics) ? 0 : gameStatistics.getYellowCards();
+            // Add small yellow cards in a row near the circle avatar
+            for (int j = 0; j < yellowCardsIterator; j++) { // Adjust the number of yellow cards as needed
+                Rectangle yellowCard = new Rectangle(8, 12, Color.YELLOW);
+                yellowCard.setStyle("-fx-border-radius: 1px");
+                avatarContainer.getChildren().add(yellowCard);
+            }
+
+            playerPanel.getChildren().add(avatarContainer);
+
             if (i > 0 && i < totalPlayers + 1) {
-                playerPanel.getChildren().add(createNicknameLabel(i));
+                Label roleLabel = new Label("");
+                roleLabel.setStyle("-fx-text-fill: #f4ff67; -fx-border-radius: 5px; -fx-font-size: 12px;");
+                // Create an HBox to hold the nickname label and the role label
+                HBox hbox = new HBox();
+                hbox.setSpacing(10); // Adjust spacing as needed
+                // Set a transparent background for the HBox
+                hbox.setStyle("-fx-background-color: rgba(31,31,31,0.5); -fx-border-radius: 5px; ");
+                hbox.setPadding(new Insets(0, 0, 0, 10));
+                hbox.getChildren().addAll(roleLabel, createNicknameLabel(i));
+                playerPanel.getChildren().add(hbox);
+                playerRoleLabelsMap.put(i, roleLabel);
+            }
+            Button button = createPlayerButton(x, y, i);
+
+            if (!checkIfAlive(i, totalPlayers)) {
+                playerPanel.setDisable(true);
+                playerPanel.setVisible(true);
+                button.setDisable(true);
             }
             selectionRolePane.getChildren().add(playerPanel);
-            Button button = createPlayerButton(x, y, i);
             int finalI = i;
             button.setOnAction(event -> assignRoleToPlayer(finalI));
             if (i == 0 || i == totalPlayers + 1) {
                 playerPanel.setVisible(false);
                 button.setVisible(false);
             }
+
             playerButtonsMap.put(i, button);
             selectionRolePane.getChildren().add(button);
         }
+    }
+
+    /**
+     * returns true if player is alive
+     * TODO: make that method in one controller, and reuse it
+     */
+    private Boolean checkIfAlive(int playerNumber, int totalPlayers) {
+        return playerNumber != 0 && playerNumber != totalPlayers + 1
+               && gameStatisticsService
+                       .getGameStatisticsByGameIdSortedByInGameNumber(SelectionController.currentGameId)
+                       .get(playerNumber - 1).isInGame();
+    }
+
+    private void assignTechnicalDefeat(String side) {
+        // Implement the logic to assign a technical defeat to the specified side
+        gameService.finishGameDueToTechnicalLoose(SelectionController.currentGameId, side);
+        fxWeaver.loadController(GameEndingController.class).show();
+    }
+
+    private void initializePlayerCardList() {
+        ObservableList<HBox> playerCards = FXCollections.observableArrayList();
+
+        for (GameStatistics gs : gameStatisticsList) {
+            HBox playerCardRow = new HBox(10);
+            Label playerLabel = new Label("Гравець " + gs.getInGameNumber());
+            Button yellowCardButton = new Button();
+            yellowCardButton.setStyle("-fx-background-color: yellow; -fx-width: 15px; -fx-height: 20px;");
+
+            Button redCardButton = new Button();
+            redCardButton.setStyle("-fx-background-color: red; -fx-width: 15px; -fx-min-height: 20px;");
+
+            int playerNumber = gs.getInGameNumber();
+            yellowCardButton.setOnAction(e -> giveYellowCard(playerNumber, yellowCardButton, redCardButton));
+            redCardButton.setOnAction(e -> giveRedCard(playerNumber, yellowCardButton, redCardButton));
+            // Create a Region to act as a spacer
+            Region spacer = new Region();
+            HBox.setHgrow(spacer, Priority.ALWAYS);
+
+            playerCardRow.getChildren().addAll(playerLabel, spacer, yellowCardButton, redCardButton);
+            playerCards.add(playerCardRow);
+        }
+
+        playerCardListView.setItems(playerCards);
+    }
+
+
+    private void giveYellowCard(int playerNumber, Button yellowButton, Button redButton) {
+        // Get the current number of yellow cards from the database
+        GameStatistics gs = gameStatisticsService.getGameStatisticsByGameIdSortedByInGameNumber(SelectionController.currentGameId)
+                .stream()
+                .filter(stat -> stat.getInGameNumber() == playerNumber)
+                .findFirst()
+                .orElse(null);
+
+        if (gs != null) {
+            System.out.println(gs);
+            int yellowCards = gs.getYellowCards();
+            yellowCards++;
+            gs.setYellowCards(yellowCards);
+
+            // Save the updated yellow card count back to the database
+            gameStatisticsService.updateYellowCards(gs.getGame().getId(), gs.getInGameNumber(), yellowCards);
+
+            if (yellowCards >= 4) {
+                giveRedCard(playerNumber, yellowButton, redButton);
+            } else {
+                Alert alert = new Alert(Alert.AlertType.INFORMATION, "Гравець " + playerNumber + " отримав жовту картку");
+                alert.initOwner(this.stage);
+                alert.show();
+                displayRolePlayers(gameStatisticsList.size());
+            }
+        }
+    }
+
+    private void giveRedCard(int playerNumber, Button yellowButton, Button redButton) {
+        redCardedPlayers.add(playerNumber);
+        yellowButton.setDisable(true);
+        redButton.setDisable(true);
+        gameStatisticsService.removePlayerFromGame(SelectionController.currentGameId, playerNumber);
+        Alert alert = new Alert(Alert.AlertType.INFORMATION, "Гравець " + playerNumber + " отримав червону картку");
+        alert.initOwner(stage);
+        alert.show();
+        displayRolePlayers(gameStatisticsList.size());
+        //TODO: Check if game is over
     }
 
     private VBox createPlayerPanel(double x, double y) {
@@ -241,6 +391,7 @@ public class SelectionRoleController implements Initializable {
         } else {
             nicknameLabel.setText("Незнайомець");
         }
+
         nicknameLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #ffffff");
         return nicknameLabel;
     }
@@ -249,6 +400,7 @@ public class SelectionRoleController implements Initializable {
         if (currentRole != null) {
             playerIdRoleIdMap.put(playerNumber, currentRole);
             playerButtonsMap.get(playerNumber).setDisable(true);
+            playerRoleLabelsMap.get(playerNumber).setText(currentRole.getTitle()); // Update label with role
             showNextRole();
             updateAssignedRolesList();
         }
@@ -266,14 +418,16 @@ public class SelectionRoleController implements Initializable {
                 if (role == null) {
                     // Ми отримуємо відсортований масив, де останній буде мирним
                     // тому записуємо у всі порожні елементи мирного
-                    playerIdRoleIdMap.put(playerId, roles.get(roles.size() - 1));
+                    Role peace = roles.get(roles.size() - 1);
+                    playerIdRoleIdMap.put(playerId, peace);
+                    playerRoleLabelsMap.get(playerId).setText("" + peace.getTitle()); // Update new player's label
+
                     playerButtonsMap.get(playerId).setDisable(true);
                     roleSelectionIndex++;
                 }
             });
         }
-        roleTitle.setText(currentRole.getTitle() + "Ін " + roleSelectionIndex);
-        System.out.println(playerIdRoleIdMap);
+        roleTitle.setText(currentRole.getTitle());
     }
 
     private void updatePlayerRole(String oldAssignment, String newPlayerNumber) {
@@ -297,6 +451,14 @@ public class SelectionRoleController implements Initializable {
 
         playerIdRoleIdMap.put(newPlayerNumberInt, role);
         playerIdRoleIdMap.put(oldPlayerNumber, previousPlayerRole);
+
+        playerRoleLabelsMap.get(newPlayerNumberInt).setText("" + role.getTitle()); // Update new player's label
+        if (previousPlayerRole != null) {
+            playerRoleLabelsMap.get(oldPlayerNumber).setText("" + previousPlayerRole.getTitle()); // Update old player's label
+        } else {
+            playerRoleLabelsMap.get(oldPlayerNumber).setText(""); // Clear old player's label
+        }
+
         updateAssignedRolesList();
     }
 

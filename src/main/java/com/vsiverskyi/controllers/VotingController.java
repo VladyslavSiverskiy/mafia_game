@@ -147,6 +147,7 @@ public class VotingController implements Initializable {
         }
         //оновити вікно із результатом
         updateVotesDisplay();
+
         //перевірити на кінець голосування
         if (checkTheEndOfVoting()) {
             /// stop game

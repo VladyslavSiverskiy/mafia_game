@@ -37,15 +37,22 @@ public class GameStatistics {
     private Integer inGameNumber; // Номер гравця у грі
     @Column
     private Boolean skipNextVoting;
+    @Column
+    private int yellowCards;
+    @Column
+    private byte redCards;
+
     @Override
     public String toString() {
         return "GameStatistics{" +
                "id=" + id +
-               ", player=" + player +
-               ", role=" + role +
                ", points=" + points +
-               ", isInGame= " + inGame +
-               ", inGameNickname=" + inGameNickname +
+               ", inGame=" + inGame +
+               ", inGameNickname='" + inGameNickname + '\'' +
+               ", inGameNumber=" + inGameNumber +
+               ", skipNextVoting=" + skipNextVoting +
+               ", yellowCards=" + yellowCards +
+               ", redCards=" + redCards +
                '}';
     }
 }

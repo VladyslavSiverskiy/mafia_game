@@ -2,6 +2,7 @@ package com.vsiverskyi.service;
 
 import com.vsiverskyi.exception.CantStartGameException;
 import com.vsiverskyi.exception.ExceptionConstants;
+import com.vsiverskyi.exception.NoGameWithSuchIdException;
 import com.vsiverskyi.exception.NoRoleWithSuchTitleException;
 import com.vsiverskyi.model.Game;
 import com.vsiverskyi.model.GameStatistics;
@@ -53,53 +54,75 @@ public class GameService {
         return game;
     }
 
+    public ETeam finishGameDueToTechnicalLoose(Long currentGameId, String teamName) {
+        ETeam looserTeam = ETeam.valueOf(teamName);
+        Game gameToFinish = getGameInfo(currentGameId);
+        if (looserTeam == ETeam.PEACE) {
+            gameToFinish.setWinnerSide(ETeam.MAFIA);
+        }else {
+            gameToFinish.setWinnerSide(ETeam.PEACE);
+        }
+        gameToFinish.setGameStatus(EGameStatus.WAS_COMPLETED);
+        gameToFinish.setLastUpdate(LocalDateTime.now());
+        gameToFinish = gameRepository.save(gameToFinish);
+        return gameToFinish.getWinnerSide();
+    }
 
     /**
      * @return List of roles id
      */
     public List<Integer> initRolesPerGame(
-            Integer playersAmount, Integer mafiaAmount, Map<String, Boolean> additionalRoles, Game game
+            Integer playersAmount, Integer mafiaAmount, Map<String, Integer> additionalRoles, Game game
     ) throws CantStartGameException {
-        List<String> peaceRolesToAdd = additionalRoles.entrySet().stream()
-                .filter(Map.Entry::getValue) // Filter entries with true values
-                .map(Map.Entry::getKey) // Map to keys
-                .collect(Collectors.toList()); // Collect to list
-        if (playersAmount < mafiaAmount + peaceRolesToAdd.size()) {
-            throw new CantStartGameException(ExceptionConstants.TOTAL_AMOUNT_OF_PLAYERS_IS_LOWER);
-        }
+
+//        List<String> peaceRolesToAdd = additionalRoles.entrySet().stream()
+//                .filter(Map.Entry::getValue) // Filter entries with true values
+//                .map(Map.Entry::getKey) // Map to keys
+//                .collect(Collectors.toList()); // Collect to list
+
+
+//        if (playersAmount < mafiaAmount + peaceRolesToAdd.size()) {
+//            throw new CantStartGameException(ExceptionConstants.TOTAL_AMOUNT_OF_PLAYERS_IS_LOWER);
+//        }
         if (mafiaAmount >= playersAmount - mafiaAmount) {
             throw new CantStartGameException(ExceptionConstants.MAFIA_AMOUNT_IS_HIGHER_THAN_PEACE);
         }
-
         List<Integer> rolesIdToReturnList = new ArrayList<>();
         rolesIdToReturnList.addAll(returnMafiaSidePlayersId(mafiaAmount, game));
-        rolesIdToReturnList.addAll(returnPeaceSidePlayersId(playersAmount - mafiaAmount, peaceRolesToAdd, game));
+        //TODO: refactor this method to accept amount of doctors and so on
+        rolesIdToReturnList.addAll(returnPeaceSidePlayersId(playersAmount - mafiaAmount, additionalRoles, game));
         return rolesIdToReturnList;
     }
-    private List<Integer> returnPeaceSidePlayersId(int peaceAmount, List<String> additionalPeaceRoles, Game game) {
+
+    private List<Integer> returnPeaceSidePlayersId(int peaceAmount, Map<String, Integer> additionalPeaceRoles, Game game) {
         List<Integer> peaceRolesIdList = new ArrayList<>();
         int amountOfPeacePlayers = peaceAmount;
         //create additional peace roles
-        for (String roleTitle : additionalPeaceRoles) {
-            Role peaceRole =
-                    roleRepository
-                            .findByTitle(roleTitle)
-                            .orElseThrow(() ->
-                                    new NoRoleWithSuchTitleException(ExceptionConstants.NO_ROLE_WITH_SUCH_TITLE + roleTitle));
-            GameStatistics peacePlayer = GameStatistics.builder()
-                    .game(game)
-                    .inGameNumber(playerNumber++)
-                    .inGame(true)
-                    .points(0)
-                    .build();
-            gameStatisticsRepository.save(peacePlayer);
-            peaceRolesIdList.add(peaceRole.getId());
-            amountOfPeacePlayers--;
 
-            // init team
-            if (peaceRole.getTeam() == null) {
-                peaceRole.setTeam(ETeam.PEACE);
-                roleRepository.save(peaceRole);
+        for (Map.Entry<String, Integer> additionalRolesMap : additionalPeaceRoles.entrySet()) {
+            for (int i = 0; i < additionalRolesMap.getValue(); i++) {
+                Role peaceRole =
+                        roleRepository
+                                .findByTitle(additionalRolesMap.getKey())
+                                .orElseThrow(() ->
+                                        new NoRoleWithSuchTitleException(ExceptionConstants.NO_ROLE_WITH_SUCH_TITLE + additionalRolesMap.getKey()));
+                GameStatistics peacePlayer = GameStatistics.builder()
+                        .game(game)
+                        .inGameNumber(playerNumber++)
+                        .inGame(true)
+                        .points(0)
+                        .yellowCards(0)
+                        .redCards((byte) 0)
+                        .build();
+                gameStatisticsRepository.save(peacePlayer);
+                peaceRolesIdList.add(peaceRole.getId());
+                amountOfPeacePlayers--;
+
+                // init team
+                if (peaceRole.getTeam() == null) {
+                    peaceRole.setTeam(ETeam.PEACE);
+                    roleRepository.save(peaceRole);
+                }
             }
         }
 
@@ -115,6 +138,8 @@ public class GameService {
                     .inGame(true)
                     .inGameNumber(playerNumber++)
                     .points(0)
+                    .yellowCards(0)
+                    .redCards((byte) 0)
                     .build();
             gameStatisticsRepository.save(peacePlayer);
             peaceRolesIdList.add(peaceRole.getId());

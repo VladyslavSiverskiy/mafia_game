@@ -59,6 +59,8 @@ public class GameSettingsController implements Initializable {
     int currentPlayersAmount;
     int selectedPlayersAmount;
     private Map<String, Boolean> settingsState = new HashMap<>();
+    private Map<String, Integer> roleAmounts = new HashMap<>();
+
 
     @Autowired
     public GameSettingsController(GameService gameService, FxWeaver fxWeaver) {
@@ -123,7 +125,7 @@ public class GameSettingsController implements Initializable {
             Game currentGame = gameService.beginGame(playersAmountSpinner.getValue());
             SelectionController.currentGameId = currentGame.getId();
             roleIdPerGameList = gameService.initRolesPerGame(
-                    playersAmountSpinner.getValue(), mafiaAmountSpinner.getValue(), settingsState, currentGame
+                    playersAmountSpinner.getValue(), mafiaAmountSpinner.getValue(), roleAmounts, currentGame
             );
             fxWeaver.loadController(SelectionController.class).show();
         } catch (CantStartGameException e) {
@@ -142,14 +144,27 @@ public class GameSettingsController implements Initializable {
         roleAmountSpinner.setValueFactory(roleAmountSpinnerValueFactory);
         roleAmountSpinner.setDisable(true);
 
-        checkBox.selectedProperty().addListener((observable, oldValue, newValue) -> {
-            if (newValue == true) {
+        roleAmountSpinner.valueProperty().addListener((observable, oldValue, newValue) -> {
+            roleAmounts.put(text, newValue);
+            if (newValue > oldValue) {
                 selectedPlayersAmount++;
+            }else {
+                if(newValue > 1)
+                selectedPlayersAmount--;
+            }
+        });
+
+        checkBox.selectedProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue) {
+                selectedPlayersAmount++;
+                roleAmounts.put(text, 1);
                 roleAmountSpinner.setDisable(false);
             } else {
                 selectedPlayersAmount--;
                 roleAmountSpinner.setDisable(true);
+                selectedPlayersAmount = selectedPlayersAmount - roleAmountSpinner.getValue() + 1;
                 roleAmountSpinner.getValueFactory().setValue(1); // Reset spinner value to 1
+                roleAmounts.remove(text); // Reset role amount to 1
             }
             if (selectedPlayersAmount + mafiaAmountSpinner.getValue() >= currentPlayersAmount) {
                 playersAmountSpinnerValueFactory.setValue(++currentPlayersAmount);
