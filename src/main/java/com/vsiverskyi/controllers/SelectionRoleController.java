@@ -76,7 +76,7 @@ public class SelectionRoleController implements Initializable,DisplayedPlayersCo
     private List<GameStatistics> gameStatisticsList;
     private List<Role> roles;
     private ObservableList<String> assignedRolesList = FXCollections.observableArrayList();
-    private Map<Integer, Role> playerIdRoleIdMap = new HashMap<>();
+    private Map<Integer, Role> playerIdRoleMap = new HashMap<>();
     private Map<Integer, Button> playerButtonsMap = new HashMap<>(); // Map to store buttons
     private Map<Integer, Label> playerRoleLabelsMap = new HashMap<>(); // Map to store labels
     private Map<Integer, Integer> yellowCardsMap = new HashMap<>(); // Map to store yellow cards count
@@ -101,7 +101,7 @@ public class SelectionRoleController implements Initializable,DisplayedPlayersCo
                     .getGameStatisticsByGameIdSortedByInGameNumber(SelectionController.currentGameId);
             //init map keys
             for (GameStatistics gameStatistics : gameStatisticsList) {
-                playerIdRoleIdMap.put(gameStatistics.getInGameNumber(), null);
+                playerIdRoleMap.put(gameStatistics.getInGameNumber(), null);
             }
             //init roles
             roles = roleService.getRoleListFromListOfRoleId(GameSettingsController.roleIdPerGameList);
@@ -114,8 +114,8 @@ public class SelectionRoleController implements Initializable,DisplayedPlayersCo
             roleTitle.setText(currentRole.getTitle());
 
             // Initialize technical defeat buttons
-            technicalDefeatPeaceful.setOnAction(e -> assignTechnicalDefeat("PEACE"));
-            technicalDefeatMafia.setOnAction(e -> assignTechnicalDefeat("MAFIA"));
+            technicalDefeatPeaceful.setOnAction(e -> penaltyController.assignTechnicalDefeat("PEACE"));
+            technicalDefeatMafia.setOnAction(e -> penaltyController.assignTechnicalDefeat("MAFIA"));
 
             // Initialize player card list view
             penaltyController.initializePlayerCardList(gameStatisticsList, stage,this, playerCardListView);
@@ -179,6 +179,7 @@ public class SelectionRoleController implements Initializable,DisplayedPlayersCo
             startVoting.setOnAction(actionEvent -> startPresentationProcess());
         } catch (NoGameWithSuchIdException e) {
             Alert alert = new Alert(Alert.AlertType.ERROR, e.getMessage());
+            alert.initOwner(stage);
             alert.show();
         }
     }
@@ -187,15 +188,17 @@ public class SelectionRoleController implements Initializable,DisplayedPlayersCo
         // save all roles
         try {
             int c = 0;
-            for (Map.Entry<Integer, Role> entry : playerIdRoleIdMap.entrySet()) {
+            for (Map.Entry<Integer, Role> entry : playerIdRoleMap.entrySet()) {
                 if (entry.getValue() == null) {
                     c++;
                 }
             }
             if (c > 0) {
-                new Alert(Alert.AlertType.INFORMATION, "Не всі ролі було розподілено").show();
+                Alert alert = new Alert(Alert.AlertType.INFORMATION, "Не всі ролі було розподілено");
+                alert.initOwner(stage);
+                alert.show();
             } else {
-                roleService.applyRoles(SelectionController.currentGameId, playerIdRoleIdMap);
+                roleService.applyRoles(SelectionController.currentGameId, playerIdRoleMap);
                 fxWeaver.loadController(PresentationController.class).show();
             }
         } catch (RuntimeException ex) {
@@ -206,6 +209,9 @@ public class SelectionRoleController implements Initializable,DisplayedPlayersCo
 
     @Override
     public void displayRolePlayers(int totalPlayers) {
+        // Clear the previous content from the selectionRolePane
+        selectionRolePane.getChildren().clear();
+
         double centerX = selectionRolePane.getWidth() / 2;
         double centerY = selectionRolePane.getHeight() / 2;
         double radius = Math.min(centerX, centerY) - 3;
@@ -248,6 +254,10 @@ public class SelectionRoleController implements Initializable,DisplayedPlayersCo
                 Label roleLabel = new Label("");
                 roleLabel.setStyle("-fx-text-fill: #f4ff67; -fx-border-radius: 5px; -fx-font-size: 12px;");
                 // Create an HBox to hold the nickname label and the role label
+                Role role = playerIdRoleMap.get(i);
+                if (role != null) {
+                    roleLabel.setText(role.getTitle());
+                }
                 HBox hbox = new HBox();
                 hbox.setSpacing(10); // Adjust spacing as needed
                 // Set a transparent background for the HBox
@@ -257,11 +267,15 @@ public class SelectionRoleController implements Initializable,DisplayedPlayersCo
                 playerPanel.getChildren().add(hbox);
                 playerRoleLabelsMap.put(i, roleLabel);
             }
-            Button button = createPlayerButton(x, y, i);
 
+            Button button = playerButtonsMap.get(i);
+            if (button == null) {
+                button = createPlayerButton(x, y, i);
+            }
             if (!checkIfAlive(i, totalPlayers)) {
                 playerPanel.setDisable(true);
                 playerPanel.setVisible(true);
+                avatar.setFill(Color.DARKGREY);
                 button.setDisable(true);
             }
             selectionRolePane.getChildren().add(playerPanel);
@@ -287,45 +301,6 @@ public class SelectionRoleController implements Initializable,DisplayedPlayersCo
                        .getGameStatisticsByGameIdSortedByInGameNumber(SelectionController.currentGameId)
                        .get(playerNumber - 1).isInGame();
     }
-
-    private void assignTechnicalDefeat(String side) {
-        // Implement the logic to assign a technical defeat to the specified side
-        gameService.finishGameDueToTechnicalLoose(SelectionController.currentGameId, side);
-        fxWeaver.loadController(GameEndingController.class).show();
-    }
-
-//    private void initializePlayerCardList() {
-//        ObservableList<HBox> playerCards = FXCollections.observableArrayList();
-//
-//        for (GameStatistics gs : gameStatisticsList) {
-//            HBox playerCardRow = new HBox(10);
-//            Label playerLabel = new Label("Гравець " + gs.getInGameNumber());
-//            Button yellowCardButton = new Button();
-//            yellowCardButton.setStyle("-fx-background-color: yellow; -fx-width: 15px; -fx-height: 20px;");
-//
-//            Button redCardButton = new Button();
-//            redCardButton.setStyle("-fx-background-color: red; -fx-width: 15px; -fx-min-height: 20px;");
-//
-//            int playerNumber = gs.getInGameNumber();
-//            yellowCardButton.setOnAction(e -> {
-//                penaltyController.giveYellowCard(playerNumber, yellowCardButton, redCardButton, stage);
-//                displayRolePlayers(gameStatisticsList.size());
-//            });
-//            redCardButton.setOnAction(e -> {
-//                penaltyController.giveRedCard(playerNumber, yellowCardButton, redCardButton, stage);
-//                displayRolePlayers(gameStatisticsList.size());
-//                //TODO: Check if game is over
-//            });
-//            // Create a Region to act as a spacer
-//            Region spacer = new Region();
-//            HBox.setHgrow(spacer, Priority.ALWAYS);
-//
-//            playerCardRow.getChildren().addAll(playerLabel, spacer, yellowCardButton, redCardButton);
-//            playerCards.add(playerCardRow);
-//        }
-//
-//        playerCardListView.setItems(playerCards);
-//    }
 
     private VBox createPlayerPanel(double x, double y) {
         VBox playerPanel = new VBox();
@@ -364,7 +339,7 @@ public class SelectionRoleController implements Initializable,DisplayedPlayersCo
 
     private void assignRoleToPlayer(int playerNumber) {
         if (currentRole != null) {
-            playerIdRoleIdMap.put(playerNumber, currentRole);
+            playerIdRoleMap.put(playerNumber, currentRole);
             playerButtonsMap.get(playerNumber).setDisable(true);
             playerRoleLabelsMap.get(playerNumber).setText(currentRole.getTitle()); // Update label with role
             showNextRole();
@@ -380,12 +355,12 @@ public class SelectionRoleController implements Initializable,DisplayedPlayersCo
         currentRole = roles.get(roleSelectionIndex++);
         // Роздати всім іншим ролі мирного;
         if (currentRole.getTitle().equals("Мирний")) {
-            playerIdRoleIdMap.forEach((playerId, role) -> {
+            playerIdRoleMap.forEach((playerId, role) -> {
                 if (role == null) {
                     // Ми отримуємо відсортований масив, де останній буде мирним
                     // тому записуємо у всі порожні елементи мирного
                     Role peace = roles.get(roles.size() - 1);
-                    playerIdRoleIdMap.put(playerId, peace);
+                    playerIdRoleMap.put(playerId, peace);
                     playerRoleLabelsMap.get(playerId).setText("" + peace.getTitle()); // Update new player's label
 
                     playerButtonsMap.get(playerId).setDisable(true);
@@ -405,9 +380,9 @@ public class SelectionRoleController implements Initializable,DisplayedPlayersCo
         int newPlayerNumberInt = Integer.parseInt(newPlayerNumber);
 
         // Update the map
-        Role previousPlayerRole = playerIdRoleIdMap.get(newPlayerNumberInt);
+        Role previousPlayerRole = playerIdRoleMap.get(newPlayerNumberInt);
 
-        playerIdRoleIdMap.remove(oldPlayerNumber);
+        playerIdRoleMap.remove(oldPlayerNumber);
         Role role = roles
                 .stream()
                 .filter(roleToFind -> roleToFind.getTitle().equalsIgnoreCase(roleTitle))
@@ -415,8 +390,8 @@ public class SelectionRoleController implements Initializable,DisplayedPlayersCo
                 .orElseThrow(() ->
                         new NoRoleWithSuchTitleException(ExceptionConstants.NO_ROLE_WITH_SUCH_TITLE + roleTitle));
 
-        playerIdRoleIdMap.put(newPlayerNumberInt, role);
-        playerIdRoleIdMap.put(oldPlayerNumber, previousPlayerRole);
+        playerIdRoleMap.put(newPlayerNumberInt, role);
+        playerIdRoleMap.put(oldPlayerNumber, previousPlayerRole);
 
         playerRoleLabelsMap.get(newPlayerNumberInt).setText("" + role.getTitle()); // Update new player's label
         if (previousPlayerRole != null) {
@@ -430,7 +405,7 @@ public class SelectionRoleController implements Initializable,DisplayedPlayersCo
 
     private void updateAssignedRolesList() {
         assignedRolesList.clear();
-        playerIdRoleIdMap.forEach((playerNumber, role) -> {
+        playerIdRoleMap.forEach((playerNumber, role) -> {
             if (role != null) {
                 assignedRolesList.add("Гравець " + playerNumber + ": " + role.getTitle());
             }

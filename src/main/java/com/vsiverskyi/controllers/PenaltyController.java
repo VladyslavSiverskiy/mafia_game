@@ -1,6 +1,7 @@
 package com.vsiverskyi.controllers;
 
 import com.vsiverskyi.model.GameStatistics;
+import com.vsiverskyi.service.GameService;
 import com.vsiverskyi.service.GameStatisticsService;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -13,6 +14,7 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.stage.Stage;
 import lombok.RequiredArgsConstructor;
+import net.rgielen.fxweaver.core.FxWeaver;
 import org.springframework.stereotype.Controller;
 
 import java.util.List;
@@ -22,6 +24,8 @@ import java.util.List;
 public class PenaltyController {
 
     private final GameStatisticsService gameStatisticsService;
+    private final GameService gameService;
+    private final FxWeaver fxWeaver;
 
     public void giveYellowCard(int playerNumber, Button yellowButton, Button redButton, Stage stage) {
         // Get the current number of yellow cards from the database
@@ -95,4 +99,11 @@ public class PenaltyController {
 
         playerCardListView.setItems(playerCards);
     }
+
+    public void assignTechnicalDefeat(String side) {
+        // Implement the logic to assign a technical defeat to the specified side
+        gameService.finishGameDueToTechnicalLoose(SelectionController.currentGameId, side);
+        fxWeaver.loadController(GameEndingController.class).show();
+    }
+
 }
