@@ -81,7 +81,6 @@ public class SelectionRoleController implements Initializable,DisplayedPlayersCo
     private Map<Integer, Label> playerRoleLabelsMap = new HashMap<>(); // Map to store labels
     private Map<Integer, Integer> yellowCardsMap = new HashMap<>(); // Map to store yellow cards count
 //    private Set<Integer> redCardedPlayers = new HashSet<>(); // Set to store players with red cards
-
     private Role currentRole;
     private int roleSelectionIndex = 0;
 
@@ -247,7 +246,6 @@ public class SelectionRoleController implements Initializable,DisplayedPlayersCo
                 yellowCard.setStyle("-fx-border-radius: 1px");
                 avatarContainer.getChildren().add(yellowCard);
             }
-
             playerPanel.getChildren().add(avatarContainer);
 
             if (i > 0 && i < totalPlayers + 1) {
@@ -272,6 +270,7 @@ public class SelectionRoleController implements Initializable,DisplayedPlayersCo
             if (button == null) {
                 button = createPlayerButton(x, y, i);
             }
+
             if (!checkIfAlive(i, totalPlayers)) {
                 playerPanel.setDisable(true);
                 playerPanel.setVisible(true);

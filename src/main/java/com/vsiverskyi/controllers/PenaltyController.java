@@ -93,6 +93,10 @@ public class PenaltyController {
             Region spacer = new Region();
             HBox.setHgrow(spacer, Priority.ALWAYS);
 
+            if (!gs.isInGame()) {
+                yellowCardButton.setDisable(true);
+                redCardButton.setDisable(true);
+            }
             playerCardRow.getChildren().addAll(playerLabel, spacer, yellowCardButton, redCardButton);
             playerCards.add(playerCardRow);
         }

@@ -36,6 +36,7 @@ import org.springframework.stereotype.Component;
 
 import java.net.URL;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static com.vsiverskyi.utils.StyleConstants.HOVERED_BUTTON_STYLE;
@@ -48,6 +49,8 @@ public class VotingController implements Initializable, DisplayedPlayersControll
 
     @Autowired
     private GameService gameService;
+    @Autowired
+    private PenaltyController penaltyController;
     @Autowired
     private GameStatisticsService gameStatisticsService;
     @Autowired
@@ -80,8 +83,8 @@ public class VotingController implements Initializable, DisplayedPlayersControll
     private Map<Integer, Integer> playerIdVotesMap = new HashMap<>();
     private Map<Integer, Button> playerIdButton = new HashMap<>();
     private List<GameStatistics> gameStatisticsList;
-    private int currentVoterIndex = 0;
-    private int reverseCurrentVoterIndex;
+    private Integer currentVoterIndex;
+    private Integer reverseCurrentVoterIndex;
     private boolean reverse;
 
     int secondsTillEnd = 10;
@@ -89,13 +92,19 @@ public class VotingController implements Initializable, DisplayedPlayersControll
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         this.stage = StarterController.primaryStage;
-        stage.setScene(new Scene(votingAp));
+        scene = new Scene(votingAp);
+        stage.setScene(scene);
+        scene.getStylesheets().add(getClass().getResource("/style/style.css").toExternalForm());
         stage.setMaximized(true);
         gameStatisticsList = gameService.getGameInfo(SelectionController.currentGameId).getGameStatistics();
         reverseCurrentVoterIndex = gameStatisticsList.size() - 1;
+        currentVoterIndex = 0;
+// Initialize player card list view
+        penaltyController.initializePlayerCardList(gameStatisticsList, stage,this, playerCardListView);
 
         displayRolePlayers(gameStatisticsList.size());
 
+        fullScreen.setOnAction(ev -> stage.setFullScreen(true));
         beginVoting.setOnAction(actionEvent -> beginVoting());
         beginVotingReverse.setOnAction(actionEvent -> beginVotingReverse());
     }
@@ -167,14 +176,6 @@ public class VotingController implements Initializable, DisplayedPlayersControll
                 playerPanel.setVisible(true);
                 avatar.setFill(Color.DARKGREY);
                 button.setDisable(true);
-            }else {
-                button.setOnAction(actionEvent -> {
-                    if (countDownTimeLine != null) {
-                        countDownTimeLine.stop();
-                    }
-                    setVote(Integer.parseInt(button.getText()));
-                });
-                button.setDisable(true);
             }
 
             if (i == 0 || i == totalPlayers + 1) {
@@ -192,7 +193,6 @@ public class VotingController implements Initializable, DisplayedPlayersControll
      * TODO: make that method in one controller, and reuse it
      */
     private Boolean checkIfAlive(int playerNumber, int totalPlayers) {
-        System.out.println("Checking if alive player " + playerNumber);
         return playerNumber != 0 && playerNumber != totalPlayers + 1
                && gameStatisticsService
                        .getGameStatisticsByGameIdSortedByInGameNumber(SelectionController.currentGameId)
@@ -201,7 +201,7 @@ public class VotingController implements Initializable, DisplayedPlayersControll
 
 
     private void beginVoting() {
-        giveVoice(currentVoterIndex);
+        giveVoiceForward(currentVoterIndex);
     }
 
     private void beginVotingReverse() {
@@ -209,110 +209,147 @@ public class VotingController implements Initializable, DisplayedPlayersControll
         giveVoiceReverse(reverseCurrentVoterIndex);
     }
 
-    private void giveVoiceReverse(int reverseCurrentVoterIndex){
-        System.out.println(reverseCurrentVoterIndex);
-        System.out.println(playerIdVotesMap);
-        System.out.println(playerIdButton);
-        if (reverseCurrentVoterIndex >= 0) {
-            if (!checkIfAlive(reverseCurrentVoterIndex + 1, gameStatisticsList.size())) {
-                int nextPlayerIndex = reverseCurrentVoterIndex - 1;
-                giveVoiceReverse(nextPlayerIndex);
-                return;
-            }
-            secondsTillEnd = 10;
-            countDownTimeLine = new Timeline(new KeyFrame(Duration.seconds(1), (ActionEvent event) -> {
-                if (secondsTillEnd == 1) {
-                    blockAllButtons();
-                }
-                secondsLeft.setText(String.valueOf(secondsTillEnd--));
-            }));
-            // Set number of cycles (remaining duration in seconds):
-            countDownTimeLine.setCycleCount((int) secondsTillEnd);
-            countDownTimeLine.setOnFinished(event -> {
-                System.out.println(reverseCurrentVoterIndex);
-                System.out.println(playerIdButton);
-                if (reverseCurrentVoterIndex == 0) {
-                    setVote(gameStatisticsList.size());
-                    int setVoteTo = 0;
-//                    countDownTimeLine.stop();
-                    for (int i = 0; i < gameStatisticsList.size(); i++) {
-                        if (checkIfAlive(i+1, gameStatisticsList.size())) {
-                            System.out.println(true);
-                            setVoteTo = i+1;
+    private void giveVoiceForward(Integer currentVoterIndex) {
+        while (currentVoterIndex < gameStatisticsList.size()) {
+            System.out.println("CURRENT INDEX BEGINNING " + currentVoterIndex);
+
+            if (!checkIfAlive(currentVoterIndex + 1, gameStatisticsList.size())) {
+                currentVoterIndex = currentVoterIndex + 1;
+                System.out.println("CURRENT INDEX CHANGE " + currentVoterIndex);
+            } else {
+                for (Map.Entry<Integer, Button> entry : playerIdButton.entrySet()) {
+                    Button button = entry.getValue();
+                    System.out.println("Click " + currentVoterIndex);
+                    Integer finalCurrentVoterIndex1 = currentVoterIndex;
+                    button.setOnAction(actionEvent -> {
+                        if (countDownTimeLine != null) {
+                            countDownTimeLine.stop();
                         }
+                        setVote(Integer.parseInt(button.getText()), finalCurrentVoterIndex1);
+                    });
+                    button.setDisable(true);
+                }
+
+                secondsTillEnd = 10;
+                countDownTimeLine = new Timeline(new KeyFrame(Duration.seconds(1), (ActionEvent event) -> {
+                    if (secondsTillEnd == 1) {
+                        blockAllButtons();
                     }
-                    setVote(setVoteTo);
-//                    countDownTimeLine.play();
-                    System.out.println(playerIdVotesMap);
-                    return;
-                } else {
+                    secondsLeft.setText(String.valueOf(secondsTillEnd--));
+                }));
+
+                // Set number of cycles (remaining duration in seconds)
+                countDownTimeLine.setCycleCount((int) secondsTillEnd);
+                System.out.println("CURRENT INDEX " + currentVoterIndex);
+                Integer finalCurrentVoterIndex = currentVoterIndex;
+                countDownTimeLine.setOnFinished(event -> {
                     int setVoteTo = 0;
-//                    countDownTimeLine.stop();
-                    for (int i = 0; i < reverseCurrentVoterIndex; i++) {
-                        if (checkIfAlive(i+1, gameStatisticsList.size())) {
-                            System.out.println(true);
-                            setVoteTo = i+1;
+                    if (finalCurrentVoterIndex == findLastAliveIndex()) {
+                        System.out.println("Final current voter index " + finalCurrentVoterIndex);
+                        for (int i = gameStatisticsList.size() - 1; i >= 0 ; i--) {
+                            if (checkIfAlive(i + 1, gameStatisticsList.size())) {
+                                setVoteTo = i + 1;
+                            }
                         }
+                        System.out.println("Setting vote to " + setVoteTo);
+                    } else {
+                        System.out.println("FINAL INDEX " + finalCurrentVoterIndex);
+                        for (int i = finalCurrentVoterIndex + 1; i < gameStatisticsList.size(); i++) {
+                            if (checkIfAlive(i + 1, gameStatisticsList.size())) {
+                                setVoteTo = i + 1;
+                                break; // Exit loop as soon as a valid player is found
+                            }
+                        }
+                        System.out.println("setVoteTo " + setVoteTo);
                     }
-                    System.out.println("setVoteTo" + setVoteTo);
-                    //TODO: зробити це
-                    setVote(setVoteTo);
-//                    countDownTimeLine.play();
-                }
-            });
-            countDownTimeLine.play();
-            unblockAllButtons();
-            Button button = playerIdButton.get(reverseCurrentVoterIndex + 1);
-            button.setDisable(true);
-            for (Map.Entry<Integer, Button> entry : playerIdButton.entrySet()) {
-                int playerId = entry.getKey();
-                Button anotherPlayerButton = entry.getValue();
-                if (playerId != reverseCurrentVoterIndex + 1) {
-                    if(!checkIfAlive(playerId, gameStatisticsList.size())) {
-                        anotherPlayerButton.setDisable(true);
-                    }else {
-                        anotherPlayerButton.setDisable(false);
-                    }
-                } else {
-                    anotherPlayerButton.setDisable(true);
-                }
+                    setVote(setVoteTo, finalCurrentVoterIndex);
+                });
+
+                countDownTimeLine.play();
+                unblockAllButtons();
+                Button button = playerIdButton.get(currentVoterIndex + 1);
+                button.setDisable(true);
+                updateButtonStates(currentVoterIndex);
+                return;  // Exit the loop and method after starting the countdown
             }
         }
     }
 
-    /**
-     * Метод, який відповідає за те щоб конкретний гравець проголосував за когось
-     */
-    private void giveVoice(int currentVoterIndex) {
-        if (currentVoterIndex < gameStatisticsList.size()) {
-            secondsTillEnd = 10;
-            countDownTimeLine = new Timeline(new KeyFrame(Duration.seconds(1), (ActionEvent event) -> {
-                if (secondsTillEnd == 1) {
-                    blockAllButtons();
+    private void giveVoiceReverse(Integer reverseCurrentVoterIndex) {
+        while (reverseCurrentVoterIndex >= 0) {
+            System.out.println("REVERSE INDEX BEGINNING " + reverseCurrentVoterIndex);
+            if (!checkIfAlive(reverseCurrentVoterIndex + 1, gameStatisticsList.size())) {
+                reverseCurrentVoterIndex--;
+                System.out.println("REVERSE INDEX CHANGE " + reverseCurrentVoterIndex);
+            } else {
+                for (Map.Entry<Integer, Button> entry : playerIdButton.entrySet()) {
+                    Button button = entry.getValue();
+                    Integer finalReverseCurrentVoterIndex1 = reverseCurrentVoterIndex;
+                    button.setOnAction(actionEvent -> {
+                        if (countDownTimeLine != null) {
+                            countDownTimeLine.stop();
+                        }
+                        setVote(Integer.parseInt(button.getText()), finalReverseCurrentVoterIndex1);
+                    });
+                    button.setDisable(true);
                 }
-                secondsLeft.setText(String.valueOf(secondsTillEnd--));
-            }));
-            // Set number of cycles (remaining duration in seconds):
-            countDownTimeLine.setCycleCount((int) secondsTillEnd);
-            countDownTimeLine.setOnFinished(event -> {
-                if (currentVoterIndex == gameStatisticsList.size() - 1) {
-                    setVote(1);
-                } else {
-                    setVote(currentVoterIndex + 1 + 1); // + 2 тому що перша одиничка - номер, друга - наступний номер
-                }
-            });
-            countDownTimeLine.play();
-            unblockAllButtons();
-            Button button = playerIdButton.get(currentVoterIndex + 1);
-            button.setDisable(true);
-            for (Map.Entry<Integer, Button> entry : playerIdButton.entrySet()) {
-                int playerId = entry.getKey();
-                Button anotherPlayerButton = entry.getValue();
-                if (playerId != currentVoterIndex + 1) {
-                    anotherPlayerButton.setDisable(false);
-                } else {
+                secondsTillEnd = 10;
+                countDownTimeLine = new Timeline(new KeyFrame(Duration.seconds(1), (ActionEvent event) -> {
+                    if (secondsTillEnd == 1) {
+                        blockAllButtons();
+                    }
+                    secondsLeft.setText(String.valueOf(secondsTillEnd--));
+                }));
+
+                // Set number of cycles (remaining duration in seconds)
+                countDownTimeLine.setCycleCount((int) secondsTillEnd);
+                System.out.println("REVERSE CURRENT " + reverseCurrentVoterIndex);
+                Integer finalReverseCurrentVoterIndex = reverseCurrentVoterIndex;
+                countDownTimeLine.setOnFinished(event -> {
+                    int setVoteTo = 0;
+                    System.out.println("First alive");
+                    if (finalReverseCurrentVoterIndex == findFirstAliveIndex()) {
+                        System.out.println("Reverse current voter index " + finalReverseCurrentVoterIndex);
+                        for (int i = 0; i < gameStatisticsList.size(); i++) {
+                            if (checkIfAlive(i + 1, gameStatisticsList.size())) {
+                                setVoteTo = i + 1;
+                            }
+                        }
+                        System.out.println("Setting vote to " + setVoteTo);
+                    } else {
+                        System.out.println("FINAL REVERSE IN " + finalReverseCurrentVoterIndex);
+                        for (int i = 0; i < finalReverseCurrentVoterIndex; i++) {
+                            if (checkIfAlive(i + 1, gameStatisticsList.size())) {
+                                setVoteTo = i + 1;
+                            }
+                        }
+                        System.out.println("setVoteTo " + setVoteTo);
+                    }
+                    setVote(setVoteTo, finalReverseCurrentVoterIndex);
+                });
+
+                countDownTimeLine.play();
+                unblockAllButtons();
+                Button button = playerIdButton.get(reverseCurrentVoterIndex + 1);
+                button.setDisable(true);
+                updateButtonStates(reverseCurrentVoterIndex);
+                return;  // Exit the loop and method after starting the count down
+            }
+        }
+    }
+
+    private void updateButtonStates(int reverseCurrentVoterIndex) {
+        for (Map.Entry<Integer, Button> entry : playerIdButton.entrySet()) {
+            int playerId = entry.getKey();
+            Button anotherPlayerButton = entry.getValue();
+            if (playerId != reverseCurrentVoterIndex + 1) {
+                if (!checkIfAlive(playerId, gameStatisticsList.size())) {
                     anotherPlayerButton.setDisable(true);
+                } else {
+                    anotherPlayerButton.setDisable(false);
                 }
+            } else {
+                anotherPlayerButton.setDisable(true);
             }
         }
     }
@@ -333,7 +370,7 @@ public class VotingController implements Initializable, DisplayedPlayersControll
         }
     }
 
-    private void setVote(int playerNumber) {
+    private void setVote(int playerNumber, Integer voterIndex) {
         Integer playerVotes = playerIdVotesMap.get(playerNumber);
         System.out.println("Setting vote to player " + playerNumber);
         System.out.println("Setting vote number " + playerVotes);
@@ -346,34 +383,95 @@ public class VotingController implements Initializable, DisplayedPlayersControll
         updateVotesDisplay();
 
         //перевірити на кінець голосування
-        if (checkTheEndOfVoting()) {
-            /// stop game
+        if (checkTheEndOfVoting(voterIndex)) {
             blockAllButtons();
             defineVotingResult();
-            //тут можливо ще зробити сервіс, який буде перевіряти чи гру закінчено, і дьоргати його методи
-            Alert alert = new Alert(Alert.AlertType.INFORMATION, "Кінець голосування");
-            alert.initOwner(stage);
-            alert.show();
-            fxWeaver.loadController(NightStageController.class).show();
+
         } else if(reverse){
-            giveVoiceReverse(--reverseCurrentVoterIndex);
+            voterIndex = voterIndex - 1;
+            giveVoiceReverse(voterIndex);
         } else {
-            giveVoice(++currentVoterIndex);
+            voterIndex = voterIndex + 1;
+            giveVoiceForward(voterIndex);
         }
     }
 
     /**
      * Повертає gameStatistic, що вибув під час голосування
      * */
-    private GameStatistics defineVotingResult() {
+    private void defineVotingResult() {
         List<Integer> playersIdWithMaxVotes = findPlayersWithMaxVotesAmount(playerIdVotesMap);
         Integer playerInGameNumberToDelete;
         if (playersIdWithMaxVotes.size() > 1) {
-            playerInGameNumberToDelete = showRouletteWindow(playersIdWithMaxVotes);
+//            playerInGameNumberToDelete = showRouletteWindow(playersIdWithMaxVotes);
+            showRouletteWindow(playersIdWithMaxVotes, eliminatedPlayer -> {
+                System.out.println("Player eliminated: " + eliminatedPlayer);
+                // Handle the elimination of the player here
+                gameStatisticsService.deletePlayerAfterVoting(SelectionController.currentGameId, eliminatedPlayer);
+                //тут можливо ще зробити сервіс, який буде перевіряти чи гру закінчено, і дьоргати його методи
+                Alert alert = new Alert(Alert.AlertType.INFORMATION, "Кінець голосування");
+                alert.initOwner(stage);
+                alert.show();
+                fxWeaver.loadController(NightStageController.class).show();
+            });
         } else {
             playerInGameNumberToDelete = playersIdWithMaxVotes.get(0);
+            gameStatisticsService.deletePlayerAfterVoting(SelectionController.currentGameId, playerInGameNumberToDelete);
+            //тут можливо ще зробити сервіс, який буде перевіряти чи гру закінчено, і дьоргати його методи
+            Alert alert = new Alert(Alert.AlertType.INFORMATION, "Кінець голосування");
+            alert.initOwner(stage);
+            alert.show();
+            fxWeaver.loadController(NightStageController.class).show();
         }
-        return gameStatisticsService.deletePlayerAfterVoting(SelectionController.currentGameId, playerInGameNumberToDelete);
+    }
+
+    private void showRouletteWindow(List<Integer> playersIdWithMaxVotes, Consumer<Integer> onWindowClosed) {
+        Stage window = new Stage();
+        window.initModality(Modality.APPLICATION_MODAL);
+        window.setTitle("Roulette");
+        GridPane layout = new GridPane();
+
+        final Integer[] playerToDeleteInGameNumber = new Integer[1];
+        int numberOfPlayers = playersIdWithMaxVotes.size();
+        int totalButtons = numberOfPlayers * 3;
+
+        Random random = new Random();
+        int deathButtonIndex = random.nextInt(totalButtons);
+        int[] currentPlayerIndex = {0};
+
+        for (int i = 0; i < totalButtons; i++) {
+            Button button = new Button(String.valueOf(i + 1));
+            int buttonIndex = i;
+            button.setOnAction(event -> {
+                Integer currentPlayer = playersIdWithMaxVotes.get(currentPlayerIndex[0]);
+                if (buttonIndex == deathButtonIndex) {
+                    Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                    alert.setContentText("Player " + currentPlayer + " clicked the death button! Player is out.");
+                    alert.setOnHidden(e -> {
+                        playerToDeleteInGameNumber[0] = currentPlayer;
+                        window.close();
+                    });
+                    alert.show();
+                } else {
+                    Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                    alert.setContentText("Player " + currentPlayer + " is safe! Next player's turn.");
+                    alert.setOnHidden(e -> {
+                        currentPlayerIndex[0] = (currentPlayerIndex[0] + 1) % numberOfPlayers;
+                    });
+                    alert.show();
+                }
+                button.setDisable(true);
+            });
+            layout.add(button, i % 3, i / 3);
+        }
+
+        Scene scene = new Scene(layout, 300, 200);
+        countDownTimeLine.stop();
+        window.setScene(scene);
+        window.show();
+
+        // Add a listener to handle the window closing event
+        window.setOnHidden(e -> onWindowClosed.accept(playerToDeleteInGameNumber[0]));
     }
 
     private Integer showRouletteWindow(List<Integer> playersIdWithMaxVotes) {
@@ -412,6 +510,7 @@ public class VotingController implements Initializable, DisplayedPlayersControll
             layout.add(button, i % 3, i / 3);
         }
         Scene scene = new Scene(layout, 300, 200);
+        countDownTimeLine.stop();
         window.setScene(scene);
         window.showAndWait();
         return playerToDeleteInGameNumber[0];
@@ -442,13 +541,33 @@ public class VotingController implements Initializable, DisplayedPlayersControll
         playerIdButton.forEach((id, btn) -> btn.setDisable(false));
     }
 
-    private boolean checkTheEndOfVoting() {
+    private boolean checkTheEndOfVoting(Integer voterIndex) {
         if (reverse) {
-            System.out.println(reverseCurrentVoterIndex < 0);
-            return reverseCurrentVoterIndex <= 0;
+            return voterIndex <= 0;
         }else {
-            return currentVoterIndex == gameStatisticsList.size() - 1;
+            return Objects.equals(voterIndex, findLastAliveIndex());
         }
+    }
+
+    private Integer findLastAliveIndex() {
+        Integer lastAliveIndex = 0;
+        for (int i = 0; i < gameStatisticsList.size(); i++) {
+            if (gameStatisticsList.get(i).isInGame()) {
+                lastAliveIndex = i;
+            }
+        }
+        return lastAliveIndex;
+    }
+
+    private Integer findFirstAliveIndex() {
+        Integer firstAliveIndex = 0;
+        for (int i = 0; i < gameStatisticsList.size(); i++) {
+            if (gameStatisticsList.get(i).isInGame()) {
+                firstAliveIndex = i;
+                break;
+            }
+        }
+        return firstAliveIndex;
     }
 
     private Label createNicknameLabel(int i) { // When value of button is "1", then get element with 0 index

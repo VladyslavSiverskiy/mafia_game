@@ -1,12 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
 <?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.shape.Line?>
 <?import javafx.scene.text.Font?>
 
-<AnchorPane fx:id="nightStageAp" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="883.0" prefWidth="1920.0" style="-fx-background-color: #161616;" xmlns="http://javafx.com/javafx/19" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vsiverskyi.controllers.NightStageController">
-    <AnchorPane fx:id="nightStagePlayersPane" layoutX="335.0" layoutY="72.0" prefHeight="700.0" prefWidth="878.0" />
-   <AnchorPane layoutX="78.0" layoutY="84.0" prefHeight="200.0" prefWidth="200.0" style="-fx-border-color: #ffffff; -fx-border-radius: 5px;">
+<AnchorPane fx:id="nightStageAp" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="800.0" prefWidth="1280.0" style="-fx-background-color: #161616;" xmlns="http://javafx.com/javafx/19" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vsiverskyi.controllers.NightStageController">
+    <AnchorPane fx:id="nightStagePlayersPane" layoutX="180.0" layoutY="41.0" prefHeight="700.0" prefWidth="878.0" />
+   <AnchorPane layoutX="13.0" layoutY="82.0" prefHeight="200.0" prefWidth="110.0" style="-fx-border-color: #ffffff; -fx-border-radius: 5px;">
       <children>
          <Label fx:id="currentRoleTitle" layoutX="65.0" layoutY="78.0" textFill="WHITE">
             <font>
@@ -15,5 +18,16 @@
          </Label>
       </children>
    </AnchorPane>
+   <!-- Admin Menu for assigning cards -->
+   <AnchorPane layoutX="1070.0" layoutY="60.0" prefHeight="654.0" prefWidth="178.0" style="-fx-border-color: #ffffff; -fx-border-radius: 5px; -fx-background-color: #161616;">
+      <children>
+         <Label layoutX="25.0" layoutY="17.0" text="Технічна поразка" textFill="WHITE" />
+         <Button fx:id="technicalDefeatPeaceful" layoutX="26.0" layoutY="46.0" mnemonicParsing="false" prefHeight="27.0" prefWidth="144.0" style="-fx-background-color: #161616; -fx-border-color: #ffffff; -fx-border-radius: 5px;" text="Мирним" textFill="WHITE" />
+         <Button fx:id="technicalDefeatMafia" layoutX="26.0" layoutY="81.0" mnemonicParsing="false" prefHeight="27.0" prefWidth="144.0" style="-fx-background-color: #161616; -fx-border-color: #ffffff; -fx-border-radius: 5px;" text="Мафії" textFill="WHITE" />
+         <ListView fx:id="playerCardListView" layoutX="20.0" layoutY="140.0" prefHeight="500.0" prefWidth="154.0" />
+         <Line endX="100.7618408203125" layoutX="89.0" layoutY="128.0" startX="-89.0" stroke="WHITE" />
+      </children>
+   </AnchorPane>
+   <Button fx:id="fullScreen" layoutX="27.0" layoutY="25.0" mnemonicParsing="false" text="FullScreen" />
 
 </AnchorPane>

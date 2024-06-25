@@ -7,17 +7,17 @@
 <?import javafx.scene.shape.Line?>
 <?import javafx.scene.text.Font?>
 
-<AnchorPane fx:id="selectionRoleAP" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="883.0" prefWidth="1920.0" style="-fx-background-color: #161616;" xmlns="http://javafx.com/javafx/19" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vsiverskyi.controllers.SelectionRoleController">
+<AnchorPane fx:id="selectionRoleAP" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="800.0" prefWidth="1280.0" style="-fx-background-color: #161616;" xmlns="http://javafx.com/javafx/19" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vsiverskyi.controllers.SelectionRoleController">
     <children>
-        <Label fx:id="headerLabel" layoutX="109.0" layoutY="72.0" text="Оберіть ролі" textFill="WHITE">
+        <Label fx:id="headerLabel" layoutX="24.0" layoutY="69.0" text="Оберіть ролі" textFill="WHITE">
             <font>
                 <Font name="Lucida Console" size="18.0" />
             </font>
         </Label>
-        <Button fx:id="startVoting" layoutX="109.0" layoutY="687.0" mnemonicParsing="false" style="-fx-background-color: #161616; -fx-border-color: #ffffff; -fx-border-radius: 5px;" text="Перейти до обговорення" textFill="WHITE" />
-        <AnchorPane fx:id="selectionRolePane" layoutX="334.0" layoutY="48.0" prefHeight="738.0" prefWidth="878.0" />
-        <AnchorPane fx:id="selectedRolesAp" layoutX="73.0" layoutY="242.0" prefHeight="410.0" prefWidth="261.0" style="-fx-border-color: #ffffff; -fx-border-radius: 5px; -fx-background-color: #161616;" />
-        <AnchorPane layoutX="73.0" layoutY="110.0" prefHeight="103.0" prefWidth="261.0" style="-fx-border-color: #ffffff; -fx-border-radius: 5px;">
+        <Button fx:id="startVoting" layoutX="28.0" layoutY="673.0" mnemonicParsing="false" style="-fx-background-color: #161616; -fx-border-color: #ffffff; -fx-border-radius: 5px;" text="Перейти до обговорення" textFill="WHITE" />
+        <AnchorPane fx:id="selectionRolePane" layoutX="198.0" layoutY="46.0" prefHeight="738.0" prefWidth="878.0" />
+        <AnchorPane fx:id="selectedRolesAp" layoutX="5.0" layoutY="236.0" prefHeight="410.0" prefWidth="214.0" style="-fx-border-color: #ffffff; -fx-border-radius: 5px; -fx-background-color: #161616;" />
+        <AnchorPane layoutX="4.0" layoutY="117.0" prefHeight="103.0" prefWidth="214.0" style="-fx-border-color: #ffffff; -fx-border-radius: 5px;">
             <children>
                 <Label fx:id="roleTitle" layoutX="98.0" layoutY="36.0" textFill="WHITE">
                     <font>
@@ -28,7 +28,7 @@
         </AnchorPane>
 
         <!-- Admin Menu for assigning cards -->
-        <AnchorPane layoutX="1252.0" layoutY="58.0" prefHeight="654.0" prefWidth="178.0" style="-fx-border-color: #ffffff; -fx-border-radius: 5px; -fx-background-color: #161616;">
+        <AnchorPane layoutX="1081.0" layoutY="66.0" prefHeight="654.0" prefWidth="178.0" style="-fx-border-color: #ffffff; -fx-border-radius: 5px; -fx-background-color: #161616;">
             <children>
                 <Label layoutX="25.0" layoutY="17.0" text="Технічна поразка" textFill="WHITE" />
                 <Button fx:id="technicalDefeatPeaceful" layoutX="26.0" layoutY="46.0" mnemonicParsing="false" prefHeight="27.0" prefWidth="144.0" style="-fx-background-color: #161616; -fx-border-color: #ffffff; -fx-border-radius: 5px;" text="Мирним" textFill="WHITE" />

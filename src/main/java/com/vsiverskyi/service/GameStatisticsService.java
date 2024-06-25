@@ -52,7 +52,8 @@ public class GameStatisticsService {
     public GameStatistics healPlayer(long gameId, int playerToKillInGameNumber) {
         GameStatistics gameStatistics = gameStatisticsRepository
                 .findByGame_IdAndAndInGameNumber(gameId, playerToKillInGameNumber);
-        gameStatistics.setInGame(false);
+        gameStatistics.setInGame(true);
+        gameStatistics.setTimesWasHealed((short) (gameStatistics.getTimesWasHealed() + 1));
         return gameStatistics;
     }
 

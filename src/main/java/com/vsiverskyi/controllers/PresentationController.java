@@ -90,7 +90,7 @@ public class PresentationController implements Initializable, DisplayedPlayersCo
         stage.setFullScreen(true);
         stage.setScene(scene);
         scene.getStylesheets().add(getClass().getResource("/style/style.css").toExternalForm());
-
+        fullScreen.setOnAction(ev -> stage.setFullScreen(true));
 
         startVoting.setStyle(StyleConstants.IDLE_BUTTON_STYLE);
         startVoting.setOnMouseEntered(e -> startVoting.setStyle(HOVERED_BUTTON_STYLE));

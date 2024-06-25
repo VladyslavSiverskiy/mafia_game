@@ -41,6 +41,8 @@ public class GameStatistics {
     private int yellowCards;
     @Column
     private byte redCards;
+    @Column
+    private Short timesWasHealed;
 
     @Override
     public String toString() {
@@ -53,6 +55,7 @@ public class GameStatistics {
                ", skipNextVoting=" + skipNextVoting +
                ", yellowCards=" + yellowCards +
                ", redCards=" + redCards +
+               ", timesWasHealed=" + timesWasHealed +
                '}';
     }
 }
