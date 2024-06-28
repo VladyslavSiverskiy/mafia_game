@@ -9,7 +9,12 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @NoArgsConstructor
-public class ActionLogger {
+public class Action {
     private String actionText;
     private LocalDateTime localDateTime;
+
+    @Override
+    public String toString() {
+        return actionText;
+    }
 }

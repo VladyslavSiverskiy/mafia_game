@@ -13,7 +13,7 @@ import com.vsiverskyi.model.enums.ETeam;
 import com.vsiverskyi.repository.GameRepository;
 import com.vsiverskyi.repository.GameStatisticsRepository;
 import com.vsiverskyi.repository.RoleRepository;
-import com.vsiverskyi.utils.ActionLogger;
+import com.vsiverskyi.utils.Action;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +22,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -59,7 +60,7 @@ public class GameService {
         Game gameToFinish = getGameInfo(currentGameId);
         if (looserTeam == ETeam.PEACE) {
             gameToFinish.setWinnerSide(ETeam.MAFIA);
-        }else {
+        } else {
             gameToFinish.setWinnerSide(ETeam.PEACE);
         }
         gameToFinish.setGameStatus(EGameStatus.WAS_COMPLETED);
@@ -185,29 +186,107 @@ public class GameService {
     public boolean checkIfGameIsOver(Long gameId) {
         // Гра закінчується якщо виграла мафія (або рівно мафії і мирних, або мафів більше)
         // Або всіх мафій вбили
-        return false;
+        Game game = gameRepository.findById(gameId)
+                .orElseThrow(() -> new NoGameWithSuchIdException(ExceptionConstants.NO_GAME_WITH_SUCH_ID + gameId));
+        if (checkIfMafiaAmountIsEqualsToPeaceAmount(gameId)) {
+            game.setLastUpdate(LocalDateTime.now());
+            game.setGameStatus(EGameStatus.WAS_COMPLETED);
+            game.setWinnerSide(ETeam.MAFIA);
+            gameRepository.save(game);
+            //TODO: нарахувати бали
+            return true;
+        } else if (!checkIfAtLeastOneMafiaIsAlive(gameId)){
+            game.setLastUpdate(LocalDateTime.now());
+            game.setGameStatus(EGameStatus.WAS_COMPLETED);
+            game.setWinnerSide(ETeam.PEACE);
+            gameRepository.save(game);
+            return true;
+        } else {
+            return false;
+        }
     }
 
-    public ActionLogger doMafiaSelectionMove(long gameId, int playerToKillInGameNumber) {
-        ActionLogger logger = new ActionLogger();
+    private boolean checkIfAtLeastOneMafiaIsAlive(Long gameId) {
+        List<GameStatistics> gameStatisticsList = gameStatisticsService.getGameStatisticsByGameId(gameId);
+        gameStatisticsList = gameStatisticsList.stream()
+                .filter(gameStatistics -> gameStatistics.getRole()!=null)
+                .filter(GameStatistics::isInGame)
+                .collect(Collectors.toList());
+        return gameStatisticsList
+                .stream().anyMatch(gs -> gs.getRole().getTeam().equals(ETeam.MAFIA));
+    }
+
+    private boolean checkIfMafiaAmountIsEqualsToPeaceAmount(Long gameId) {
+        List<GameStatistics> gameStatisticsList = gameStatisticsService.getGameStatisticsByGameId(gameId);
+        Map<ETeam, Long> eachTeamPlayersAmount = gameStatisticsList.stream()
+                .filter(gameStatistics -> gameStatistics.getRole() != null)
+                .filter(GameStatistics::isInGame)
+                .collect(Collectors.groupingBy(
+                        gameStatistics -> gameStatistics.getRole().getTeam(),
+                        Collectors.counting()
+                ));
+        if (eachTeamPlayersAmount.size() > 0) {
+            long mafiaPlayersAmount = eachTeamPlayersAmount.get(ETeam.MAFIA) != null ? eachTeamPlayersAmount.get(ETeam.MAFIA) : 0L;
+            long peacePlayersAmount = eachTeamPlayersAmount.get(ETeam.PEACE) != null ? eachTeamPlayersAmount.get(ETeam.PEACE) : 0L;
+            return mafiaPlayersAmount >= peacePlayersAmount;
+        }else {
+            return false;
+        }
+    }
+
+    public Action doMafiaSelectionMove(long gameId, int playerToKillInGameNumber) {
+        Action logger = new Action();
         logger.setActionText(" обрала гравця № " + playerToKillInGameNumber);
         logger.setLocalDateTime(LocalDateTime.now());
         return logger;
     }
 
-    public ActionLogger doMafiaKillMove(long gameId, int playerToKillInGameNumber) {
+    public Action doMafiaKillMove(long gameId, int playerToKillInGameNumber) {
         gameStatisticsService.killPlayer(gameId, playerToKillInGameNumber);
-        ActionLogger logger = new ActionLogger();
+        Action logger = new Action();
         logger.setActionText("Мафія вистрілила у гравця № " + playerToKillInGameNumber);
         logger.setLocalDateTime(LocalDateTime.now());
         return logger;
     }
 
-    public ActionLogger doDoctorMove(long gameId, int playerToHealInGameNumber) {
+    public Action doDoctorMove(long gameId, int playerToHealInGameNumber) {
         gameStatisticsService.healPlayer(gameId, playerToHealInGameNumber);
-        ActionLogger logger = new ActionLogger();
+        Action logger = new Action();
         logger.setActionText("Лікар лікує гравця № " + playerToHealInGameNumber);
         logger.setLocalDateTime(LocalDateTime.now());
         return logger;
+    }
+
+    public Action doLedyMove(Long currentGameId, int chosenPlayerNumber) {
+        gameStatisticsService.blockVotingPerDay(currentGameId, chosenPlayerNumber);
+        Action logger = new Action();
+        logger.setActionText("Леді обирає гравця № " + chosenPlayerNumber);
+        logger.setLocalDateTime(LocalDateTime.now());
+        return logger;
+    }
+
+    public Action doManiakMove(Long currentGameId, int chosenPlayerNumber) {
+        gameStatisticsService.killPlayer(currentGameId, chosenPlayerNumber);
+        Action logger = new Action();
+        logger.setActionText("Маніяк вистрілив у гравця № " + chosenPlayerNumber);
+        logger.setLocalDateTime(LocalDateTime.now());
+        return logger;
+    }
+
+    public Action doStrilochnykMove(Long currentGameId, int chosenPlayerNumber) {
+        gameStatisticsService.killPlayer(currentGameId, chosenPlayerNumber);
+        Action logger = new Action();
+        logger.setActionText("Стрілочник вистрілив у гравця № " + chosenPlayerNumber);
+        logger.setLocalDateTime(LocalDateTime.now());
+        return logger;
+    }
+
+    public void resetStrilochnykAttempts(Long currentGameId) {
+        for (GameStatistics gameStatistics: gameStatisticsService.getGameStatisticsByGameId(currentGameId)) {
+            if (gameStatistics.getRole().getRoleNameConstant().equals(ERoleOrder.STRILOCHNYK.name())) {
+                gameStatistics.setTimesWasKilled((short) 0);
+                gameStatisticsRepository.save(gameStatistics);
+            }
+        }
     }
 }

@@ -36,13 +36,18 @@ public class GameStatistics {
     @Column
     private Integer inGameNumber; // Номер гравця у грі
     @Column
-    private Boolean skipNextVoting;
+    private boolean skipNextVoting;
     @Column
     private int yellowCards;
     @Column
     private byte redCards;
     @Column
-    private Short timesWasHealed;
+    private short timesWasHealed = 0;
+    /**
+     * Для таких ролей, як Стрілочник
+     */
+    @Column
+    private short timesWasKilled = 0;
 
     @Override
     public String toString() {

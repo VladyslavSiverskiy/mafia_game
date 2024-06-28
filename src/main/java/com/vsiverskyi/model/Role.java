@@ -5,6 +5,8 @@ import com.vsiverskyi.model.enums.ETeam;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.Objects;
+
 @Entity
 @Builder
 @Getter
@@ -35,5 +37,18 @@ public class Role {
                ", team=" + team +
                ", roleNameConstant=" + roleNameConstant +
                '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Role role = (Role) o;
+        return Objects.equals(id, role.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
     }
 }

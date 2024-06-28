@@ -60,6 +60,10 @@ public class PenaltyController {
         Alert alert = new Alert(Alert.AlertType.INFORMATION, "Гравець " + playerNumber + " отримав червону картку");
         alert.initOwner(stage);
         alert.show();
+        //TODO: перевірити на кінець
+        if (gameService.checkIfGameIsOver(SelectionController.currentGameId)) {
+            fxWeaver.loadController(GameEndingController.class);
+        }
     }
 
     public void initializePlayerCardList(

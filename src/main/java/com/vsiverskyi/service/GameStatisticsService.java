@@ -35,7 +35,14 @@ public class GameStatisticsService {
     public GameStatistics killPlayer(long gameId, int playerToKillInGameNumber) {
         GameStatistics gameStatistics = gameStatisticsRepository
                 .findByGame_IdAndAndInGameNumber(gameId, playerToKillInGameNumber);
-        gameStatistics.setInGame(false);
+        System.out.println(gameStatistics.getRole());
+        if(gameStatistics.getRole().getRoleNameConstant().equals(ERoleOrder.STRILOCHNYK.name())) {
+            System.out.println("HERE");
+            gameStatistics.setTimesWasKilled((short) (gameStatistics.getTimesWasKilled() + 1));
+        }else {
+            gameStatistics.setInGame(false);
+        }
+        gameStatisticsRepository.save(gameStatistics);
         return gameStatistics;
     }
 
@@ -46,6 +53,7 @@ public class GameStatisticsService {
         GameStatistics gameStatistics = gameStatisticsRepository
                 .findByGame_IdAndAndInGameNumber(gameId, playerToKillInGameNumber);
         gameStatistics.setInGame(false);
+        gameStatisticsRepository.save(gameStatistics);
         return gameStatistics;
     }
 
@@ -54,6 +62,7 @@ public class GameStatisticsService {
                 .findByGame_IdAndAndInGameNumber(gameId, playerToKillInGameNumber);
         gameStatistics.setInGame(true);
         gameStatistics.setTimesWasHealed((short) (gameStatistics.getTimesWasHealed() + 1));
+        gameStatisticsRepository.save(gameStatistics);
         return gameStatistics;
     }
 
@@ -98,5 +107,32 @@ public class GameStatisticsService {
             gameStatistics.setYellowCards(yellowCards);
             gameStatisticsRepository.save(gameStatistics);
         }
+    }
+
+    public void removeAllVotingSkipsPerDay(Long currentGameId) {
+        List<GameStatistics> gameStatisticsList = getGameStatisticsByGameId(currentGameId);
+        for (GameStatistics gs: gameStatisticsList) {
+            gs.setSkipNextVoting(false);
+            gameStatisticsRepository.save(gs);
+        }
+    }
+
+    public void blockVotingPerDay(Long currentGameId, int chosenPlayerNumber) {
+        GameStatistics gameStatistics = gameStatisticsRepository
+                .findByGame_IdAndAndInGameNumber(currentGameId, chosenPlayerNumber);
+        gameStatistics.setSkipNextVoting(true);
+        gameStatisticsRepository.save(gameStatistics);
+    }
+
+    public int getSumOfStrilochnykAttempts(Long currentGameId) {
+        int sum = getGameStatisticsByGameId(currentGameId)
+                .stream()
+                .filter(gameStatistics ->
+                        gameStatistics.isInGame()
+                        && gameStatistics.getRole().getRoleNameConstant().equals(ERoleOrder.STRILOCHNYK.name()))
+                .mapToInt(GameStatistics::getTimesWasKilled)
+                .sum();
+        System.out.println(sum);
+        return sum;
     }
 }
