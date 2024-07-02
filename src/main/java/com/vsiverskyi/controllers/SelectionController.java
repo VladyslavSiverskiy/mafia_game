@@ -53,6 +53,8 @@ public class SelectionController implements Initializable {
     private Label roleName;
     @FXML
     private Button startVoting;
+    @FXML
+    private Button fullScreen;
     private List<GameStatistics> gameStatisticsList;
     private int currentPlayerIndex;
 
@@ -61,16 +63,18 @@ public class SelectionController implements Initializable {
         this.stage = StarterController.primaryStage;
         stage.setScene(new Scene(selectionAP));
         stage.setMaximized(true);
+        stage.setFullScreen(true);
+        fullScreen.setOnAction(ev -> stage.setFullScreen(true));
+
         try {
             gameStatisticsList = gameStatisticsService.getGameStatisticsByGameId(currentGameId);
         }catch (NoGameWithSuchIdException e) {
             Alert alert = new Alert(Alert.AlertType.ERROR, e.getMessage());
+            alert.initOwner(stage);
             alert.show();
         }
-        System.out.println(GameSettingsController.roleIdPerGameList);
         int totalPlayers = gameStatisticsList.size();
         displayPlayers(totalPlayers);
-        System.out.println(selectionPane.getChildren());
         startVoting.setOnAction(actionEvent -> fxWeaver.loadController(SelectionRoleController.class).show());
     }
 
@@ -107,7 +111,7 @@ public class SelectionController implements Initializable {
             //TODO: можливо дописати умову (якщо Player != null) тоді брати його nickname
 //            nicknameComboBox.getSelectionModel().select(); // Select the first nickname by default
             nicknameComboBox.setStyle("-fx-font-size: 12px;");
-            new ComboBoxAutoComplete<String>(nicknameComboBox);
+            new ComboBoxAutoComplete<>(nicknameComboBox);
             int finalI = i;
             nicknameComboBox.getSelectionModel().selectedItemProperty().addListener((options, oldValue, newValue) -> {
                 if (finalI > 0 && finalI < totalPlayers + 1) {

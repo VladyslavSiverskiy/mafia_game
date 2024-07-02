@@ -135,4 +135,13 @@ public class GameStatisticsService {
         System.out.println(sum);
         return sum;
     }
+
+    public void resetYellowCardsAmountAndGiveRedOne(Long currentGameId, int playerNumber) {
+        GameStatistics gameStatistics = gameStatisticsRepository
+                .findByGame_IdAndAndInGameNumber(currentGameId, playerNumber);
+        gameStatistics.setYellowCards(0);
+        gameStatistics.setRedCards((byte) 1);
+        gameStatisticsRepository.save(gameStatistics);
+
+    }
 }

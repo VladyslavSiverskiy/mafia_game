@@ -69,6 +69,8 @@ public class PresentationController implements Initializable, DisplayedPlayersCo
     @FXML
     private Button skip;
     @FXML
+    private Button nextPlayerButton;
+    @FXML
     private Button technicalDefeatPeaceful;
     @FXML
     private Button technicalDefeatMafia;
@@ -78,16 +80,17 @@ public class PresentationController implements Initializable, DisplayedPlayersCo
     private ListView<HBox> playerCardListView;
     private List<GameStatistics> gameStatisticsList;
     //set the delay as 0
+    Timeline countDownTimeLine;
     private int secondsPerPresentation = 5;
     private int secondsTillEnd = 5;
     private boolean presentationFinished;
+
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         this.stage = StarterController.primaryStage;
         scene = new Scene(presentationAp);
         stage.setMaximized(true);
-        stage.setFullScreen(true);
         stage.setScene(scene);
         scene.getStylesheets().add(getClass().getResource("/style/style.css").toExternalForm());
         fullScreen.setOnAction(ev -> stage.setFullScreen(true));
@@ -105,7 +108,9 @@ public class PresentationController implements Initializable, DisplayedPlayersCo
 
         displayRolePlayers(gameStatisticsList.size());
         startVoting.setOnAction(actionEvent -> startPresentation(0));
+        nextPlayerButton.setOnAction(actionEvent -> skipToNextPlayer());
         skip.setOnAction(event -> fxWeaver.loadController(VotingController.class).show());
+        stage.setFullScreen(true);
     }
 
     @Override
@@ -144,14 +149,10 @@ public class PresentationController implements Initializable, DisplayedPlayersCo
             avatarContainer.getChildren().add(avatar);
 
             int yellowCardsIterator = Objects.isNull(gameStatistics) ? 0 : gameStatistics.getYellowCards();
+            int redCardsIterator = Objects.isNull(gameStatistics) ? 0 : gameStatistics.getRedCards();
             // Add small yellow cards in a row near the circle avatar
-            for (int j = 0; j < yellowCardsIterator; j++) { // Adjust the number of yellow cards as needed
-                Rectangle yellowCard = new Rectangle(8, 12, Color.YELLOW);
-                yellowCard.setStyle("-fx-border-radius: 1px");
-                avatarContainer.getChildren().add(yellowCard);
-            }
+            ViewController.showCards(yellowCardsIterator, redCardsIterator, avatarContainer);
             playerPanel.getChildren().add(avatarContainer);
-
 
             if (i > 0 && i < totalPlayers + 1) {
                 Label roleLabel = new Label("");
@@ -203,19 +204,21 @@ public class PresentationController implements Initializable, DisplayedPlayersCo
             // TODO: поміняти не нормальні змінні, а не в коді
             secondsTillEnd = 50;
             presentationPlayerId.setText("-");
-            Timeline countDownTimeLine = new Timeline(new KeyFrame(Duration.seconds(1), (ActionEvent event) -> {
+            countDownTimeLine = new Timeline(new KeyFrame(Duration.seconds(1), (ActionEvent event) -> {
                 secondsLeft.setText(String.valueOf(secondsTillEnd--));
             }));
             // Set number of cycles (remaining duration in seconds):
             countDownTimeLine.setCycleCount((int) 50);
             countDownTimeLine.setOnFinished(event -> {
                 Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                alert.initOwner(stage);
                 alert.show();
                 alert.setOnHidden(evt -> startVoting());
             });
             countDownTimeLine.play();
             return;
         }
+
         GameStatistics gameStatistics = gameStatisticsList.get(index);
         if (gameStatistics != null) {
             // Create time line to lower remaining duration every second:
@@ -224,9 +227,8 @@ public class PresentationController implements Initializable, DisplayedPlayersCo
                 startPresentation(finalIndex);
             } else {
                 secondsTillEnd = 5;
-                System.out.println(gameStatistics);
                 presentationPlayerId.setText(gameStatistics.getInGameNumber().toString());
-                Timeline countDownTimeLine = new Timeline(new KeyFrame(Duration.seconds(1), (ActionEvent event) -> {
+                countDownTimeLine = new Timeline(new KeyFrame(Duration.seconds(1), (ActionEvent event) -> {
                     secondsLeft.setText(String.valueOf(secondsTillEnd--));
                     presentationPlayerId.setText(gameStatistics.getInGameNumber().toString());
                 }));
@@ -242,6 +244,15 @@ public class PresentationController implements Initializable, DisplayedPlayersCo
                 });
                 countDownTimeLine.play();
             }
+        }
+    }
+
+    private void skipToNextPlayer() {
+        if (countDownTimeLine != null) {
+            countDownTimeLine.stop();
+            startPresentation(gameStatisticsList.indexOf(gameStatisticsList.stream()
+                    .filter(gs -> gs.getInGameNumber().toString().equals(presentationPlayerId.getText()))
+                    .findFirst().orElse(null)) + 1);
         }
     }
 

@@ -35,5 +35,6 @@
                   <Font name="System Bold" size="12.0" />
               </font>
           </Label>
+      <Button fx:id="nextPlayerButton" layoutX="103.0" layoutY="511.0" mnemonicParsing="false" text="Next" />
     </children>
 </AnchorPane>

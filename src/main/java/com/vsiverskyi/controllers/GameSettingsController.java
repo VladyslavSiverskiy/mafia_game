@@ -33,6 +33,9 @@ import java.util.*;
 @Component
 @FxmlView("GameSettings.fxml")
 public class GameSettingsController implements Initializable {
+    private ConfigurableApplicationContext applicationContext;
+    private GameService gameService;
+    private FxWeaver fxWeaver;
     private Stage stage;
     private Scene scene;
     private Parent root;
@@ -40,9 +43,8 @@ public class GameSettingsController implements Initializable {
     private AnchorPane anchorPane;
     @FXML
     private AnchorPane anchorPaneScrollPlace;
-    private ConfigurableApplicationContext applicationContext;
-    private GameService gameService;
-    private FxWeaver fxWeaver;
+    @FXML
+    private Button fullScreen;
     @FXML
     private Spinner<Integer> playersAmountSpinner;
     @FXML
@@ -73,6 +75,8 @@ public class GameSettingsController implements Initializable {
         this.stage = StarterController.primaryStage;
         stage.setScene(new Scene(anchorPane));
         stage.setMaximized(true);
+        stage.setFullScreen(true);
+        fullScreen.setOnAction(ev -> stage.setFullScreen(true));
 
         playersAmountSpinnerValueFactory.setValue(10);
         playersAmountSpinner.setValueFactory(playersAmountSpinnerValueFactory);
@@ -129,7 +133,9 @@ public class GameSettingsController implements Initializable {
             );
             fxWeaver.loadController(SelectionController.class).show();
         } catch (CantStartGameException e) {
-            new Alert(Alert.AlertType.WARNING, e.getMessage()).show();
+            Alert alert = new Alert(Alert.AlertType.WARNING, e.getMessage());
+            alert.initOwner(stage);
+            alert.show();;
         }
     }
 
@@ -148,8 +154,7 @@ public class GameSettingsController implements Initializable {
             roleAmounts.put(text, newValue);
             if (newValue > oldValue) {
                 selectedPlayersAmount++;
-            }else {
-                if(newValue > 1)
+            }else if(newValue > 1) {
                 selectedPlayersAmount--;
             }
         });

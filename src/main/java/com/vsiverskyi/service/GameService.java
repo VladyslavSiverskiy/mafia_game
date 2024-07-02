@@ -188,6 +188,12 @@ public class GameService {
         // Або всіх мафій вбили
         Game game = gameRepository.findById(gameId)
                 .orElseThrow(() -> new NoGameWithSuchIdException(ExceptionConstants.NO_GAME_WITH_SUCH_ID + gameId));
+        List<GameStatistics> gameStatisticsList = gameStatisticsService.getGameStatisticsByGameIdSortedByInGameNumber(gameId);
+
+        if(!checkIfRolesWereSet(gameStatisticsList)) {
+            return false;
+        }
+
         if (checkIfMafiaAmountIsEqualsToPeaceAmount(gameId)) {
             game.setLastUpdate(LocalDateTime.now());
             game.setGameStatus(EGameStatus.WAS_COMPLETED);
@@ -204,6 +210,12 @@ public class GameService {
         } else {
             return false;
         }
+    }
+
+    private boolean checkIfRolesWereSet(List<GameStatistics> gameStatisticsList) {
+        return !gameStatisticsList.stream()
+                .filter(gameStatistics -> gameStatistics.getRole() != null)
+                .toList().isEmpty();
     }
 
     private boolean checkIfAtLeastOneMafiaIsAlive(Long gameId) {

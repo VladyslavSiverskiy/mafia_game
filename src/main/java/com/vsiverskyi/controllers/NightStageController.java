@@ -7,6 +7,7 @@ import com.vsiverskyi.model.enums.ERoleOrder;
 import com.vsiverskyi.model.enums.ETeam;
 import com.vsiverskyi.service.GameService;
 import com.vsiverskyi.service.GameStatisticsService;
+import com.vsiverskyi.service.PointsService;
 import com.vsiverskyi.service.RoleService;
 import com.vsiverskyi.utils.Action;
 import javafx.fxml.FXML;
@@ -51,6 +52,8 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
     @Autowired
     private RoleService roleService;
     @Autowired
+    private PointsService pointsService;
+    @Autowired
     private PenaltyController penaltyController;
     @Autowired
     private GameStatisticsService gameStatisticsService;
@@ -86,7 +89,7 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
     private int selectedToKillPlayerNumber;
     /**
      * Sum of all game statistics` 'timesWasKilled' fields of current game
-     * */
+     */
     private int archerAttemptsAmount;
     private int strilochnykIndex;
 
@@ -96,6 +99,8 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
         scene = new Scene(nightStageAp);
         stage.setScene(scene);
         scene.getStylesheets().add(getClass().getResource("/style/style.css").toExternalForm());
+        stage.setMaximized(true);
+        stage.setFullScreen(true);
 
         currentRoleIndex = 0;
         archerAttemptsAmount = 0;
@@ -104,9 +109,6 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
         playerIdRoleMap = new HashMap<>();
         playerButtonsMap = new HashMap<>();
         playerRoleLabelsMap = new HashMap<>();
-
-        stage.setMaximized(true);
-
         gameService.resetStrilochnykAttempts(SelectionController.currentGameId);
         updatePlayersList();
         initPlayerRoleMap();
@@ -156,19 +158,26 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
     private void setNextRole() {
 //        updatePlayersList();
         currentRoleIndex++;
-        System.out.println("Current role index: " + currentRoleIndex);
         if (currentRoleIndex == actualInGameRoles.size()) {
             Alert alert = new Alert(Alert.AlertType.INFORMATION, queueToString(actionsQueue));
+            alert.initOwner(stage);
             alert.showAndWait();
+            pointsService.countOnePointAfterDayAndNight(SelectionController.currentGameId);
             if (gameService.checkIfGameIsOver(SelectionController.currentGameId)) {
                 fxWeaver.loadController(GameEndingController.class).show();
             } else {
                 fxWeaver.loadController(VotingController.class).show();
             }
-        }else {
+        } else if (currentRoleIndex < actualInGameRoles.size()) {
             currentRole = actualInGameRoles.get(currentRoleIndex);
             currentRoleTitle.setText(currentRole.getTitle() + " " + currentRoleIndex);
-            System.out.println(actualInGameRoles);
+            if (currentRole.getRoleNameConstant().equalsIgnoreCase(ERoleOrder.STRILOCHNYK.name())) {
+                archerAttemptsAmount
+                        = gameStatisticsService.getSumOfStrilochnykAttempts(SelectionController.currentGameId);
+                if(archerAttemptsAmount == 0) {
+                    setNextRole();
+                }
+            }
             if (currentRole.getRoleNameConstant().equalsIgnoreCase(ERoleOrder.PEACE.name())) {
                 setNextRole();
             }
@@ -197,38 +206,36 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
             tempCurrentRoleIndex++;
         }
         Role roleToCheck = gameStatisticsListSortedByRoleOrder.get(tempCurrentRoleIndex).getRole();
-        System.out.println(roleToCheck);
         return roleToCheck.getTeam() == ETeam.PEACE;
     }
 
     private void handlePlayerAction(int chosenPlayerNumber) {
-        System.out.println(actualInGameRoles);
-        System.out.println(ERoleOrder.valueOf(currentRole.getRoleNameConstant()));
         switch (ERoleOrder.valueOf(currentRole.getRoleNameConstant())) {
             case MAFIA:
                 if (playerIdRoleMap.get(chosenPlayerNumber).getRoleNameConstant().equals(ERoleOrder.MAFIA.name())) {
                     Alert mafiaCantChooseHimselfAlert =
                             new Alert(Alert.AlertType.INFORMATION, "Мафія не може проголосувати за себе");
+                    mafiaCantChooseHimselfAlert.initOwner(stage);
                     mafiaCantChooseHimselfAlert.show();
                 } else {
                     Action mafiaMoveLogger = null;
-                    System.out.println("Mafia");
                     if (gameStatisticsService.checkIfDonIsAlive(SelectionController.currentGameId)) {
                         // якщо живий то мафія нікого не вбиває
                         mafiaMoveLogger = gameService.doMafiaSelectionMove(SelectionController.currentGameId, chosenPlayerNumber);
                         mafiaMoveLogger.setActionText("Мафія " + chosenPlayerNumber + mafiaMoveLogger.getActionText());
                         Alert alert = new Alert(Alert.AlertType.INFORMATION, mafiaMoveLogger.getActionText());
+                        alert.initOwner(stage);
                         alert.show();
                     } else {
                         // якщо ні, то мафія вибирає кого вбити
                         selectedToKillPlayerNumber = chosenPlayerNumber;
                         mafiaMoveLogger = gameService.doMafiaKillMove(SelectionController.currentGameId, chosenPlayerNumber);
-                        // у випадку, якщо дві мафії ходять за одну - не треба цю перевірку
-//                    if(isNextRolePeace()) {
-                        // kill
-//                         mafiaMoveLogger = gameService.doMafiaKillMove(SelectionController.currentGameId, chosenPlayerNumber);
-//                    }
                     }
+                    pointsService.countPointsInOrderToNightAction(
+                            SelectionController.currentGameId,
+                            currentRole,
+                            chosenPlayerNumber
+                    );
                     setNextRole();
                     actionsQueue.add(mafiaMoveLogger);
                 }
@@ -238,12 +245,19 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
                 if (playerIdRoleMap.get(chosenPlayerNumber).getRoleNameConstant().equals(ERoleOrder.DON.name())) {
                     Alert donCantChooseHimselfAlert =
                             new Alert(Alert.AlertType.INFORMATION, "Дон не може проголосувати за себе");
-                    donCantChooseHimselfAlert.show();
+                    donCantChooseHimselfAlert.initOwner(stage);
+                    donCantChooseHimselfAlert.showAndWait();
                 } else {
                     Action donMoveLogger = gameService.doMafiaKillMove(SelectionController.currentGameId, chosenPlayerNumber);
+                    pointsService.countPointsInOrderToNightAction(
+                            SelectionController.currentGameId,
+                            currentRole,
+                            chosenPlayerNumber
+                    );
                     actionsQueue.add(donMoveLogger);
                     Alert alert = new Alert(Alert.AlertType.INFORMATION, donMoveLogger.getActionText());
-                    alert.show();
+                    alert.initOwner(stage);
+                    alert.showAndWait();
                     setNextRole();
                 }
                 break;
@@ -252,9 +266,17 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
                     && (findByInGameNumber(chosenPlayerNumber).getTimesWasHealed() >= 2)) {
                     Alert doctorCantHealHimselfAlert =
                             new Alert(Alert.AlertType.INFORMATION, "Лікар не може лікувати себе більше двох разів");
-                    doctorCantHealHimselfAlert.show();
+                    doctorCantHealHimselfAlert.initOwner(stage);
+                    doctorCantHealHimselfAlert.showAndWait();
                 } else {
+                    // Метод - нарахувати поінти за хід вночі.
+                    // Передамо поточну роль, і всі з такою роллю отримають стільки то балів
                     doDoctorMove(chosenPlayerNumber);
+                    pointsService.countPointsInOrderToNightAction(
+                            SelectionController.currentGameId,
+                            currentRole,
+                            chosenPlayerNumber
+                    );
                     setNextRole();
                 }
                 break;
@@ -262,9 +284,15 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
                 if (playerIdRoleMap.get(chosenPlayerNumber).getRoleNameConstant().equals(ERoleOrder.LEDY.name())) {
                     Alert ladyCantChooseHerselfAlert =
                             new Alert(Alert.AlertType.INFORMATION, "Леді не може голосувати за себе");
-                    ladyCantChooseHerselfAlert.show();
+                    ladyCantChooseHerselfAlert.initOwner(stage);
+                    ladyCantChooseHerselfAlert.showAndWait();
                 } else {
                     doLedyMove(chosenPlayerNumber);
+                    pointsService.countPointsInOrderToNightAction(
+                            SelectionController.currentGameId,
+                            currentRole,
+                            chosenPlayerNumber
+                    );
                     setNextRole();
                 }
                 break;
@@ -272,9 +300,15 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
                 if (playerIdRoleMap.get(chosenPlayerNumber).getRoleNameConstant().equals(ERoleOrder.SHERYF.name())) {
                     Alert sheryfCantChooseHimselfAlert =
                             new Alert(Alert.AlertType.INFORMATION, "Шериф не може голосувати за себе");
-                    sheryfCantChooseHimselfAlert.show();
+                    sheryfCantChooseHimselfAlert.initOwner(stage);
+                    sheryfCantChooseHimselfAlert.showAndWait();
                 } else {
                     doSheryfMove(chosenPlayerNumber);
+                    pointsService.countPointsInOrderToNightAction(
+                            SelectionController.currentGameId,
+                            currentRole,
+                            chosenPlayerNumber
+                    );
                     setNextRole();
                 }
                 break;
@@ -282,28 +316,31 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
                 if (playerIdRoleMap.get(chosenPlayerNumber).getRoleNameConstant().equals(ERoleOrder.MANIAK.name())) {
                     Alert maniakCantChooseHimselfAlert =
                             new Alert(Alert.AlertType.INFORMATION, "Маніяк не може голосувати за себе");
-                    maniakCantChooseHimselfAlert.show();
-                }else {
+                    maniakCantChooseHimselfAlert.initOwner(stage);
+                    maniakCantChooseHimselfAlert.showAndWait();
+                } else {
                     doManiakMove(chosenPlayerNumber);
+                    pointsService.countPointsInOrderToNightAction(
+                            SelectionController.currentGameId,
+                            currentRole,
+                            chosenPlayerNumber
+                    );
                     setNextRole();
                 }
                 break;
             case STRILOCHNYK:
-                archerAttemptsAmount
-                        = gameStatisticsService.getSumOfStrilochnykAttempts(SelectionController.currentGameId);
-                System.out.println(archerAttemptsAmount);
                 if (strilochnykIndex < archerAttemptsAmount) {
-                    System.out.println("DOING STRILOCKNYK");
                     doStrilochnykMove(chosenPlayerNumber);
-                    System.out.println("Strilochnyk index " + strilochnykIndex);
-                    System.out.println("Attempts " + archerAttemptsAmount);
-                    if(strilochnykIndex == archerAttemptsAmount - 1) {
+                    pointsService.countPointsInOrderToNightAction(
+                            SelectionController.currentGameId,
+                            currentRole,
+                            chosenPlayerNumber
+                    );
+                    if (strilochnykIndex == archerAttemptsAmount - 1) {
                         setNextRole();
                     } else {
                         strilochnykIndex++;
                     }
-                }else if (archerAttemptsAmount == 0){
-                    setNextRole();
                 }
                 break;
         }
@@ -313,12 +350,15 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
         Action strilochnykMoveLogger = gameService.doStrilochnykMove(SelectionController.currentGameId, chosenPlayerNumber);
         // тут додавати logger в чергу?
         actionsQueue.add(strilochnykMoveLogger);
-        System.out.println("Doing STRILOCHNYK");
     }
 
     private void doManiakMove(int chosenPlayerNumber) {
         Action maniakMoveLogger = gameService.doManiakMove(SelectionController.currentGameId, chosenPlayerNumber);
         // тут додавати logger в чергу?
+        Alert alert = new Alert(Alert.AlertType.INFORMATION, maniakMoveLogger.getActionText());
+        // тут додавати logger в чергу?
+        alert.initOwner(stage);
+        alert.showAndWait();
         actionsQueue.add(maniakMoveLogger);
     }
 
@@ -326,23 +366,30 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
         Action sheryfMoveLogger = new Action();
         sheryfMoveLogger.setActionText("Шериф обирає гравця "
                                        + chosenPlayerNumber
-                                       +  " з роллю '" + playerIdRoleMap.get(chosenPlayerNumber).getTitle() + "'");
+                                       + " з роллю '" + playerIdRoleMap.get(chosenPlayerNumber).getTitle() + "'");
         sheryfMoveLogger.setLocalDateTime(LocalDateTime.now());
         Alert alert = new Alert(Alert.AlertType.INFORMATION, sheryfMoveLogger.getActionText());
         // тут додавати logger в чергу?
-        alert.show();
+        alert.initOwner(stage);
+        alert.showAndWait();
         actionsQueue.add(sheryfMoveLogger);
     }
 
     private void doDoctorMove(int chosenPlayerNumber) {
         Action doctorMoveLogger = gameService.doDoctorMove(SelectionController.currentGameId, chosenPlayerNumber);
         // тут додавати logger в чергу?
+        Alert alert = new Alert(Alert.AlertType.INFORMATION, doctorMoveLogger.getActionText());
+        alert.initOwner(stage);
+        alert.showAndWait();
         actionsQueue.add(doctorMoveLogger);
     }
 
     private void doLedyMove(int chosenPlayerNumber) {
         Action ledyMoveLogger = gameService.doLedyMove(SelectionController.currentGameId, chosenPlayerNumber);
         // тут додавати logger в чергу?
+        Alert alert = new Alert(Alert.AlertType.INFORMATION, ledyMoveLogger.getActionText());
+        alert.initOwner(stage);
+        alert.showAndWait();
         actionsQueue.add(ledyMoveLogger);
     }
 
@@ -377,12 +424,8 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
             avatarContainer.setPadding(new Insets(0, 0, 0, 10)); // Add padding from the left side
             avatarContainer.getChildren().add(avatar);
             int yellowCardsIterator = Objects.isNull(gameStatistics) ? 0 : gameStatistics.getYellowCards();
-            // Add small yellow cards in a row near the circle avatar
-            for (int j = 0; j < yellowCardsIterator; j++) { // Adjust the number of yellow cards as needed
-                Rectangle yellowCard = new Rectangle(8, 12, Color.YELLOW);
-                yellowCard.setStyle("-fx-border-radius: 1px");
-                avatarContainer.getChildren().add(yellowCard);
-            }
+            int redCardsIterator = Objects.isNull(gameStatistics) ? 0 : gameStatistics.getRedCards();
+            ViewController.showCards(yellowCardsIterator, redCardsIterator, avatarContainer);
             playerPanel.getChildren().add(avatarContainer);
 
             if (i > 0 && i < totalPlayers + 1) {

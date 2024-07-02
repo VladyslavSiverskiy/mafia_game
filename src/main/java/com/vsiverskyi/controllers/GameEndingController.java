@@ -3,6 +3,7 @@ package com.vsiverskyi.controllers;
 import com.vsiverskyi.model.Game;
 import com.vsiverskyi.model.enums.ETeam;
 import com.vsiverskyi.service.GameService;
+import com.vsiverskyi.service.PointsService;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.Parent;
@@ -25,6 +26,8 @@ public class GameEndingController implements Initializable {
 
     @Autowired
     private GameService gameService;
+    @Autowired
+    private PointsService pointsService;
     private Stage stage;
     private Scene scene;
     private Parent root;
@@ -44,6 +47,7 @@ public class GameEndingController implements Initializable {
         stage.setMaximized(true);
         stage.setFullScreen(true);
         Game game = gameService.getGameInfo(SelectionController.currentGameId);
+        pointsService.countPointsAfterGameWasFinished(game.getId());
         winnerTitleLabel.setText(game.getWinnerSide().getTitle());
         toStarterPage.setOnAction(ev -> {
             StarterController.primaryStage = (Stage) toStarterPage.getScene().getWindow();

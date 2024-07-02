@@ -56,6 +56,7 @@ public class PenaltyController {
     public void giveRedCard(int playerNumber, Button yellowButton, Button redButton, Stage stage) {
         yellowButton.setDisable(true);
         redButton.setDisable(true);
+        gameStatisticsService.resetYellowCardsAmountAndGiveRedOne(SelectionController.currentGameId, playerNumber);
         gameStatisticsService.removePlayerFromGame(SelectionController.currentGameId, playerNumber);
         Alert alert = new Alert(Alert.AlertType.INFORMATION, "Гравець " + playerNumber + " отримав червону картку");
         alert.initOwner(stage);

@@ -130,7 +130,9 @@ public class SelectionRoleController implements Initializable,DisplayedPlayersCo
                         .filter(role -> role.getTitle().equalsIgnoreCase(newSelection))
                         .findFirst()
                         .orElseThrow(() -> new NoRoleWithSuchTitleException(ExceptionConstants.NO_ROLE_WITH_SUCH_TITLE + newSelection));
-                new Alert(Alert.AlertType.INFORMATION, currentRole.getTitle());
+                Alert alert = new Alert(Alert.AlertType.INFORMATION, currentRole.getTitle());
+                alert.initOwner(stage);
+                alert.show();
             });
 
             // Create ListView for assigned roles
@@ -163,7 +165,6 @@ public class SelectionRoleController implements Initializable,DisplayedPlayersCo
 
                         setGraphic(hbox);
                         textField.setText("");
-//                        setText(null); // Clear any text setting
                     }
                 }
             });
@@ -201,7 +202,9 @@ public class SelectionRoleController implements Initializable,DisplayedPlayersCo
                 fxWeaver.loadController(PresentationController.class).show();
             }
         } catch (RuntimeException ex) {
-            new Alert(Alert.AlertType.ERROR, ex.getMessage());
+            Alert alert = new Alert(Alert.AlertType.ERROR, ex.getMessage());
+            alert.initOwner(stage);
+            alert.show();
         }
 
     }
@@ -240,12 +243,9 @@ public class SelectionRoleController implements Initializable,DisplayedPlayersCo
             avatarContainer.setPadding(new Insets(0, 0, 0, 10)); // Add padding from the left side
             avatarContainer.getChildren().add(avatar);
             int yellowCardsIterator = Objects.isNull(gameStatistics) ? 0 : gameStatistics.getYellowCards();
+            int redCardsIterator = Objects.isNull(gameStatistics) ? 0 : gameStatistics.getRedCards();
             // Add small yellow cards in a row near the circle avatar
-            for (int j = 0; j < yellowCardsIterator; j++) { // Adjust the number of yellow cards as needed
-                Rectangle yellowCard = new Rectangle(8, 12, Color.YELLOW);
-                yellowCard.setStyle("-fx-border-radius: 1px");
-                avatarContainer.getChildren().add(yellowCard);
-            }
+            ViewController.showCards(yellowCardsIterator,redCardsIterator, avatarContainer);
             playerPanel.getChildren().add(avatarContainer);
 
             if (i > 0 && i < totalPlayers + 1) {
@@ -269,13 +269,6 @@ public class SelectionRoleController implements Initializable,DisplayedPlayersCo
             Button button = playerButtonsMap.get(i);
             if (button == null) {
                 button = createPlayerButton(x, y, i);
-            }
-
-            if (!checkIfAlive(i, totalPlayers)) {
-                playerPanel.setDisable(true);
-                playerPanel.setVisible(true);
-                avatar.setFill(Color.DARKGREY);
-                button.setDisable(true);
             }
             selectionRolePane.getChildren().add(playerPanel);
             int finalI = i;
