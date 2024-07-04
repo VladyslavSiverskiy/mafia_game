@@ -144,4 +144,8 @@ public class GameStatisticsService {
         gameStatisticsRepository.save(gameStatistics);
 
     }
+
+    public void save(GameStatistics gameStatistics) {
+        gameStatisticsRepository.save(gameStatistics);
+    }
 }

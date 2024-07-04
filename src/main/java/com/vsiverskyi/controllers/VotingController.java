@@ -8,6 +8,7 @@ import com.vsiverskyi.service.GameStatisticsService;
 import com.vsiverskyi.service.PointsService;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -15,10 +16,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.ListView;
+import javafx.scene.control.*;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
@@ -88,7 +86,7 @@ public class VotingController implements Initializable, DisplayedPlayersControll
     private Integer currentVoterIndex;
     private Integer reverseCurrentVoterIndex;
     private boolean reverse;
-
+    private Timeline excuseTimeLine;
     int secondsTillEnd = 10;
 
     @Override
@@ -102,7 +100,7 @@ public class VotingController implements Initializable, DisplayedPlayersControll
         playerIdVotesMap = new HashMap<>();
         playerIdButton = new HashMap<>();
 
-        gameStatisticsList = gameService.getGameInfo(SelectionController.currentGameId).getGameStatistics();
+        gameStatisticsList = gameStatisticsService.getGameStatisticsByGameIdSortedByInGameNumber(SelectionController.currentGameId);
         reverseCurrentVoterIndex = gameStatisticsList.size() - 1;
         currentVoterIndex = 0;
 // Initialize player card list view
@@ -223,6 +221,7 @@ public class VotingController implements Initializable, DisplayedPlayersControll
     }
 
     private void giveVoiceForward(Integer currentVoterIndex) {
+        System.out.println("FRW" + currentVoterIndex);
         while (currentVoterIndex < gameStatisticsList.size()) {
             if (!checkIfAlive(currentVoterIndex + 1, gameStatisticsList.size()) ||
                 checkIfSkipVoting(currentVoterIndex + 1, gameStatisticsList.size())) {
@@ -252,6 +251,7 @@ public class VotingController implements Initializable, DisplayedPlayersControll
                 countDownTimeLine.setCycleCount((int) secondsTillEnd);
                 Integer finalCurrentVoterIndex = currentVoterIndex;
                 countDownTimeLine.setOnFinished(event -> {
+                    countDownTimeLine.stop();
                     int setVoteTo = 0;
                     if (finalCurrentVoterIndex == findLastAliveIndex()) {
                         for (int i = gameStatisticsList.size() - 1; i >= 0 ; i--) {
@@ -281,6 +281,7 @@ public class VotingController implements Initializable, DisplayedPlayersControll
     }
 
     private void giveVoiceReverse(Integer reverseCurrentVoterIndex) {
+        System.out.println("Reverse " + reverseCurrentVoterIndex);
         while (reverseCurrentVoterIndex >= 0) {
             if (!checkIfAlive(reverseCurrentVoterIndex + 1, gameStatisticsList.size())) {
                 reverseCurrentVoterIndex--;
@@ -307,7 +308,10 @@ public class VotingController implements Initializable, DisplayedPlayersControll
                 // Set number of cycles (remaining duration in seconds)
                 countDownTimeLine.setCycleCount((int) secondsTillEnd);
                 Integer finalReverseCurrentVoterIndex = reverseCurrentVoterIndex;
+
                 countDownTimeLine.setOnFinished(event -> {
+                    //TODO: переробити на PLatform.runLaner()
+                    countDownTimeLine.stop();
                     int setVoteTo = 0;
                     if (finalReverseCurrentVoterIndex == findFirstAliveIndex()) {
                         for (int i = 0; i < gameStatisticsList.size(); i++) {
@@ -369,11 +373,88 @@ public class VotingController implements Initializable, DisplayedPlayersControll
 
     private void setVote(int playerNumber, Integer voterIndex) {
         Integer playerVotes = playerIdVotesMap.get(playerNumber);
+
         if (playerVotes == null) {
             playerIdVotesMap.put(playerNumber, 1);
-        } else {
-            playerIdVotesMap.put(playerNumber, playerVotes + 1);
+            addPointsAndChangeVoterIndex(playerNumber, voterIndex);
+        } else if (playerVotes == 2) {
+            //Отримати гравця в якого голосують, щоб взяти його excusesAttempts
+            GameStatistics gameStatistics = gameStatisticsService
+                    .getGameStatisticsByGameIdSortedByInGameNumber(SelectionController.currentGameId).get(playerNumber - 1);
+            System.out.println(gameStatistics);
+            System.out.println(gameStatistics.getExcusesAttempts());
+            if (gameStatistics.getExcusesAttempts() < SettingsConstantsController.AVAILABLE_ATTEMPTS_TO_EXCUSE) {
+                System.out.println("ENTRING DIALOG");
+                excuseTimeLine = null;
+                countDownTimeLine = null;
+                ButtonType foo = new ButtonType("Так", ButtonBar.ButtonData.YES);
+                ButtonType bar = new ButtonType("Ні", ButtonBar.ButtonData.CANCEL_CLOSE);
+                Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "Скористатись правом на оправдання?", foo, bar);
+                alert.setTitle("Оправдання");
+                alert.initOwner(stage);
+                alert.setHeaderText("Гравець має право на оправдання");
+                alert.setResizable(false);
+                Optional<ButtonType> result = alert.showAndWait();
+                if (result.isPresent() && result.get().getText().equals("Так")) {
+                    gameStatistics.setExcusesAttempts((short) (gameStatistics.getExcusesAttempts() + 1));
+                    gameStatisticsService.save(gameStatistics);
+                    startExcuseTimer(playerNumber, voterIndex, gameStatistics);
+                } else {
+                    playerIdVotesMap.put(playerNumber, playerVotes + 1);
+                    addPointsAndChangeVoterIndex(playerNumber, voterIndex);
+                }
+            } else {
+                playerIdVotesMap.put(playerNumber, playerVotes + 1);
+                addPointsAndChangeVoterIndex(playerNumber, voterIndex);
+            }
         }
+        else {
+            playerIdVotesMap.put(playerNumber, playerVotes + 1);
+            addPointsAndChangeVoterIndex(playerNumber, voterIndex);
+        }
+    }
+
+    private void startExcuseTimer(int playerNumber, int voterIndex, GameStatistics gameStatistics) {
+        System.out.println("EXECUTING");
+        excuseTimeLine = new Timeline(new KeyFrame(Duration.seconds(secondsTillEnd), ae -> {
+            Platform.runLater(() -> {
+                excuseTimeLine.stop(); // Stop the timer when it ends
+                showExcuseChoiceDialog(playerNumber, voterIndex, gameStatistics);
+            });
+        }));
+        excuseTimeLine.setCycleCount(1);
+        excuseTimeLine.play();
+    }
+
+    private void showExcuseChoiceDialog(int playerNumber, int voterIndex, GameStatistics gameStatistics) {
+        Alert excuseAlert = new Alert(Alert.AlertType.CONFIRMATION);
+        excuseAlert.setTitle("Оправдання");
+        excuseAlert.setHeaderText("Час на оправдання завершився");
+        excuseAlert.setContentText("Виберіть опцію:");
+        excuseAlert.getButtonTypes().setAll(ButtonType.OK, ButtonType.CANCEL);
+        excuseAlert.initOwner(stage);
+
+        Optional<ButtonType> excuseResult = excuseAlert.showAndWait();
+        if (excuseResult.isPresent() && excuseResult.get() == ButtonType.OK) {
+            // Proceed with voting logic here if the player chooses to vote
+            playerIdVotesMap.put(playerNumber, playerIdVotesMap.get(playerNumber) + 1);
+            addPointsAndChangeVoterIndex(playerNumber, voterIndex);
+        } else {
+            // Player decides not to vote, handle accordingly
+            System.out.println("Doesnt want");
+            if(reverse){
+                System.out.println(voterIndex);
+                giveVoiceReverse(voterIndex);
+            } else {
+                System.out.println(voterIndex);
+                giveVoiceForward(voterIndex);
+            }
+            // Do not change the voter index to allow the player to vote again
+        }
+    }
+
+    private void addPointsAndChangeVoterIndex(int playerNumber, int voterIndex) {
+
         //оновити вікно із результатом
         updateVotesDisplay();
 
@@ -482,7 +563,7 @@ public class VotingController implements Initializable, DisplayedPlayersControll
         if (map == null || map.isEmpty()) {
             return List.of();
         }
-
+        System.out.println(map);
         // Find the maximum value in the map
         int maxValue = map.values().stream()
                 .max(Integer::compareTo)

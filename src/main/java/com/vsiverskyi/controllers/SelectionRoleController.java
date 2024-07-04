@@ -95,6 +95,7 @@ public class SelectionRoleController implements Initializable,DisplayedPlayersCo
         stage.setFullScreen(true);
         fullScreen.setOnAction(ev -> stage.setFullScreen(true));
         try {
+            System.out.println("ID " + SelectionController.currentGameId);
             // get list of gamers and sort them by their number
             gameStatisticsList = gameStatisticsService
                     .getGameStatisticsByGameIdSortedByInGameNumber(SelectionController.currentGameId);

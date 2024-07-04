@@ -48,6 +48,8 @@ public class GameStatistics {
      */
     @Column
     private short timesWasKilled = 0;
+    @Column
+    private short excusesAttempts = 0;
 
     @Override
     public String toString() {
