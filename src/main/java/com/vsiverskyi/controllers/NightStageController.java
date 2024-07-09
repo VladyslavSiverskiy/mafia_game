@@ -48,6 +48,8 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
     private Scene scene;
     private Parent root;
     @Autowired
+    private ViewController viewController;
+    @Autowired
     private GameService gameService;
     @Autowired
     private RoleService roleService;
@@ -174,7 +176,7 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
             if (currentRole.getRoleNameConstant().equalsIgnoreCase(ERoleOrder.STRILOCHNYK.name())) {
                 archerAttemptsAmount
                         = gameStatisticsService.getSumOfStrilochnykAttempts(SelectionController.currentGameId);
-                if(archerAttemptsAmount == 0) {
+                if (archerAttemptsAmount == 0) {
                     setNextRole();
                 }
             }
@@ -395,6 +397,8 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
 
     @Override
     public void displayRolePlayers(int totalPlayers) {
+        nightStagePlayersPane.getChildren().clear();
+
         double centerX = nightStagePlayersPane.getWidth() / 2;
         double centerY = nightStagePlayersPane.getHeight() / 2;
         double radius = Math.min(centerX, centerY) - 5;
@@ -425,7 +429,18 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
             avatarContainer.getChildren().add(avatar);
             int yellowCardsIterator = Objects.isNull(gameStatistics) ? 0 : gameStatistics.getYellowCards();
             int redCardsIterator = Objects.isNull(gameStatistics) ? 0 : gameStatistics.getRedCards();
-            ViewController.showCards(yellowCardsIterator, redCardsIterator, avatarContainer);
+            int inGameNumber = Objects.isNull(gameStatistics) ? 0 : gameStatistics.getInGameNumber();
+            viewController.showCards(
+                    yellowCardsIterator,
+                    redCardsIterator,
+                    avatarContainer,
+                    inGameNumber,
+                    this,
+                    gameStatisticsListSortedByInGameNumber.size(),
+                    stage,
+                    playerCardListView,
+                    gameStatisticsListSortedByInGameNumber
+            );
             playerPanel.getChildren().add(avatarContainer);
 
             if (i > 0 && i < totalPlayers + 1) {
@@ -452,7 +467,7 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
             }
 
             if (!checkIfAlive(i, totalPlayers)) {
-                playerPanel.setDisable(true);
+//                playerPanel.setDisable(true);
                 playerPanel.setVisible(true);
                 avatar.setFill(Color.DARKGREY);
                 button.setDisable(true);

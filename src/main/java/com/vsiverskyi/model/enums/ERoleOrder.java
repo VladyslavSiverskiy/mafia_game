@@ -2,16 +2,16 @@ package com.vsiverskyi.model.enums;
 
 public enum ERoleOrder {
     UNDEFINED("Undefined"),
-    MAFIA("Мафія"),
-    DON("Дон"),
-    SHERYF("Шериф"),
+    MAFIA("Хабарник"),
+    DON("Корупціонер"),
+    SHERYF("Гетьман"),
     DOCTOR("Лікар"),
     LEDY("Леді"),
-    MANIAK("Маніяк"),
-    STRILOCHNYK("Стрілочник"),
+    MANIAK("Навіжений"),
+    STRILOCHNYK("Кармалюк"),
     BOMBA("Бомба"),
     ZATYCHKA("Затичка"),
-    PEACE("Мирний");
+    PEACE("Козак");
 
     ERoleOrder(final String title) {
         this.title = title;

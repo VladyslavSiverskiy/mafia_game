@@ -2,6 +2,7 @@ package com.vsiverskyi.controllers;
 
 import com.vsiverskyi.exception.CantStartGameException;
 import com.vsiverskyi.model.Game;
+import com.vsiverskyi.model.enums.ERoleOrder;
 import com.vsiverskyi.service.GameService;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -97,13 +98,13 @@ public class GameSettingsController implements Initializable {
         settingsBox.setPadding(new Insets(10));
         settingsBox.setSpacing(10);
 
-        settingsBox.getChildren().add(createSettingRow("Лікар"));
-        settingsBox.getChildren().add(createSettingRow("Шериф"));
-        settingsBox.getChildren().add(createSettingRow("Леді"));
-        settingsBox.getChildren().add(createSettingRow("Маніяк"));
-        settingsBox.getChildren().add(createSettingRow("Стрілочник"));
-        settingsBox.getChildren().add(createSettingRow("Бомба"));
-        settingsBox.getChildren().add(createSettingRow("Затичка"));
+        settingsBox.getChildren().add(createSettingRow(ERoleOrder.DOCTOR.getTitle()));
+        settingsBox.getChildren().add(createSettingRow(ERoleOrder.SHERYF.getTitle()));
+        settingsBox.getChildren().add(createSettingRow(ERoleOrder.LEDY.getTitle()));
+        settingsBox.getChildren().add(createSettingRow(ERoleOrder.MANIAK.getTitle()));
+        settingsBox.getChildren().add(createSettingRow(ERoleOrder.STRILOCHNYK.getTitle()));
+        settingsBox.getChildren().add(createSettingRow(ERoleOrder.BOMBA.getTitle()));
+        settingsBox.getChildren().add(createSettingRow(ERoleOrder.ZATYCHKA.getTitle()));
 
         // Create a ScrollPane and add the settingsBox to it
         ScrollPane scrollPane = new ScrollPane();

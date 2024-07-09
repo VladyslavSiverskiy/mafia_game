@@ -73,6 +73,7 @@ public class PenaltyController {
             DisplayedPlayersController controller,
             ListView<HBox> playerCardListView
     ) {
+        System.out.println("INIT");
         ObservableList<HBox> playerCards = FXCollections.observableArrayList();
 
         for (GameStatistics gs : gameStatisticsList) {
@@ -98,9 +99,13 @@ public class PenaltyController {
             Region spacer = new Region();
             HBox.setHgrow(spacer, Priority.ALWAYS);
 
+            System.out.println(gs);
             if (!gs.isInGame()) {
                 yellowCardButton.setDisable(true);
                 redCardButton.setDisable(true);
+            }else {
+                yellowCardButton.setDisable(false);
+                redCardButton.setDisable(false);
             }
             playerCardRow.getChildren().addAll(playerLabel, spacer, yellowCardButton, redCardButton);
             playerCards.add(playerCardRow);

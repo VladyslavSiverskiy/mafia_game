@@ -28,15 +28,12 @@
         <Button fx:id="beginVotingReverse" layoutX="38.0" layoutY="672.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="129.0" text="Проти годинникової" />
         <Button fx:id="fullScreen" layoutX="73.0" layoutY="35.0" mnemonicParsing="false" text="FullScreen" />
       <Button fx:id="startButton" layoutX="56.0" layoutY="505.0" mnemonicParsing="false" prefHeight="27.0" prefWidth="90.0" text="Почати" />
-        <AnchorPane fx:id="votingPlayersPane" layoutX="172.0" layoutY="55.0" prefHeight="700.0" prefWidth="878.0">
-            <children>
-                <Label fx:id="secondsLeft" layoutX="392.0" layoutY="250.0" textFill="WHITE">
-                    <font>
-                        <Font size="83.0" />
-                    </font>
-                </Label>
-            </children>
-        </AnchorPane>
-      <Label fx:id="startLabel" layoutX="35.0" layoutY="543.0" prefHeight="17.0" prefWidth="0.0" textFill="WHITE" />
+        <AnchorPane fx:id="votingPlayersPane" layoutX="172.0" layoutY="55.0" prefHeight="700.0" prefWidth="878.0" />
+      <Label fx:id="startLabel" layoutX="45.0" layoutY="547.0" prefHeight="37.0" prefWidth="144.0" textFill="WHITE" />
+          <Label fx:id="secondsLeft" layoutX="55.0" layoutY="328.0" prefHeight="122.0" prefWidth="90.0" textFill="WHITE">
+              <font>
+                  <Font size="83.0" />
+              </font>
+          </Label>
     </children>
 </AnchorPane>

@@ -106,6 +106,7 @@ public class PointsService {
     }
 
     public void countPointsInOrderToDayAction(Long gameId, int targetPlayerNumber, int voterPlayerNumber) {
+        System.out.println("COUNTING FOR GAME WIHT ID " + gameId);
         GameStatistics voterPlayer = gameStatisticsRepository
                 .findByGame_IdAndAndInGameNumber(gameId, voterPlayerNumber);
         GameStatistics targetPlayer = gameStatisticsRepository
@@ -121,6 +122,5 @@ public class PointsService {
             voterPlayer.setPoints(voterPlayer.getPoints() + 2); // TODO: можливо змінити кількість балів
             gameStatisticsRepository.save(voterPlayer);
         }
-
     }
 }

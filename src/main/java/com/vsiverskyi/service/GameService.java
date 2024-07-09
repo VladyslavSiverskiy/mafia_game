@@ -75,16 +75,7 @@ public class GameService {
     public List<Integer> initRolesPerGame(
             Integer playersAmount, Integer mafiaAmount, Map<String, Integer> additionalRoles, Game game
     ) throws CantStartGameException {
-
-//        List<String> peaceRolesToAdd = additionalRoles.entrySet().stream()
-//                .filter(Map.Entry::getValue) // Filter entries with true values
-//                .map(Map.Entry::getKey) // Map to keys
-//                .collect(Collectors.toList()); // Collect to list
-
-
-//        if (playersAmount < mafiaAmount + peaceRolesToAdd.size()) {
-//            throw new CantStartGameException(ExceptionConstants.TOTAL_AMOUNT_OF_PLAYERS_IS_LOWER);
-//        }
+        playerNumber = 1;
         if (mafiaAmount >= playersAmount - mafiaAmount) {
             throw new CantStartGameException(ExceptionConstants.MAFIA_AMOUNT_IS_HIGHER_THAN_PEACE);
         }
@@ -131,7 +122,7 @@ public class GameService {
         for (int i = 0; i < amountOfPeacePlayers; i++) {
             Role peaceRole =
                     roleRepository
-                            .findByTitle("Мирний")
+                            .findByTitle("Козак")
                             .orElseThrow(() ->
                                     new NoRoleWithSuchTitleException(ExceptionConstants.NO_ROLE_WITH_SUCH_TITLE + "Мирний"));
             GameStatistics peacePlayer = GameStatistics.builder()

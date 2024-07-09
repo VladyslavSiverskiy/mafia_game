@@ -1,18 +1,54 @@
 package com.vsiverskyi.controllers;
 
+import com.vsiverskyi.model.GameStatistics;
+import com.vsiverskyi.service.GameStatisticsService;
+import javafx.scene.control.Button;
+import javafx.scene.control.ListView;
 import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
+import javafx.stage.Stage;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
+import java.util.List;
+
+@Component
 public class ViewController {
-    public static void showCards(int yellowCardsIterator, int redCardsIterator, HBox avatarContainer) {
+
+    @Autowired
+    private GameStatisticsService gameStatisticsService;
+    @Autowired
+    private PenaltyController penaltyController;
+
+    public void showCards(
+            int yellowCardsIterator,
+            int redCardsIterator,
+            HBox avatarContainer,
+            int playerInGameNumber,
+            DisplayedPlayersController controller,
+            int amountOfPlayers,
+            Stage stage,
+            ListView<HBox> playerCardListView,
+            List<GameStatistics> gameStatisticsList
+    ) {
         for (int j = 0; j < yellowCardsIterator; j++) { // Adjust the number of yellow cards as needed
             Rectangle yellowCard = new Rectangle(8, 12, Color.YELLOW);
-            yellowCard.setStyle("-fx-border-radius: 1px");
+            yellowCard.setOnMouseClicked(mouseEvent -> {
+                gameStatisticsService.removeYellowCard(SelectionController.currentGameId, playerInGameNumber);
+                controller.displayRolePlayers(amountOfPlayers);
+            });
+            yellowCard.setStyle("-fx-border-radius: 1px; -fx-background-color: yellow");
             avatarContainer.getChildren().add(yellowCard);
         }
         for (int j = 0; j < redCardsIterator; j++) { // Adjust the number of yellow cards as needed
             Rectangle redCard = new Rectangle(8, 12, Color.RED);
+            redCard.setOnMouseClicked(mouseEvent -> {
+                gameStatisticsService.removeRedCard(SelectionController.currentGameId, playerInGameNumber);
+                controller.displayRolePlayers(amountOfPlayers);
+                penaltyController.initializePlayerCardList(
+                        gameStatisticsService.getGameStatisticsByGameIdSortedByInGameNumber(SelectionController.currentGameId), stage, controller, playerCardListView);
+            });
             redCard.setStyle("-fx-border-radius: 1px");
             avatarContainer.getChildren().add(redCard);
         }

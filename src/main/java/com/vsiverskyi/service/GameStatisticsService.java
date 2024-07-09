@@ -136,6 +136,21 @@ public class GameStatisticsService {
         return sum;
     }
 
+    public void removeYellowCard(Long currentGameId, int playerInGameNumber) {
+            GameStatistics gameStatistics = gameStatisticsRepository
+                    .findByGame_IdAndAndInGameNumber(currentGameId, playerInGameNumber);
+            gameStatistics.setYellowCards(gameStatistics.getYellowCards() - 1);
+            gameStatisticsRepository.save(gameStatistics);
+    }
+
+    public void removeRedCard(Long currentGameId, int playerInGameNumber) {
+        GameStatistics gameStatistics = gameStatisticsRepository
+                .findByGame_IdAndAndInGameNumber(currentGameId, playerInGameNumber);
+        gameStatistics.setRedCards((byte) (gameStatistics.getRedCards() - 1));
+        gameStatistics.setInGame(true);
+        gameStatisticsRepository.save(gameStatistics);
+    }
+
     public void resetYellowCardsAmountAndGiveRedOne(Long currentGameId, int playerNumber) {
         GameStatistics gameStatistics = gameStatisticsRepository
                 .findByGame_IdAndAndInGameNumber(currentGameId, playerNumber);

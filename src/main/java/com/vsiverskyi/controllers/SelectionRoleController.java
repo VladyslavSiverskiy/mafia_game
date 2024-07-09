@@ -6,6 +6,7 @@ import com.vsiverskyi.exception.NoRoleWithSuchTitleException;
 import com.vsiverskyi.model.GameStatistics;
 import com.vsiverskyi.model.Player;
 import com.vsiverskyi.model.Role;
+import com.vsiverskyi.model.enums.ERoleOrder;
 import com.vsiverskyi.service.GameService;
 import com.vsiverskyi.service.GameStatisticsService;
 import com.vsiverskyi.service.RoleService;
@@ -38,6 +39,8 @@ import static com.vsiverskyi.utils.StyleConstants.IDLE_BUTTON_STYLE;
 @FxmlView("SelectionRole.fxml")
 public class SelectionRoleController implements Initializable,DisplayedPlayersController {
 
+    @Autowired
+    private ViewController viewController;
     @Autowired
     private GameService gameService;
     @Autowired
@@ -94,6 +97,13 @@ public class SelectionRoleController implements Initializable,DisplayedPlayersCo
         stage.setMaximized(true);
         stage.setFullScreen(true);
         fullScreen.setOnAction(ev -> stage.setFullScreen(true));
+        roleSelectionIndex=0;
+
+        playerButtonsMap = new HashMap<>();
+        playerIdRoleMap = new HashMap<>();
+        playerRoleLabelsMap = new HashMap<>();
+        assignedRolesList = FXCollections.observableArrayList();
+
         try {
             System.out.println("ID " + SelectionController.currentGameId);
             // get list of gamers and sort them by their number
@@ -230,6 +240,10 @@ public class SelectionRoleController implements Initializable,DisplayedPlayersCo
                 int finalI1 = i;
                 gameStatisticsList = gameStatisticsService
                         .getGameStatisticsByGameIdSortedByInGameNumber(SelectionController.currentGameId);
+                System.out.println(SelectionController.currentGameId);
+                System.out.println(gameStatisticsList);
+
+
                 gameStatistics = gameStatisticsList
                         .stream()
                         .filter(gs -> gs.getInGameNumber() == finalI1).findFirst().get();
@@ -245,8 +259,20 @@ public class SelectionRoleController implements Initializable,DisplayedPlayersCo
             avatarContainer.getChildren().add(avatar);
             int yellowCardsIterator = Objects.isNull(gameStatistics) ? 0 : gameStatistics.getYellowCards();
             int redCardsIterator = Objects.isNull(gameStatistics) ? 0 : gameStatistics.getRedCards();
+            int inGameNumber = Objects.isNull(gameStatistics) ? 0 : gameStatistics.getInGameNumber();
             // Add small yellow cards in a row near the circle avatar
-            ViewController.showCards(yellowCardsIterator,redCardsIterator, avatarContainer);
+//            viewController.showCards(yellowCardsIterator, redCardsIterator, avatarContainer, inGameNumber, this, gameStatisticsList.size());
+            viewController.showCards(
+                    yellowCardsIterator,
+                    redCardsIterator,
+                    avatarContainer,
+                    inGameNumber,
+                    this,
+                    gameStatisticsList.size(),
+                    stage,
+                    playerCardListView,
+                    gameStatisticsList
+            );
             playerPanel.getChildren().add(avatarContainer);
 
             if (i > 0 && i < totalPlayers + 1) {
@@ -347,7 +373,7 @@ public class SelectionRoleController implements Initializable,DisplayedPlayersCo
     private void showNextRole() {
         currentRole = roles.get(roleSelectionIndex++);
         // Роздати всім іншим ролі мирного;
-        if (currentRole.getTitle().equals("Мирний")) {
+        if (currentRole.getTitle().equals(ERoleOrder.PEACE.getTitle())) {
             playerIdRoleMap.forEach((playerId, role) -> {
                 if (role == null) {
                     // Ми отримуємо відсортований масив, де останній буде мирним

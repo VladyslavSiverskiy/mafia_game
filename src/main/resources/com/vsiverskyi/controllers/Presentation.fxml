@@ -36,5 +36,6 @@
               </font>
           </Label>
       <Button fx:id="nextPlayerButton" layoutX="103.0" layoutY="511.0" mnemonicParsing="false" text="Next" />
+      <Label fx:id="startLabel" layoutX="26.0" layoutY="639.0" textFill="WHITE" />
     </children>
 </AnchorPane>

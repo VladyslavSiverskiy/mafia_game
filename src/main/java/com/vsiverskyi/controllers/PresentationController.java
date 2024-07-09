@@ -15,10 +15,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.ListView;
+import javafx.scene.control.*;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -34,9 +31,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.net.URL;
-import java.util.List;
-import java.util.Objects;
-import java.util.ResourceBundle;
+import java.util.*;
 
 import static com.vsiverskyi.utils.StyleConstants.HOVERED_BUTTON_STYLE;
 import static com.vsiverskyi.utils.StyleConstants.IDLE_BUTTON_STYLE;
@@ -48,6 +43,8 @@ public class PresentationController implements Initializable, DisplayedPlayersCo
     private Stage stage;
     private Scene scene;
     private Parent root;
+    @Autowired
+    private ViewController viewController;
     @Autowired
     private GameService gameService;
     @Autowired
@@ -62,6 +59,8 @@ public class PresentationController implements Initializable, DisplayedPlayersCo
     private AnchorPane presentationPlayersPane;
     @FXML
     private Label secondsLeft;
+    @FXML
+    private Label startLabel;
     @FXML
     private Label presentationPlayerId;
     @FXML
@@ -79,6 +78,8 @@ public class PresentationController implements Initializable, DisplayedPlayersCo
     @FXML
     private ListView<HBox> playerCardListView;
     private List<GameStatistics> gameStatisticsList;
+    private Map<Integer, Button> playerIdButton;
+    private Queue<Integer> gamersOrder;
     //set the delay as 0
     Timeline countDownTimeLine;
     private int secondsPerPresentation = 5;
@@ -95,6 +96,8 @@ public class PresentationController implements Initializable, DisplayedPlayersCo
         scene.getStylesheets().add(getClass().getResource("/style/style.css").toExternalForm());
         fullScreen.setOnAction(ev -> stage.setFullScreen(true));
 
+
+        playerIdButton = new HashMap<>();
         startVoting.setStyle(StyleConstants.IDLE_BUTTON_STYLE);
         startVoting.setOnMouseEntered(e -> startVoting.setStyle(HOVERED_BUTTON_STYLE));
         startVoting.setOnMouseExited(e -> startVoting.setStyle(IDLE_BUTTON_STYLE));
@@ -107,9 +110,14 @@ public class PresentationController implements Initializable, DisplayedPlayersCo
         penaltyController.initializePlayerCardList(gameStatisticsList, stage, this, playerCardListView);
 
         displayRolePlayers(gameStatisticsList.size());
-        startVoting.setOnAction(actionEvent -> startPresentation(0));
+        startVoting.setOnAction(actionEvent -> startPresentation());
         nextPlayerButton.setOnAction(actionEvent -> skipToNextPlayer());
-        skip.setOnAction(event -> fxWeaver.loadController(VotingController.class).show());
+        skip.setOnAction(event -> {
+            if(countDownTimeLine != null) {
+                countDownTimeLine.stop();
+            }
+            fxWeaver.loadController(VotingController.class).show();
+        });
         stage.setFullScreen(true);
     }
 
@@ -150,8 +158,21 @@ public class PresentationController implements Initializable, DisplayedPlayersCo
 
             int yellowCardsIterator = Objects.isNull(gameStatistics) ? 0 : gameStatistics.getYellowCards();
             int redCardsIterator = Objects.isNull(gameStatistics) ? 0 : gameStatistics.getRedCards();
+            int inGameNumber = Objects.isNull(gameStatistics) ? 0 : gameStatistics.getInGameNumber();
             // Add small yellow cards in a row near the circle avatar
-            ViewController.showCards(yellowCardsIterator, redCardsIterator, avatarContainer);
+//            viewController.showCards(yellowCardsIterator, redCardsIterator, avatarContainer, inGameNumber, this, gameStatisticsList.size());
+
+            viewController.showCards(
+                    yellowCardsIterator,
+                    redCardsIterator,
+                    avatarContainer,
+                    inGameNumber,
+                    this,
+                    gameStatisticsList.size(),
+                    stage,
+                    playerCardListView,
+                    gameStatisticsList
+            );
             playerPanel.getChildren().add(avatarContainer);
 
             if (i > 0 && i < totalPlayers + 1) {
@@ -173,7 +194,7 @@ public class PresentationController implements Initializable, DisplayedPlayersCo
             presentationPlayersPane.getChildren().add(playerPanel);
             Button button = createPlayerButton(x, y, i);
             if (!checkIfAlive(i, totalPlayers)) {
-                playerPanel.setDisable(true);
+//                playerPanel.setDisable(true);
                 playerPanel.setVisible(true);
                 avatar.setFill(Color.DARKGREY);
                 button.setDisable(true);
@@ -182,6 +203,8 @@ public class PresentationController implements Initializable, DisplayedPlayersCo
             if (i == 0 || i == totalPlayers + 1) {
                 playerPanel.setVisible(false);
                 button.setVisible(false);
+            } else {
+                playerIdButton.put(i, button);
             }
             presentationPlayersPane.getChildren().add(button);
         }
@@ -198,33 +221,42 @@ public class PresentationController implements Initializable, DisplayedPlayersCo
                        .get(playerNumber - 1).isInGame();
     }
 
-    private void startPresentation(int index) {
+    private void endEachPlayerPresentation() {
+        // TODO: поміняти не нормальні змінні, а не в коді
+        secondsTillEnd = 50;
+        presentationPlayerId.setText("-");
+        countDownTimeLine = new Timeline(new KeyFrame(Duration.seconds(1), (ActionEvent event) -> {
+            secondsLeft.setText(String.valueOf(secondsTillEnd--));
+        }));
+        // Set number of cycles (remaining duration in seconds):
+        countDownTimeLine.setCycleCount((int) 50);
+        countDownTimeLine.setOnFinished(event -> {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.initOwner(stage);
+            alert.show();
+            alert.setOnHidden(evt -> startVoting());
+        });
+        countDownTimeLine.play();
+        return;
+    }
+
+    private void doPresentation(int index) {
         //обговорення після
-        if (index > gameStatisticsList.size() - 1) {
-            // TODO: поміняти не нормальні змінні, а не в коді
-            secondsTillEnd = 50;
-            presentationPlayerId.setText("-");
-            countDownTimeLine = new Timeline(new KeyFrame(Duration.seconds(1), (ActionEvent event) -> {
-                secondsLeft.setText(String.valueOf(secondsTillEnd--));
-            }));
-            // Set number of cycles (remaining duration in seconds):
-            countDownTimeLine.setCycleCount((int) 50);
-            countDownTimeLine.setOnFinished(event -> {
-                Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                alert.initOwner(stage);
-                alert.show();
-                alert.setOnHidden(evt -> startVoting());
-            });
-            countDownTimeLine.play();
-            return;
+        if (gamersOrder.isEmpty()) { // якщо всі проголосували - почати обговорення
+            endEachPlayerPresentation();
         }
 
         GameStatistics gameStatistics = gameStatisticsList.get(index);
         if (gameStatistics != null) {
             // Create time line to lower remaining duration every second:
             if (!gameStatistics.isInGame()) {
-                int finalIndex = index + 1;
-                startPresentation(finalIndex);
+                gamersOrder.remove();
+                Integer currentPlayerNumber = gamersOrder.peek() - 1;
+                if (currentPlayerNumber == null) {
+                    endEachPlayerPresentation();
+                } else {
+                    doPresentation(currentPlayerNumber - 1);
+                }
             } else {
                 secondsTillEnd = 5;
                 presentationPlayerId.setText(gameStatistics.getInGameNumber().toString());
@@ -237,20 +269,64 @@ public class PresentationController implements Initializable, DisplayedPlayersCo
                 // Show alert when time is up:
                 int finalIndex = index + 1;
                 countDownTimeLine.setOnFinished(event -> {
-                    Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                    alert.initOwner(stage);
-                    alert.show();
-                    alert.setOnHidden(evt -> startPresentation(finalIndex));
+//                    Alert alert = new Alert(Alert.AlertType.INFORMATION);
+//                    alert.initOwner(stage);
+//                    alert.show();
+//                    alert.setOnHidden(evt -> doPresentation(finalIndex));
+                    gamersOrder.remove();
+                    Integer nextGamer = gamersOrder.peek();
+                    if (nextGamer == null) {
+                        endEachPlayerPresentation();
+                    } else {
+                        doPresentation(nextGamer - 1);
+                    }
                 });
                 countDownTimeLine.play();
             }
         }
     }
 
+    private void startPresentation() {
+        startLabel.setText("Оберіть гравця, з якого розпочнемо");
+
+        for (Map.Entry<Integer, Button> entry : playerIdButton.entrySet()) {
+            Button button = entry.getValue();
+            button.setOnAction(actionEvent -> {
+                ButtonType foo = new ButtonType("За годинниковою стрілкою", ButtonBar.ButtonData.YES);
+                ButtonType bar = new ButtonType("Проти годинникової стрілки", ButtonBar.ButtonData.YES);
+                Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "Виберіть напрямок", foo, bar);
+                alert.setTitle("Напрямок голосування");
+                alert.initOwner(stage);
+                alert.setHeaderText("Оберіть напрямок голосування");
+                alert.setResizable(false);
+                Optional<ButtonType> result = alert.showAndWait();
+                if (result.isPresent() && result.get().getText().equals("За годинниковою стрілкою")) {
+                    gamersOrder = getOrderOfInGameNumbersNaturalOrder(entry.getKey() - 1);
+                    System.out.println(gamersOrder);
+                    doPresentation(entry.getKey() - 1);
+                }
+            });
+        }
+
+    }
+
+    private LinkedList<Integer> getOrderOfInGameNumbersNaturalOrder(int beginFromIndex) {
+        LinkedList<Integer> inGameNumbers = new LinkedList<>();
+        // add in game numbers from selected to the end
+        for (int i = beginFromIndex; i < gameStatisticsList.size(); i++) {
+            inGameNumbers.add(gameStatisticsList.get(i).getInGameNumber());
+        }
+        // add in game numbers before selected
+        for (int i = 0; i < beginFromIndex; i++) {
+            inGameNumbers.add(gameStatisticsList.get(i).getInGameNumber());
+        }
+        return inGameNumbers;
+    }
+
     private void skipToNextPlayer() {
         if (countDownTimeLine != null) {
             countDownTimeLine.stop();
-            startPresentation(gameStatisticsList.indexOf(gameStatisticsList.stream()
+            doPresentation(gameStatisticsList.indexOf(gameStatisticsList.stream()
                     .filter(gs -> gs.getInGameNumber().toString().equals(presentationPlayerId.getText()))
                     .findFirst().orElse(null)) + 1);
         }
