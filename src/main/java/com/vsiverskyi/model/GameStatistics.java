@@ -50,6 +50,28 @@ public class GameStatistics {
     private short timesWasKilled = 0;
     @Column
     private short excusesAttempts = 0;
+    /**
+     * Для Отамана
+     * */
+    @Column
+    private boolean defendedPerNextVoting;
+    /***
+     * Для леді
+     */
+    @Column
+    private boolean poisonedByLady;
+    @Column
+    private short nightsTillDeath;
+    /**
+     * Для бомби
+     */
+    @Column
+    private boolean wasMarkedByBomb;
+    /**
+     * Для крадія
+     * */
+    @Column
+    private boolean wasMarkedByKradiy;
 
     @Override
     public String toString() {

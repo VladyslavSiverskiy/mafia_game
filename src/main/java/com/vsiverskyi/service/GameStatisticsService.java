@@ -12,8 +12,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -32,14 +34,47 @@ public class GameStatisticsService {
         return gameStatisticsRepository.save(gameStatistics);
     }
 
+    public List<Integer> getMarkedByBombAlivePlayersInGameNumbers(Long gameId) {
+        return gameRepository.findById(gameId).get()
+                .getGameStatistics()
+                .stream()
+                .filter(gameStatistics -> gameStatistics.isWasMarkedByBomb())
+                .map(gameStatistics -> gameStatistics.getInGameNumber())
+                .toList();
+    }
+
+    public void markPlayersByBomb(Set<Integer> playersToMark, Long gameId) {
+        clearPreviousMarks(gameId);
+        for (Integer playerInGameNumber : playersToMark) {
+            GameStatistics gameStatistics = gameStatisticsRepository
+                    .findByGame_IdAndAndInGameNumber(gameId, playerInGameNumber);
+            gameStatistics.setWasMarkedByBomb(true);
+            gameStatisticsRepository.save(gameStatistics);
+        }
+    }
+
+    private void clearPreviousMarks(Long gameId) {
+        List<GameStatistics> gameStatistics = gameRepository.findById(gameId).get().getGameStatistics();
+        for (GameStatistics gameStatistic: gameStatistics) {
+            gameStatistic.setWasMarkedByBomb(false);
+            gameStatisticsRepository.save(gameStatistic);
+        }
+    }
+
     public GameStatistics killPlayer(long gameId, int playerToKillInGameNumber) {
         GameStatistics gameStatistics = gameStatisticsRepository
                 .findByGame_IdAndAndInGameNumber(gameId, playerToKillInGameNumber);
-        System.out.println(gameStatistics.getRole());
-        if(gameStatistics.getRole().getRoleNameConstant().equals(ERoleOrder.STRILOCHNYK.name())) {
-            System.out.println("HERE");
+        if (gameStatistics.getRole().getRoleNameConstant().equals(ERoleOrder.STRILOCHNYK.name())) {
             gameStatistics.setTimesWasKilled((short) (gameStatistics.getTimesWasKilled() + 1));
-        }else {
+        } else if (gameStatistics.getRole().getRoleNameConstant().equals(ERoleOrder.BOMBA.name())) {
+            List<GameStatistics> gamersMarkedByBomb = gameRepository.findById(gameId).get().getGameStatistics();
+            for (GameStatistics gamer : gamersMarkedByBomb) {
+                if(gamer.isWasMarkedByBomb()) {
+                    gamer.setInGame(false);
+                }
+            }
+            gameStatistics.setInGame(false);
+        } else {
             gameStatistics.setInGame(false);
         }
         gameStatisticsRepository.save(gameStatistics);
@@ -48,7 +83,7 @@ public class GameStatisticsService {
 
     /**
      * This method is used in penalty system, when player gets red card
-     * */
+     */
     public GameStatistics removePlayerFromGame(long gameId, int playerToKillInGameNumber) {
         GameStatistics gameStatistics = gameStatisticsRepository
                 .findByGame_IdAndAndInGameNumber(gameId, playerToKillInGameNumber);
@@ -61,6 +96,7 @@ public class GameStatisticsService {
         GameStatistics gameStatistics = gameStatisticsRepository
                 .findByGame_IdAndAndInGameNumber(gameId, playerToKillInGameNumber);
         gameStatistics.setInGame(true);
+        gameStatistics.setPoisonedByLady(false);
         gameStatistics.setTimesWasHealed((short) (gameStatistics.getTimesWasHealed() + 1));
         gameStatisticsRepository.save(gameStatistics);
         return gameStatistics;
@@ -88,13 +124,63 @@ public class GameStatisticsService {
 
     public GameStatistics deletePlayerAfterVoting(Long gameId, int inGameNumber) {
         GameStatistics gameStatistics = gameStatisticsRepository.findByGame_IdAndAndInGameNumber(gameId, inGameNumber);
-        gameStatistics.setInGame(false);
-        gameStatistics = gameStatisticsRepository.save(gameStatistics);
+        if (!gameStatistics.isDefendedPerNextVoting()) {
+            gameStatistics.setInGame(false);
+            gameStatistics = gameStatisticsRepository.save(gameStatistics);
+        }
+        if (gameStatistics.getRole().getTitle().equals(ERoleOrder.BOMBA.getTitle())) {
+            System.out.println("HERE");
+            killNearestPlayers(gameStatistics.getInGameNumber(), gameId);
+        }
         return gameStatistics;
     }
 
+    private void killNearestPlayers(Integer bombInGameNumber, Long gameId) {
+        int killedPlayersFromLeftSide = 0;
+        int killedPlayersFromRightSide = 0;
+
+        int amountOfPlayers = gameRepository.findById(gameId).get().getPlayersAmount();
+        int currentPlayerNumberToCheck = bombInGameNumber + 1;
+
+        //do right
+        while(killedPlayersFromRightSide < 2) {
+            if (currentPlayerNumberToCheck > amountOfPlayers) {
+                currentPlayerNumberToCheck = 1;
+            }
+            System.out.println(currentPlayerNumberToCheck);
+            GameStatistics gameStatistics = gameStatisticsRepository
+                    .findByGame_IdAndAndInGameNumber(gameId, currentPlayerNumberToCheck);
+            if (gameStatistics.isInGame()) {
+                gameStatistics.setInGame(false);
+                gameStatisticsRepository.save(gameStatistics);
+                killedPlayersFromRightSide++;
+                currentPlayerNumberToCheck++;
+            } else {
+                currentPlayerNumberToCheck++;
+            }
+        }
+
+        //do left
+        currentPlayerNumberToCheck = bombInGameNumber - 1;
+        while(killedPlayersFromLeftSide < 2) {
+            if (currentPlayerNumberToCheck > amountOfPlayers) {
+                currentPlayerNumberToCheck = amountOfPlayers;
+            }
+            GameStatistics gameStatistics = gameStatisticsRepository
+                    .findByGame_IdAndAndInGameNumber(gameId, currentPlayerNumberToCheck);
+            if (gameStatistics.isInGame()) {
+                gameStatistics.setInGame(false);
+                gameStatisticsRepository.save(gameStatistics);
+                killedPlayersFromLeftSide++;
+                currentPlayerNumberToCheck--;
+            } else {
+                currentPlayerNumberToCheck--;
+            }
+        }
+    }
+
     public Boolean checkIfDonIsAlive(long currentGameId) {
-        List<GameStatistics> gameStatisticsList =  gameRepository.findById(currentGameId).get().getGameStatistics();
+        List<GameStatistics> gameStatisticsList = gameRepository.findById(currentGameId).get().getGameStatistics();
         GameStatistics donRole = gameStatisticsList.stream()
                 .filter(gameStatistics -> gameStatistics.getRole().getRoleNameConstant()
                         .equals(ERoleOrder.DON.name())).toList().get(0);
@@ -111,8 +197,16 @@ public class GameStatisticsService {
 
     public void removeAllVotingSkipsPerDay(Long currentGameId) {
         List<GameStatistics> gameStatisticsList = getGameStatisticsByGameId(currentGameId);
-        for (GameStatistics gs: gameStatisticsList) {
+        for (GameStatistics gs : gameStatisticsList) {
             gs.setSkipNextVoting(false);
+            gameStatisticsRepository.save(gs);
+        }
+    }
+
+    public void removeAllVotingDefencesPerDay(Long currentGameId) {
+        List<GameStatistics> gameStatisticsList = getGameStatisticsByGameId(currentGameId);
+        for (GameStatistics gs : gameStatisticsList) {
+            gs.setDefendedPerNextVoting(false);
             gameStatisticsRepository.save(gs);
         }
     }
@@ -137,10 +231,10 @@ public class GameStatisticsService {
     }
 
     public void removeYellowCard(Long currentGameId, int playerInGameNumber) {
-            GameStatistics gameStatistics = gameStatisticsRepository
-                    .findByGame_IdAndAndInGameNumber(currentGameId, playerInGameNumber);
-            gameStatistics.setYellowCards(gameStatistics.getYellowCards() - 1);
-            gameStatisticsRepository.save(gameStatistics);
+        GameStatistics gameStatistics = gameStatisticsRepository
+                .findByGame_IdAndAndInGameNumber(currentGameId, playerInGameNumber);
+        gameStatistics.setYellowCards(gameStatistics.getYellowCards() - 1);
+        gameStatisticsRepository.save(gameStatistics);
     }
 
     public void removeRedCard(Long currentGameId, int playerInGameNumber) {
@@ -157,10 +251,56 @@ public class GameStatisticsService {
         gameStatistics.setYellowCards(0);
         gameStatistics.setRedCards((byte) 1);
         gameStatisticsRepository.save(gameStatistics);
+    }
 
+    public void setDefenceForNextVoting(Long currentGameId, int chosenPlayerNumber) {
+        GameStatistics gameStatistics = gameStatisticsRepository
+                .findByGame_IdAndAndInGameNumber(currentGameId, chosenPlayerNumber);
+        gameStatistics.setDefendedPerNextVoting(true);
+        gameStatisticsRepository.save(gameStatistics);
+    }
+
+    public void resetDefenceForNextVoting(Long currentGameId, int chosenPlayerNumber) {
+        GameStatistics gameStatistics = gameStatisticsRepository
+                .findByGame_IdAndAndInGameNumber(currentGameId, chosenPlayerNumber);
+        gameStatistics.setDefendedPerNextVoting(false);
+        gameStatisticsRepository.save(gameStatistics);
     }
 
     public void save(GameStatistics gameStatistics) {
         gameStatisticsRepository.save(gameStatistics);
+    }
+
+    public List<GameStatistics> processPoisonedPlayers(Long currentGameId) {
+        List<GameStatistics> poisonedGamers = gameRepository.findById(currentGameId)
+                .orElseThrow()
+                .getGameStatistics().stream().filter(gameStatistics -> gameStatistics.isPoisonedByLady()).collect(Collectors.toList());
+        List<GameStatistics> killedDueToPoisoningInGameNumbers = new ArrayList<>();
+        for (GameStatistics gameStatistics : poisonedGamers) {
+            if (gameStatistics.getNightsTillDeath() == 0) {
+                killPlayer(currentGameId, gameStatistics.getInGameNumber());
+                killedDueToPoisoningInGameNumbers.add(gameStatistics);
+            } else {
+                gameStatistics.setNightsTillDeath((short) (gameStatistics.getNightsTillDeath() - 1));
+                gameStatisticsRepository.save(gameStatistics);
+            }
+        }
+        return killedDueToPoisoningInGameNumbers;
+    }
+
+    public void markPlayerByKradiy(int chosenPlayerNumber, Long currentGameId) {
+        GameStatistics gameStatistics = gameStatisticsRepository
+                .findByGame_IdAndAndInGameNumber(currentGameId, chosenPlayerNumber);
+        gameStatistics.setWasMarkedByKradiy(true);
+        gameStatisticsRepository.save(gameStatistics);
+    }
+
+    public void removeAllKradiyChoices(Long currentGameId) {
+        List<GameStatistics> gameStatisticsList = gameRepository.findById(currentGameId)
+                .orElseThrow(() -> new NoGameWithSuchIdException(ExceptionConstants.NO_GAME_WITH_SUCH_ID)).getGameStatistics();
+        for (GameStatistics gameStatistics: gameStatisticsList) {
+            gameStatistics.setWasMarkedByKradiy(false);
+            gameStatisticsRepository.save(gameStatistics);
+        }
     }
 }

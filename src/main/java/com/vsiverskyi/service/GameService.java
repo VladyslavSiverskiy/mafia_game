@@ -19,10 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -38,6 +35,13 @@ public class GameService {
 
     public Game getGameInfo(Long id) {
         return gameRepository.findById(id).get();
+    }
+
+    public Game increaseNightIndicator(Long id) {
+        Game game = getGameInfo(id);
+        game.setCurrentNightIndicator(game.getCurrentNightIndicator() + 1);
+        gameRepository.save(game);
+        return game;
     }
 
     public Game beginGame(
@@ -193,14 +197,32 @@ public class GameService {
             //TODO: нарахувати бали
             return true;
         } else if (!checkIfAtLeastOneMafiaIsAlive(gameId)){
-            game.setLastUpdate(LocalDateTime.now());
-            game.setGameStatus(EGameStatus.WAS_COMPLETED);
-            game.setWinnerSide(ETeam.PEACE);
-            gameRepository.save(game);
-            return true;
+            Optional<GameStatistics> perevertenGamer = findAlivePereverten(gameId);
+            if (perevertenGamer.isPresent()) {
+                GameStatistics gameStatistics = perevertenGamer.get();
+                gameStatistics.setRole(roleRepository.findByTitle(ERoleOrder.PEREVERTEN_MAFIA.getTitle()).get());
+                gameStatisticsRepository.save(gameStatistics);
+                return false;
+            }else{
+                game.setLastUpdate(LocalDateTime.now());
+                game.setGameStatus(EGameStatus.WAS_COMPLETED);
+                game.setWinnerSide(ETeam.PEACE);
+                gameRepository.save(game);
+                return true;
+            }
         } else {
             return false;
         }
+    }
+
+    private Optional<GameStatistics> findAlivePereverten(Long gameId) {
+        List<GameStatistics> gameStatisticsList = gameRepository
+                .findById(gameId)
+                .orElseThrow(() -> new NoGameWithSuchIdException(ExceptionConstants.NO_GAME_WITH_SUCH_ID + gameId))
+                .getGameStatistics();
+        Optional<GameStatistics> perevertenGamer = gameStatisticsList.stream().filter(gameStatistics ->
+                gameStatistics.getRole().getTitle().equals(ERoleOrder.PEREVERTEN_PEACE.getTitle())).findFirst();
+        return perevertenGamer;
     }
 
     private boolean checkIfRolesWereSet(List<GameStatistics> gameStatisticsList) {
@@ -245,10 +267,17 @@ public class GameService {
     }
 
     public Action doMafiaKillMove(long gameId, int playerToKillInGameNumber) {
-        gameStatisticsService.killPlayer(gameId, playerToKillInGameNumber);
+        GameStatistics gameStatistics = gameStatisticsRepository
+                .findByGame_IdAndAndInGameNumber(gameId, playerToKillInGameNumber);
         Action logger = new Action();
-        logger.setActionText("Мафія вистрілила у гравця № " + playerToKillInGameNumber);
-        logger.setLocalDateTime(LocalDateTime.now());
+        if (gameStatistics.getRole().getTitle().equals(ERoleOrder.PEREVERTEN_PEACE.getTitle())) {
+            logger.setActionText("Мафія вистрілила у перевертня, вона не може його вбити. ");
+            logger.setLocalDateTime(LocalDateTime.now());
+        }else{
+            gameStatisticsService.killPlayer(gameId, playerToKillInGameNumber);
+            logger.setActionText("Мафія вистрілила у гравця № " + playerToKillInGameNumber);
+            logger.setLocalDateTime(LocalDateTime.now());
+        }
         return logger;
     }
 
@@ -260,10 +289,10 @@ public class GameService {
         return logger;
     }
 
-    public Action doLedyMove(Long currentGameId, int chosenPlayerNumber) {
+    public Action doZatychkaMove(Long currentGameId, int chosenPlayerNumber) {
         gameStatisticsService.blockVotingPerDay(currentGameId, chosenPlayerNumber);
         Action logger = new Action();
-        logger.setActionText("Леді обирає гравця № " + chosenPlayerNumber);
+        logger.setActionText("Затичка обирає гравця № " + chosenPlayerNumber);
         logger.setLocalDateTime(LocalDateTime.now());
         return logger;
     }
@@ -279,7 +308,15 @@ public class GameService {
     public Action doStrilochnykMove(Long currentGameId, int chosenPlayerNumber) {
         gameStatisticsService.killPlayer(currentGameId, chosenPlayerNumber);
         Action logger = new Action();
-        logger.setActionText("Стрілочник вистрілив у гравця № " + chosenPlayerNumber);
+        logger.setActionText(ERoleOrder.STRILOCHNYK + " вистрілив у гравця № " + chosenPlayerNumber);
+        logger.setLocalDateTime(LocalDateTime.now());
+        return logger;
+    }
+
+    public Action doOtamanMove(Long currentGameId, int chosenPlayerNumber) {
+        gameStatisticsService.setDefenceForNextVoting(currentGameId, chosenPlayerNumber);
+        Action logger = new Action();
+        logger.setActionText(ERoleOrder.OTAMAN.getTitle() + " надав захист гравцеві № " + chosenPlayerNumber);
         logger.setLocalDateTime(LocalDateTime.now());
         return logger;
     }
@@ -291,5 +328,16 @@ public class GameService {
                 gameStatisticsRepository.save(gameStatistics);
             }
         }
+    }
+
+    public Action doLedyMove(Long currentGameId, int chosenPlayerNumber) {
+        GameStatistics gameStatistics = gameStatisticsRepository
+                .findByGame_IdAndAndInGameNumber(currentGameId, chosenPlayerNumber);
+        gameStatistics.setPoisonedByLady(true);
+        gameStatistics.setNightsTillDeath((short) 1);
+        Action logger = new Action();
+        logger.setActionText(ERoleOrder.LEDY.getTitle() + " отруює гравця № " + chosenPlayerNumber);
+        logger.setLocalDateTime(LocalDateTime.now());
+        return logger;
     }
 }

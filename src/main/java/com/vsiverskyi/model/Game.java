@@ -30,6 +30,8 @@ public class Game {
     private ETeam winnerSide;
     @Column
     private Integer playersAmount;
+    @Column
+    private int currentNightIndicator;
     @OneToMany(mappedBy = "game",fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private List<GameStatistics> gameStatistics;
 

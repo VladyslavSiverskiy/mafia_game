@@ -4,13 +4,18 @@ public enum ERoleOrder {
     UNDEFINED("Undefined"),
     MAFIA("Хабарник"),
     DON("Корупціонер"),
+    OTAMAN("Отаман"),
     SHERYF("Гетьман"),
-    DOCTOR("Лікар"),
-    LEDY("Леді"),
+    DOCTOR("Знахар"),
+    LEDY("Діва ночі"),
     MANIAK("Навіжений"),
     STRILOCHNYK("Кармалюк"),
     BOMBA("Бомба"),
-    ZATYCHKA("Затичка"),
+    ZATYCHKA("Пастор"),
+    ZATYCHKA_SUDDYA("Суддя"),
+    PEREVERTEN_PEACE("Яничар-мирний"),
+    PEREVERTEN_MAFIA("Яничар-мафія"),
+    KRADIY("Крадій"),
     PEACE("Козак");
 
     ERoleOrder(final String title) {

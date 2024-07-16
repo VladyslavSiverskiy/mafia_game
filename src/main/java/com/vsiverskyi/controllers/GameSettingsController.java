@@ -99,12 +99,16 @@ public class GameSettingsController implements Initializable {
         settingsBox.setSpacing(10);
 
         settingsBox.getChildren().add(createSettingRow(ERoleOrder.DOCTOR.getTitle()));
+        settingsBox.getChildren().add(createSettingRow(ERoleOrder.OTAMAN.getTitle()));
         settingsBox.getChildren().add(createSettingRow(ERoleOrder.SHERYF.getTitle()));
         settingsBox.getChildren().add(createSettingRow(ERoleOrder.LEDY.getTitle()));
         settingsBox.getChildren().add(createSettingRow(ERoleOrder.MANIAK.getTitle()));
         settingsBox.getChildren().add(createSettingRow(ERoleOrder.STRILOCHNYK.getTitle()));
         settingsBox.getChildren().add(createSettingRow(ERoleOrder.BOMBA.getTitle()));
         settingsBox.getChildren().add(createSettingRow(ERoleOrder.ZATYCHKA.getTitle()));
+        settingsBox.getChildren().add(createSettingRow(ERoleOrder.ZATYCHKA_SUDDYA.getTitle()));
+        settingsBox.getChildren().add(createSettingRow(ERoleOrder.PEREVERTEN_PEACE.getTitle()));
+        settingsBox.getChildren().add(createSettingRow(ERoleOrder.KRADIY.getTitle()));
 
         // Create a ScrollPane and add the settingsBox to it
         ScrollPane scrollPane = new ScrollPane();
@@ -136,7 +140,7 @@ public class GameSettingsController implements Initializable {
         } catch (CantStartGameException e) {
             Alert alert = new Alert(Alert.AlertType.WARNING, e.getMessage());
             alert.initOwner(stage);
-            alert.show();;
+            alert.show();
         }
     }
 

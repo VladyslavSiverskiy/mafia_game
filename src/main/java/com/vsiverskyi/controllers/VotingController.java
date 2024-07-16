@@ -3,6 +3,7 @@ package com.vsiverskyi.controllers;
 import com.vsiverskyi.model.GameStatistics;
 import com.vsiverskyi.model.Player;
 import com.vsiverskyi.model.Role;
+import com.vsiverskyi.model.enums.ERoleOrder;
 import com.vsiverskyi.service.GameService;
 import com.vsiverskyi.service.GameStatisticsService;
 import com.vsiverskyi.service.PointsService;
@@ -14,6 +15,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Cursor;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
@@ -93,6 +95,7 @@ public class VotingController implements Initializable, DisplayedPlayersControll
     private Integer currentVoterIndex;
     private Integer reverseCurrentVoterIndex;
     private boolean reverse;
+    private boolean kradiyHasStolenVoice;
     private Timeline excuseTimeLine;
     int secondsTillEnd = 10;
 
@@ -106,6 +109,7 @@ public class VotingController implements Initializable, DisplayedPlayersControll
         stage.setFullScreen(true);
         playerIdVotesMap = new HashMap<>();
         playerIdButton = new HashMap<>();
+        kradiyHasStolenVoice = false;
 
         gameStatisticsList = gameStatisticsService.getGameStatisticsByGameIdSortedByInGameNumber(SelectionController.currentGameId);
         reverseCurrentVoterIndex = gameStatisticsList.size() - 1;
@@ -226,11 +230,18 @@ public class VotingController implements Initializable, DisplayedPlayersControll
                 playerPanel.setVisible(true);
                 avatar.setFill(Color.DARKGREY);
                 button.setDisable(true);
+                button.setStyle(IDLE_BUTTON_STYLE);
             }
 
             if (checkIfSkipVoting(i, totalPlayers)) {
                 Label label = new Label("S");
                 playerPanel.getChildren().add(label);
+            }
+
+            if (checkIfMarkedByKradiy(i, totalPlayers)) {
+                Label label = new Label("K");
+                playerPanel.getChildren().add(label);
+                kradiyHasStolenVoice = true;
             }
 
             if (i == 0 || i == totalPlayers + 1) {
@@ -259,6 +270,13 @@ public class VotingController implements Initializable, DisplayedPlayersControll
                && gameStatisticsService
                        .getGameStatisticsByGameIdSortedByInGameNumber(SelectionController.currentGameId)
                        .get(playerNumber - 1).isSkipNextVoting();
+    }
+
+    private Boolean checkIfMarkedByKradiy(int playerNumber, int totalPlayers) {
+        return playerNumber != 0 && playerNumber != totalPlayers + 1
+               && gameStatisticsService
+                       .getGameStatisticsByGameIdSortedByInGameNumber(SelectionController.currentGameId)
+                       .get(playerNumber - 1).isWasMarkedByKradiy();
     }
 
     private void beginVoting(int beginFromIndex) {
@@ -304,7 +322,9 @@ public class VotingController implements Initializable, DisplayedPlayersControll
     private void giveVoiceForward(Integer currentVoterIndex) {
 
         if (!checkIfAlive(currentVoterIndex + 1, gameStatisticsList.size()) ||
-            checkIfSkipVoting(currentVoterIndex + 1, gameStatisticsList.size())) {
+            checkIfSkipVoting(currentVoterIndex + 1, gameStatisticsList.size()) ||
+            checkIfMarkedByKradiy(currentVoterIndex + 1, gameStatisticsList.size())
+        ) {
             // якщо гравець не живий
             gamersOrder.remove();// видаляємо його
             //take next. If next is null and game
@@ -358,21 +378,23 @@ public class VotingController implements Initializable, DisplayedPlayersControll
             }));
 
             countDownTimeLine.setCycleCount(Timeline.INDEFINITE);
-            System.out.println("PLAY");
             countDownTimeLine.play();
             unblockAllButtons();
+            updateButtonStates(currentVoterIndex);
             Button button = playerIdButton.get(currentVoterIndex + 1);
             button.setStyle("-fx-background-color: #00f100");
+            System.out.println("Style");
             //            button.setDisable(true);
-
-            updateButtonStates(currentVoterIndex);
             return;  // Exit the loop and method after starting the countdown
         }
     }
 
 
     private void giveVoiceReverse(Integer reverseCurrentVoterIndex) {
-        if (!checkIfAlive(reverseCurrentVoterIndex + 1, gameStatisticsList.size())) {
+        if (!checkIfAlive(reverseCurrentVoterIndex + 1, gameStatisticsList.size()) ||
+            checkIfSkipVoting(currentVoterIndex + 1, gameStatisticsList.size()) ||
+            checkIfMarkedByKradiy(currentVoterIndex + 1, gameStatisticsList.size()
+            )) {
             gamersOrder.remove();// видаляємо його
             //take next. If next is null and game
             Integer nextPlayerNumber = gamersOrder.peek();
@@ -415,8 +437,6 @@ public class VotingController implements Initializable, DisplayedPlayersControll
                                 }
                             }
                         }
-                        System.out.println(setVoteTo);
-                        System.out.println(finalReverseCurrentVoterIndex);
                         setVote(setVoteTo, finalReverseCurrentVoterIndex);
                     });
                     countDownTimeLine.stop();
@@ -425,10 +445,15 @@ public class VotingController implements Initializable, DisplayedPlayersControll
             countDownTimeLine.setCycleCount(Timeline.INDEFINITE);
             countDownTimeLine.play();
             unblockAllButtons();
-            Button button = playerIdButton.get(reverseCurrentVoterIndex + 1);
-            button.setDisable(true);
+//            Button button = playerIdButton.get(reverseCurrentVoterIndex + 1);
+//            button.setDisable(true);
 //            button.setStyle();
+//            updateButtonStates(reverseCurrentVoterIndex);
+
             updateButtonStates(reverseCurrentVoterIndex);
+            Button button = playerIdButton.get(reverseCurrentVoterIndex + 1);
+            button.setStyle("-fx-background-color: #00f100");
+
             return;  // Exit the loop and method after starting the count down
         }
     }
@@ -440,13 +465,16 @@ public class VotingController implements Initializable, DisplayedPlayersControll
             if (playerId != reverseCurrentVoterIndex + 1) {
                 if (!checkIfAlive(playerId, gameStatisticsList.size())) {
                     anotherPlayerButton.setDisable(true);
-                    anotherPlayerButton.setStyle("-fx-background-color: #4cff4c; -fx-border-radius: 1px; -fx-border-color: black; -fx-text-fill: black");
+                    System.out.println("Style here");
+//                    anotherPlayerButton.setStyle("-fx-background-color: #4cff4c; -fx-border-radius: 1px; -fx-border-color: black; -fx-text-fill: black");
                 } else {
                     anotherPlayerButton.setDisable(false);
                     anotherPlayerButton.setStyle(IDLE_BUTTON_STYLE);
                 }
             } else {
                 anotherPlayerButton.setDisable(true);
+                anotherPlayerButton.setStyle("-fx-background-color: #00f100");
+                System.out.println("Last else");
             }
         }
     }
@@ -470,15 +498,19 @@ public class VotingController implements Initializable, DisplayedPlayersControll
     private void setVote(int playerNumber, Integer voterIndex) {
         Integer playerVotes = playerIdVotesMap.get(playerNumber);
 
+        GameStatistics gameStatisticsVoter = gameStatisticsService
+                .getGameStatisticsByGameIdSortedByInGameNumber(SelectionController.currentGameId).get(voterIndex);
+        boolean isKradiy = kradiyHasStolenVoice && gameStatisticsVoter.getRole().getRoleNameConstant().equals(ERoleOrder.KRADIY.name());
+
+        int votesToAdd = isKradiy ? 2 : 1;
+
         if (playerVotes == null) {
-            playerIdVotesMap.put(playerNumber, 1);
+            playerIdVotesMap.put(playerNumber, votesToAdd);
             addPointsAndChangeVoterIndex(playerNumber, voterIndex);
         } else if (playerVotes == 2) {
             //Отримати гравця в якого голосують, щоб взяти його excusesAttempts
             GameStatistics gameStatistics = gameStatisticsService
                     .getGameStatisticsByGameIdSortedByInGameNumber(SelectionController.currentGameId).get(playerNumber - 1);
-            System.out.println(gameStatistics);
-            System.out.println(gameStatistics.getExcusesAttempts());
             if (gameStatistics.getExcusesAttempts() < SettingsConstantsController.AVAILABLE_ATTEMPTS_TO_EXCUSE) {
                 excuseTimeLine = null;
                 countDownTimeLine = null;
@@ -495,15 +527,15 @@ public class VotingController implements Initializable, DisplayedPlayersControll
                     gameStatisticsService.save(gameStatistics);
                     startExcuseTimer(playerNumber, voterIndex, gameStatistics);
                 } else {
-                    playerIdVotesMap.put(playerNumber, playerVotes + 1);
+                    playerIdVotesMap.put(playerNumber, playerVotes + votesToAdd);
                     addPointsAndChangeVoterIndex(playerNumber, voterIndex);
                 }
             } else {
-                playerIdVotesMap.put(playerNumber, playerVotes + 1);
+                playerIdVotesMap.put(playerNumber, playerVotes + votesToAdd);
                 addPointsAndChangeVoterIndex(playerNumber, voterIndex);
             }
         } else {
-            playerIdVotesMap.put(playerNumber, playerVotes + 1);
+            playerIdVotesMap.put(playerNumber, playerVotes + votesToAdd);
             addPointsAndChangeVoterIndex(playerNumber, voterIndex);
         }
     }
@@ -733,8 +765,9 @@ public class VotingController implements Initializable, DisplayedPlayersControll
         button.setLayoutX(x - 46);
         button.setLayoutY(y - 33);
         button.setStyle(IDLE_BUTTON_STYLE);
-        button.setOnMouseEntered(e -> button.setStyle(HOVERED_BUTTON_STYLE));
-        button.setOnMouseExited(e -> button.setStyle(IDLE_BUTTON_STYLE));
+        button.setCursor(Cursor.OPEN_HAND);
+//        button.setOnMouseEntered(e -> button.setStyle(HOVERED_BUTTON_STYLE));
+//        button.setOnMouseExited(e -> button.setStyle(IDLE_BUTTON_STYLE));
         return button;
     }
 
