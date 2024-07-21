@@ -80,6 +80,8 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
     private Button fullScreen;
     @FXML
     private ListView<HBox> playerCardListView;
+    @FXML
+    private ListView<String> allRolesPerGameList;
     private List<GameStatistics> gameStatisticsListSortedByRoleOrder;
     private List<GameStatistics> gameStatisticsListSortedByInGameNumber;
     private List<Role> actualInGameRoles; //here should be converted set -> list
@@ -238,6 +240,11 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
     private void updatePlayersList() {
         gameStatisticsListSortedByRoleOrder = gameStatisticsService
                 .getGameStatisticsByGameId(SelectionController.currentGameId);
+        List<String> roleTitles = gameStatisticsListSortedByRoleOrder.stream()
+                .map(gameStatistics -> gameStatistics.getRole().getTitle()).distinct().collect(Collectors.toList());
+        for (String title: roleTitles) {
+            allRolesPerGameList.getItems().add(title);
+        }
         gameStatisticsListSortedByInGameNumber = gameStatisticsService
                 .getGameStatisticsByGameIdSortedByInGameNumber(SelectionController.currentGameId);
         actualInGameRoles = gameStatisticsListSortedByRoleOrder.stream()

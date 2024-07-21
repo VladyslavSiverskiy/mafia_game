@@ -104,7 +104,7 @@ public class SelectionController implements Initializable {
             // Selection of nickname from a list (You may replace this with a ComboBox)
             ComboBox<String> nicknameComboBox = new ComboBox<>();
             // Add nicknames to the ComboBox
-            nicknameComboBox.getItems().addAll("Nickname 1", "Nickname 2", "Nickname 3", "ORest", "Іван"); // Example nicknames
+            nicknameComboBox.getItems().addAll("Nickname 1", "Nickname 2", "Nickname 3", "ORest", "Іван", "Патрон", "Сірко", "Кривенька качечка", "Сміхотун", "Нікудишко", "Бабай", "Семилітка", "Пан Коцький", "Колосок", "Лежень", "Ох", "П'яточкін", "Той що живе в річці", "Товсті щоки", "Таємний посол", "Котигорошко", "Літачок ЛІП", "Івасик Телесик", "Коровай", "Чарівний горох", "Капітошка", "Кожум'яка", "Лис Микита", "Солом'яний", "Круглячок", "Знахідка"); // Example nicknames
             nicknameComboBox.setTooltip(new Tooltip());
             nicknameComboBox.getSelectionModel().isEmpty(); // Select the first nickname by default
 

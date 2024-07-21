@@ -88,11 +88,6 @@ public class GameSettingsController implements Initializable {
         mafiaAmountSpinnerValueFactory.setValue(3);
         mafiaAmountSpinner.setValueFactory(mafiaAmountSpinnerValueFactory);
 
-        SpinnerValueFactory<Integer> secondsPerMoveSpinnerValueFactory =
-                new SpinnerValueFactory.IntegerSpinnerValueFactory(45, 60);
-        secondsPerMoveSpinnerValueFactory.setValue(50);
-        secondsPerMoveSpinner.setValueFactory(secondsPerMoveSpinnerValueFactory);
-
         // Create a VBox to hold all the settings
         VBox settingsBox = new VBox();
         settingsBox.setPadding(new Insets(10));

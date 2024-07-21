@@ -7,6 +7,7 @@ import com.vsiverskyi.model.enums.ERoleOrder;
 import com.vsiverskyi.service.GameService;
 import com.vsiverskyi.service.GameStatisticsService;
 import com.vsiverskyi.service.PointsService;
+import com.vsiverskyi.utils.SettingsUtil;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
@@ -60,6 +61,8 @@ public class VotingController implements Initializable, DisplayedPlayersControll
     private GameStatisticsService gameStatisticsService;
     @Autowired
     private FxWeaver fxWeaver;
+    @Autowired
+    private GeneralSettingsController generalSettingsController;
     private Stage stage;
     private Scene scene;
     private Parent root;
@@ -87,6 +90,8 @@ public class VotingController implements Initializable, DisplayedPlayersControll
     private Button startButton;
     @FXML
     private Label startLabel;
+    @FXML
+    private Button resetVote;
     private Timeline countDownTimeLine;
     private Map<Integer, Integer> playerIdVotesMap;
     private Map<Integer, Button> playerIdButton;
@@ -99,6 +104,10 @@ public class VotingController implements Initializable, DisplayedPlayersControll
     private Timeline excuseTimeLine;
     int secondsTillEnd = 10;
 
+    int lastVoterNumber;
+    int lastVotedNumber;
+    int lastVoiceAmount;
+
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         this.stage = StarterController.primaryStage;
@@ -110,6 +119,9 @@ public class VotingController implements Initializable, DisplayedPlayersControll
         playerIdVotesMap = new HashMap<>();
         playerIdButton = new HashMap<>();
         kradiyHasStolenVoice = false;
+
+        int secondsPerMove = SettingsUtil.getSecondsPerMove();
+        System.out.println("Seconds per move: " + secondsPerMove);
 
         gameStatisticsList = gameStatisticsService.getGameStatisticsByGameIdSortedByInGameNumber(SelectionController.currentGameId);
         reverseCurrentVoterIndex = gameStatisticsList.size() - 1;
@@ -126,6 +138,12 @@ public class VotingController implements Initializable, DisplayedPlayersControll
         fullScreen.setOnAction(ev -> stage.setFullScreen(true));
 
         startButton.setOnAction(actionEvent -> startVoting());
+
+        resetVote.setOnAction(actionEvent -> resetVote());
+    }
+
+    private void resetVote() {
+
     }
 
     private void startVoting() {
@@ -155,7 +173,6 @@ public class VotingController implements Initializable, DisplayedPlayersControll
     @Override
     public void displayRolePlayers(int totalPlayers) {
         votingPlayersPane.getChildren().clear();
-
 
         double centerX = votingPlayersPane.getWidth() / 2;
         double centerY = votingPlayersPane.getHeight() / 2;
@@ -189,9 +206,6 @@ public class VotingController implements Initializable, DisplayedPlayersControll
             int yellowCardsIterator = Objects.isNull(gameStatistics) ? 0 : gameStatistics.getYellowCards();
             int redCardsIterator = Objects.isNull(gameStatistics) ? 0 : gameStatistics.getRedCards();
             int inGameNumber = Objects.isNull(gameStatistics) ? 0 : gameStatistics.getInGameNumber();
-            //
-            System.out.println("RERENDERING" + redCardsIterator);
-//            viewController.showCards(yellowCardsIterator, redCardsIterator, avatarContainer, inGameNumber, this, gameStatisticsList.size());
             viewController.showCards(
                     yellowCardsIterator,
                     redCardsIterator,
@@ -315,7 +329,6 @@ public class VotingController implements Initializable, DisplayedPlayersControll
     private void beginVotingReverse(int beginFromIndex) {
         reverse = true;
         gamersOrder = getOrderOfInGameNumbersReverseOrder(beginFromIndex);
-        System.out.println(gamersOrder);
         giveVoiceReverse(gamersOrder.peek() - 1);
     }
 
@@ -348,7 +361,7 @@ public class VotingController implements Initializable, DisplayedPlayersControll
                 button.setDisable(true);
             }
 
-            secondsTillEnd = 10;
+            secondsTillEnd = SettingsUtil.getSecondsPerMove();
             Integer finalCurrentVoterIndex = currentVoterIndex;
 
             countDownTimeLine = new Timeline(new KeyFrame(Duration.seconds(1), (ActionEvent event) -> {
@@ -525,13 +538,13 @@ public class VotingController implements Initializable, DisplayedPlayersControll
                 if (result.isPresent() && result.get().getText().equals("Так")) {
                     gameStatistics.setExcusesAttempts((short) (gameStatistics.getExcusesAttempts() + 1));
                     gameStatisticsService.save(gameStatistics);
-                    startExcuseTimer(playerNumber, voterIndex, gameStatistics);
+                    startExcuseTimer(playerNumber, voterIndex, gameStatistics, votesToAdd);
                 } else {
                     playerIdVotesMap.put(playerNumber, playerVotes + votesToAdd);
                     addPointsAndChangeVoterIndex(playerNumber, voterIndex);
                 }
             } else {
-                playerIdVotesMap.put(playerNumber, playerVotes + votesToAdd);
+                doVote(playerNumber, playerVotes, votesToAdd);
                 addPointsAndChangeVoterIndex(playerNumber, voterIndex);
             }
         } else {
@@ -540,19 +553,23 @@ public class VotingController implements Initializable, DisplayedPlayersControll
         }
     }
 
-    private void startExcuseTimer(int playerNumber, int voterIndex, GameStatistics gameStatistics) {
+    private void doVote(int playerNumber, int playerVotes, int votesToAdd) {
+        playerIdVotesMap.put(playerNumber, playerVotes + votesToAdd);
+    }
+
+    private void startExcuseTimer(int playerNumber, int voterIndex, GameStatistics gameStatistics, int votesToAdd) {
         secondsTillEnd = 10;
         excuseTimeLine = new Timeline(new KeyFrame(Duration.seconds(secondsTillEnd), ae -> {
             Platform.runLater(() -> {
                 excuseTimeLine.stop(); // Stop the timer when it ends
-                showExcuseChoiceDialog(playerNumber, voterIndex, gameStatistics);
+                showExcuseChoiceDialog(playerNumber, voterIndex, gameStatistics, votesToAdd);
             });
         }));
         excuseTimeLine.setCycleCount(1);
         excuseTimeLine.play();
     }
 
-    private void showExcuseChoiceDialog(int playerNumber, int voterIndex, GameStatistics gameStatistics) {
+    private void showExcuseChoiceDialog(int playerNumber, int voterIndex, GameStatistics gameStatistics, int votesToAdd) {
         Alert excuseAlert = new Alert(Alert.AlertType.CONFIRMATION);
         excuseAlert.setTitle("Оправдання");
         excuseAlert.setHeaderText("Час на оправдання завершився");
@@ -563,7 +580,7 @@ public class VotingController implements Initializable, DisplayedPlayersControll
         Optional<ButtonType> excuseResult = excuseAlert.showAndWait();
         if (excuseResult.isPresent() && excuseResult.get() == ButtonType.OK) {
             // Proceed with voting logic here if the player chooses to vote
-            playerIdVotesMap.put(playerNumber, playerIdVotesMap.get(playerNumber) + 1);
+            playerIdVotesMap.put(playerNumber, playerIdVotesMap.get(playerNumber) + votesToAdd);
             addPointsAndChangeVoterIndex(playerNumber, voterIndex);
         } else {
             // Player decides not to vote, handle accordingly

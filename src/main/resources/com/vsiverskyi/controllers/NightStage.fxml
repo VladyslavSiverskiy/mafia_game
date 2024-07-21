@@ -11,7 +11,7 @@
     <AnchorPane fx:id="nightStagePlayersPane" layoutX="180.0" layoutY="41.0" prefHeight="700.0" prefWidth="878.0" />
    <AnchorPane layoutX="13.0" layoutY="82.0" prefHeight="200.0" prefWidth="110.0" style="-fx-border-color: #ffffff; -fx-border-radius: 5px;">
       <children>
-         <Label fx:id="currentRoleTitle" layoutX="65.0" layoutY="78.0" textFill="WHITE">
+         <Label fx:id="currentRoleTitle" layoutX="5.0" prefHeight="200.0" prefWidth="135.0" textFill="WHITE">
             <font>
                <Font size="30.0" />
             </font>
@@ -29,5 +29,10 @@
       </children>
    </AnchorPane>
    <Button fx:id="fullScreen" layoutX="27.0" layoutY="25.0" mnemonicParsing="false" text="FullScreen" />
+   <AnchorPane layoutX="10.0" layoutY="324.0" prefHeight="210.0" prefWidth="117.0" style="-fx-border-color: #ffffff; -fx-border-radius: 5px;">
+      <children>
+         <ListView fx:id="allRolesPerGameList" layoutX="2.0" layoutY="10.0" prefHeight="202.0" prefWidth="144.0" />
+      </children>
+   </AnchorPane>
 
 </AnchorPane>

@@ -5,6 +5,7 @@ import com.vsiverskyi.model.Player;
 import com.vsiverskyi.model.Role;
 import com.vsiverskyi.service.GameService;
 import com.vsiverskyi.service.GameStatisticsService;
+import com.vsiverskyi.utils.SettingsUtil;
 import com.vsiverskyi.utils.StyleConstants;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
@@ -101,6 +102,14 @@ public class PresentationController implements Initializable, DisplayedPlayersCo
         startVoting.setStyle(StyleConstants.IDLE_BUTTON_STYLE);
         startVoting.setOnMouseEntered(e -> startVoting.setStyle(HOVERED_BUTTON_STYLE));
         startVoting.setOnMouseExited(e -> startVoting.setStyle(IDLE_BUTTON_STYLE));
+
+        nextPlayerButton.setStyle(StyleConstants.IDLE_BUTTON_STYLE);
+        nextPlayerButton.setOnMouseEntered(e -> nextPlayerButton.setStyle(HOVERED_BUTTON_STYLE));
+        nextPlayerButton.setOnMouseExited(e -> nextPlayerButton.setStyle(IDLE_BUTTON_STYLE));
+
+        skip.setStyle(StyleConstants.IDLE_BUTTON_STYLE);
+        skip.setOnMouseEntered(e -> skip.setStyle(HOVERED_BUTTON_STYLE));
+        skip.setOnMouseExited(e -> skip.setStyle(IDLE_BUTTON_STYLE));
 
         technicalDefeatPeaceful.setOnAction(e -> penaltyController.assignTechnicalDefeat("PEACE"));
         technicalDefeatMafia.setOnAction(e -> penaltyController.assignTechnicalDefeat("MAFIA"));
@@ -223,13 +232,13 @@ public class PresentationController implements Initializable, DisplayedPlayersCo
 
     private void endEachPlayerPresentation() {
         // TODO: поміняти не нормальні змінні, а не в коді
-        secondsTillEnd = 50;
+        secondsTillEnd = SettingsUtil.getSecondsPerDiscussion();
         presentationPlayerId.setText("-");
         countDownTimeLine = new Timeline(new KeyFrame(Duration.seconds(1), (ActionEvent event) -> {
             secondsLeft.setText(String.valueOf(secondsTillEnd--));
         }));
         // Set number of cycles (remaining duration in seconds):
-        countDownTimeLine.setCycleCount((int) 50);
+        countDownTimeLine.setCycleCount((int) SettingsUtil.getSecondsPerDiscussion());
         countDownTimeLine.setOnFinished(event -> {
             Alert alert = new Alert(Alert.AlertType.INFORMATION);
             alert.initOwner(stage);
@@ -245,27 +254,26 @@ public class PresentationController implements Initializable, DisplayedPlayersCo
         if (gamersOrder.isEmpty()) { // якщо всі проголосували - почати обговорення
             endEachPlayerPresentation();
         }
-
         GameStatistics gameStatistics = gameStatisticsList.get(index);
         if (gameStatistics != null) {
             // Create time line to lower remaining duration every second:
             if (!gameStatistics.isInGame()) {
                 gamersOrder.remove();
-                Integer currentPlayerNumber = gamersOrder.peek() - 1;
+                Integer currentPlayerNumber = gamersOrder.peek();
                 if (currentPlayerNumber == null) {
                     endEachPlayerPresentation();
                 } else {
                     doPresentation(currentPlayerNumber - 1);
                 }
             } else {
-                secondsTillEnd = 5;
+                secondsTillEnd = SettingsUtil.getSecondsPerPresentation();
                 presentationPlayerId.setText(gameStatistics.getInGameNumber().toString());
                 countDownTimeLine = new Timeline(new KeyFrame(Duration.seconds(1), (ActionEvent event) -> {
                     secondsLeft.setText(String.valueOf(secondsTillEnd--));
                     presentationPlayerId.setText(gameStatistics.getInGameNumber().toString());
                 }));
                 // Set number of cycles (remaining duration in seconds):
-                countDownTimeLine.setCycleCount((int) secondsPerPresentation);
+                countDownTimeLine.setCycleCount(SettingsUtil.getSecondsPerPresentation());
                 // Show alert when time is up:
                 int finalIndex = index + 1;
                 countDownTimeLine.setOnFinished(event -> {
@@ -302,12 +310,24 @@ public class PresentationController implements Initializable, DisplayedPlayersCo
                 Optional<ButtonType> result = alert.showAndWait();
                 if (result.isPresent() && result.get().getText().equals("За годинниковою стрілкою")) {
                     gamersOrder = getOrderOfInGameNumbersNaturalOrder(entry.getKey() - 1);
-                    System.out.println(gamersOrder);
                     doPresentation(entry.getKey() - 1);
+                    startLabel.setText("");
+                    blockAllButtons();
+                }else {
+                    gamersOrder = getOrderOfInGameNumbersReverseOrder(entry.getKey() - 1);
+                    doPresentation(entry.getKey() - 1);
+                    startLabel.setText("");
+                    blockAllButtons();
                 }
             });
         }
+    }
 
+    private void blockAllButtons() {
+        for(Button button: playerIdButton.values()) {
+            button.setDisable(true);
+        }
+        startVoting.setDisable(true);
     }
 
     private LinkedList<Integer> getOrderOfInGameNumbersNaturalOrder(int beginFromIndex) {
@@ -323,12 +343,32 @@ public class PresentationController implements Initializable, DisplayedPlayersCo
         return inGameNumbers;
     }
 
+    private LinkedList<Integer> getOrderOfInGameNumbersReverseOrder(int beginFromIndex) {
+        LinkedList<Integer> inGameNumbers = new LinkedList<>();
+        // add in game numbers from selected to the end
+        for (int i = beginFromIndex; i >= 0; i--) {
+            inGameNumbers.add(gameStatisticsList.get(i).getInGameNumber());
+        }
+        // add in game numbers before selected
+        for (int i = gameStatisticsList.size() - 1; i > beginFromIndex; i--) {
+            inGameNumbers.add(gameStatisticsList.get(i).getInGameNumber());
+        }
+        return inGameNumbers;
+    }
+
     private void skipToNextPlayer() {
         if (countDownTimeLine != null) {
             countDownTimeLine.stop();
-            doPresentation(gameStatisticsList.indexOf(gameStatisticsList.stream()
-                    .filter(gs -> gs.getInGameNumber().toString().equals(presentationPlayerId.getText()))
-                    .findFirst().orElse(null)) + 1);
+            gamersOrder.remove();
+            Integer currentPlayerNumber = gamersOrder.peek();
+            if (currentPlayerNumber == null) {
+                endEachPlayerPresentation();
+            } else {
+                doPresentation(currentPlayerNumber - 1);
+            }
+//            doPresentation(gameStatisticsList.indexOf(gameStatisticsList.stream()
+//                    .filter(gs -> gs.getInGameNumber().toString().equals(presentationPlayerId.getText()))
+//                    .findFirst().orElse(null)) + 1);
         }
     }
 

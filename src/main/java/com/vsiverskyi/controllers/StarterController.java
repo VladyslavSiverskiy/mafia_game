@@ -36,6 +36,8 @@ public class StarterController {
     private final FxWeaver fxWeaver;
     @FXML
     Button start_btn;
+    @FXML
+    Button general_btn;
 
     @FXML
     public void openGameSettingsPage(ActionEvent actionEvent) throws IOException {
@@ -43,11 +45,16 @@ public class StarterController {
         fxWeaver.loadController(GameSettingsController.class).show();
     }
 
+    @FXML
+    public void openGeneralSettingsPage(ActionEvent actionEvent) throws IOException {
+        primaryStage = (Stage) general_btn.getScene().getWindow();
+        fxWeaver.loadController(GeneralSettingsController.class).show();
+    }
+
     public void show() {
         Parent root = fxWeaver.loadView(StarterController.class);
         Scene scene = new Scene(root);
         primaryStage.setScene(scene);
         primaryStage.show();
-
     }
 }
