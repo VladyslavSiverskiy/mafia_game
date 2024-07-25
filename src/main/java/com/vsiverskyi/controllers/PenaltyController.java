@@ -5,10 +5,7 @@ import com.vsiverskyi.service.GameService;
 import com.vsiverskyi.service.GameStatisticsService;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.ListView;
+import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
@@ -61,7 +58,6 @@ public class PenaltyController {
         Alert alert = new Alert(Alert.AlertType.INFORMATION, "Гравець " + playerNumber + " отримав червону картку");
         alert.initOwner(stage);
         alert.show();
-        //TODO: перевірити на кінець
         if (gameService.checkIfGameIsOver(SelectionController.currentGameId)) {
             fxWeaver.loadController(GameEndingController.class);
         }
@@ -77,8 +73,22 @@ public class PenaltyController {
         ObservableList<HBox> playerCards = FXCollections.observableArrayList();
 
         for (GameStatistics gs : gameStatisticsList) {
-            HBox playerCardRow = new HBox(10);
-            Label playerLabel = new Label("Гравець " + gs.getInGameNumber());
+            HBox playerCardRow = new HBox(5);
+
+            String nickname = gs.getInGameNickname() != null ? gs.getInGameNickname() : "Незнайомець";
+            String displayNickname = nickname;
+            if (nickname.length() > 18) {
+                displayNickname = nickname.substring(0, 15) + "...";
+            }
+
+            Label playerLabel = new Label(gs.getInGameNumber() + "." + displayNickname.toUpperCase());
+
+            Tooltip fullNicknameTooltip = new Tooltip(nickname);
+            playerLabel.setTooltip(fullNicknameTooltip);
+// Create a Tooltip with the full nickname
+//            Tooltip.install(playerLabel, fullNicknameTooltip);
+
+//            playerCardRow.getChildren().add(playerLabel);
             Button yellowCardButton = new Button();
             yellowCardButton.setStyle("-fx-background-color: yellow; -fx-width: 15px; -fx-height: 20px;");
 
@@ -93,7 +103,6 @@ public class PenaltyController {
             redCardButton.setOnAction(e -> {
                 giveRedCard(playerNumber, yellowCardButton, redCardButton, stage);
                 controller.displayRolePlayers(gameStatisticsList.size());
-                //TODO: Check if game is over
             });
             // Create a Region to act as a spacer
             Region spacer = new Region();

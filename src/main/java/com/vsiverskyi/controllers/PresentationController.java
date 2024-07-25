@@ -17,12 +17,13 @@ import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.scene.paint.ImagePattern;
 import javafx.scene.shape.Circle;
-import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 import lombok.RequiredArgsConstructor;
@@ -97,7 +98,6 @@ public class PresentationController implements Initializable, DisplayedPlayersCo
         scene.getStylesheets().add(getClass().getResource("/style/style.css").toExternalForm());
         fullScreen.setOnAction(ev -> stage.setFullScreen(true));
 
-
         playerIdButton = new HashMap<>();
         startVoting.setStyle(StyleConstants.IDLE_BUTTON_STYLE);
         startVoting.setOnMouseEntered(e -> startVoting.setStyle(HOVERED_BUTTON_STYLE));
@@ -122,7 +122,7 @@ public class PresentationController implements Initializable, DisplayedPlayersCo
         startVoting.setOnAction(actionEvent -> startPresentation());
         nextPlayerButton.setOnAction(actionEvent -> skipToNextPlayer());
         skip.setOnAction(event -> {
-            if(countDownTimeLine != null) {
+            if (countDownTimeLine != null) {
                 countDownTimeLine.stop();
             }
             fxWeaver.loadController(VotingController.class).show();
@@ -156,7 +156,20 @@ public class PresentationController implements Initializable, DisplayedPlayersCo
             }
 
             // Create a panel to represent each player
-            Circle avatar = new Circle(18, Color.LIGHTGRAY); // Example avatar
+            Circle avatar = new Circle(18); // Example avatar
+            if (gameStatistics != null) {
+                Image avatarImage = null;
+                try {
+                    avatarImage = new Image("images/" + gameStatistics.getRole().getRoleNameConstant() + ".jpg");
+                } catch (Exception e) {
+                    avatarImage = new Image("images/icon.jpg");
+                }
+                // Create an ImagePattern using the loaded image
+                ImagePattern imagePattern = new ImagePattern(avatarImage);
+                // Set the ImagePattern as the fill for the Circle
+                avatar.setFill(imagePattern);
+            }
+
             VBox playerPanel = createPlayerPanel(x, y);
             // Create an HBox to hold the avatar and other elements
             HBox avatarContainer = new HBox();
@@ -164,12 +177,18 @@ public class PresentationController implements Initializable, DisplayedPlayersCo
             avatarContainer.setSpacing(10); // Adjust spacing as needed
             avatarContainer.setPadding(new Insets(0, 0, 0, 10)); // Add padding from the left side
             avatarContainer.getChildren().add(avatar);
+            Label roleLabel = new Label("");
+            roleLabel.setStyle("-fx-text-fill: #f4ff67; -fx-border-radius: 5px; -fx-font-size: 12px;");
+            // Create an HBox to hold the nickname label and the role label
+            if (gameStatistics != null) {
+                Role role = gameStatistics.getRole();
+                roleLabel.setText(role.getTitle());
+                avatarContainer.getChildren().add(roleLabel);
+            }
 
             int yellowCardsIterator = Objects.isNull(gameStatistics) ? 0 : gameStatistics.getYellowCards();
             int redCardsIterator = Objects.isNull(gameStatistics) ? 0 : gameStatistics.getRedCards();
             int inGameNumber = Objects.isNull(gameStatistics) ? 0 : gameStatistics.getInGameNumber();
-            // Add small yellow cards in a row near the circle avatar
-//            viewController.showCards(yellowCardsIterator, redCardsIterator, avatarContainer, inGameNumber, this, gameStatisticsList.size());
 
             viewController.showCards(
                     yellowCardsIterator,
@@ -185,19 +204,12 @@ public class PresentationController implements Initializable, DisplayedPlayersCo
             playerPanel.getChildren().add(avatarContainer);
 
             if (i > 0 && i < totalPlayers + 1) {
-                Label roleLabel = new Label("");
-                roleLabel.setStyle("-fx-text-fill: #f4ff67; -fx-border-radius: 5px; -fx-font-size: 12px;");
-                // Create an HBox to hold the nickname label and the role label
-                Role role = gameStatistics.getRole();
-                if (role != null) {
-                    roleLabel.setText(role.getTitle());
-                }
                 HBox hbox = new HBox();
                 hbox.setSpacing(10); // Adjust spacing as needed
                 // Set a transparent background for the HBox
                 hbox.setStyle("-fx-background-color: rgba(31,31,31,0.5); -fx-border-radius: 5px; ");
                 hbox.setPadding(new Insets(0, 0, 0, 10));
-                hbox.getChildren().addAll(roleLabel, createNicknameLabel(i));
+                hbox.getChildren().addAll(viewController.createNicknameLabel(i, gameStatisticsList));
                 playerPanel.getChildren().add(hbox);
             }
             presentationPlayersPane.getChildren().add(playerPanel);
@@ -313,7 +325,7 @@ public class PresentationController implements Initializable, DisplayedPlayersCo
                     doPresentation(entry.getKey() - 1);
                     startLabel.setText("");
                     blockAllButtons();
-                }else {
+                } else {
                     gamersOrder = getOrderOfInGameNumbersReverseOrder(entry.getKey() - 1);
                     doPresentation(entry.getKey() - 1);
                     startLabel.setText("");
@@ -324,7 +336,7 @@ public class PresentationController implements Initializable, DisplayedPlayersCo
     }
 
     private void blockAllButtons() {
-        for(Button button: playerIdButton.values()) {
+        for (Button button : playerIdButton.values()) {
             button.setDisable(true);
         }
         startVoting.setDisable(true);
@@ -366,29 +378,11 @@ public class PresentationController implements Initializable, DisplayedPlayersCo
             } else {
                 doPresentation(currentPlayerNumber - 1);
             }
-//            doPresentation(gameStatisticsList.indexOf(gameStatisticsList.stream()
-//                    .filter(gs -> gs.getInGameNumber().toString().equals(presentationPlayerId.getText()))
-//                    .findFirst().orElse(null)) + 1);
         }
     }
 
     private void startVoting() {
         fxWeaver.loadController(VotingController.class).show();
-    }
-
-    private Label createNicknameLabel(int i) { // When value of button is "1", then get element with 0 index
-        GameStatistics currentGamer = gameStatisticsList.get(i - 1);
-        Player player = currentGamer.getPlayer();
-        Label nicknameLabel = new Label();
-        if (player != null) {
-            nicknameLabel.setText(player.getNickname());
-        } else if (currentGamer.getInGameNickname() != null) {
-            nicknameLabel.setText(currentGamer.getInGameNickname());
-        } else {
-            nicknameLabel.setText("Незнайомець");
-        }
-        nicknameLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #ffffff");
-        return nicknameLabel;
     }
 
     private VBox createPlayerPanel(double x, double y) {

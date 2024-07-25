@@ -178,9 +178,15 @@ public class GameSettingsController implements Initializable {
             settingsState.put(text, newValue);
         });
         HBox row = new HBox();
-        row.setAlignment(Pos.CENTER_LEFT);
+        row.setAlignment(Pos.CENTER);
         row.setSpacing(15);
+        row.setPadding(new Insets(5, 0, 5, 0)); // Optional: Add padding to the row
         row.getChildren().addAll(label, checkBox, roleAmountSpinner);
+
+        // Optional: Set minimum widths for children for better alignment
+        label.setMinWidth(150);
+        checkBox.setMinWidth(50);
+        roleAmountSpinner.setMinWidth(60);
         return row;
     }
 }

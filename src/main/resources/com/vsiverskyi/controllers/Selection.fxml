@@ -7,12 +7,12 @@
 
 <AnchorPane fx:id="selectionAP" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="883.0" prefWidth="1920.0" style="-fx-background-color: #161616;" xmlns="http://javafx.com/javafx/19" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vsiverskyi.controllers.SelectionController">
    <children>
-      <Label fx:id="headerLabel" layoutX="109.0" layoutY="72.0" text="Оберіть нікнейми" textFill="WHITE">
+      <Label fx:id="headerLabel" layoutX="73.0" layoutY="115.0" text="Роздайте нікнейми:" textFill="WHITE">
          <font>
             <Font name="Lucida Console" size="18.0" />
          </font></Label>
-      <Button fx:id="startVoting" layoutX="109.0" layoutY="687.0" mnemonicParsing="false" style="-fx-background-color: #161616; -fx-border-color: #ffffff; -fx-border-radius: 5px;" text="Перейти до вибору ролей" textFill="WHITE" />
-      <AnchorPane fx:id="selectionPane" layoutX="335.0" layoutY="57.0" prefHeight="700.0" prefWidth="878.0" />
+      <Button fx:id="startVoting" layoutX="73.0" layoutY="733.0" mnemonicParsing="false" style="-fx-background-color: #161616; -fx-border-color: #ffffff; -fx-border-radius: 5px;" text="Перейти до вибору ролей" textFill="WHITE" />
+      <AnchorPane fx:id="selectionPane" layoutX="283.0" layoutY="60.0" prefHeight="700.0" prefWidth="878.0" />
       <Button fx:id="fullScreen" layoutX="73.0" layoutY="35.0" mnemonicParsing="false" text="FullScreen" />
 
    </children>

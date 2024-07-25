@@ -1,8 +1,10 @@
 package com.vsiverskyi.controllers;
 
 import com.vsiverskyi.model.GameStatistics;
+import com.vsiverskyi.model.Player;
 import com.vsiverskyi.service.GameStatisticsService;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
@@ -52,6 +54,21 @@ public class ViewController {
             redCard.setStyle("-fx-border-radius: 1px");
             avatarContainer.getChildren().add(redCard);
         }
+    }
 
+    public Label createNicknameLabel(int i, List<GameStatistics> gameStatisticsList) { // When value of button is "1", then get element with 0 index
+        GameStatistics currentGamer = gameStatisticsList.get(i - 1);
+        Player player = currentGamer.getPlayer();
+        Label nicknameLabel = new Label();
+        if (player != null) {
+            nicknameLabel.setText(player.getNickname());
+        } else if (currentGamer.getInGameNickname() != null) {
+            nicknameLabel.setText(currentGamer.getInGameNickname().toUpperCase());
+        } else {
+            nicknameLabel.setText("НЕЗНАЙОМЕЦЬ");
+        }
+
+        nicknameLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #ffffff");
+        return nicknameLabel;
     }
 }

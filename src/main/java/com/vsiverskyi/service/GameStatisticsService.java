@@ -4,6 +4,7 @@ import com.vsiverskyi.exception.ExceptionConstants;
 import com.vsiverskyi.exception.NoGameWithSuchIdException;
 import com.vsiverskyi.model.Game;
 import com.vsiverskyi.model.GameStatistics;
+import com.vsiverskyi.model.Role;
 import com.vsiverskyi.model.enums.ERoleOrder;
 import com.vsiverskyi.repository.GameRepository;
 import com.vsiverskyi.repository.GameStatisticsRepository;
@@ -55,7 +56,7 @@ public class GameStatisticsService {
 
     private void clearPreviousMarks(Long gameId) {
         List<GameStatistics> gameStatistics = gameRepository.findById(gameId).get().getGameStatistics();
-        for (GameStatistics gameStatistic: gameStatistics) {
+        for (GameStatistics gameStatistic : gameStatistics) {
             gameStatistic.setWasMarkedByBomb(false);
             gameStatisticsRepository.save(gameStatistic);
         }
@@ -69,7 +70,7 @@ public class GameStatisticsService {
         } else if (gameStatistics.getRole().getRoleNameConstant().equals(ERoleOrder.BOMBA.name())) {
             List<GameStatistics> gamersMarkedByBomb = gameRepository.findById(gameId).get().getGameStatistics();
             for (GameStatistics gamer : gamersMarkedByBomb) {
-                if(gamer.isWasMarkedByBomb()) {
+                if (gamer.isWasMarkedByBomb()) {
                     gamer.setInGame(false);
                 }
             }
@@ -143,7 +144,7 @@ public class GameStatisticsService {
         int currentPlayerNumberToCheck = bombInGameNumber + 1;
 
         //do right
-        while(killedPlayersFromRightSide < 2) {
+        while (killedPlayersFromRightSide < 2) {
             if (currentPlayerNumberToCheck > amountOfPlayers) {
                 currentPlayerNumberToCheck = 1;
             }
@@ -162,7 +163,7 @@ public class GameStatisticsService {
 
         //do left
         currentPlayerNumberToCheck = bombInGameNumber - 1;
-        while(killedPlayersFromLeftSide < 2) {
+        while (killedPlayersFromLeftSide < 2) {
             if (currentPlayerNumberToCheck > amountOfPlayers) {
                 currentPlayerNumberToCheck = amountOfPlayers;
             }
@@ -298,9 +299,18 @@ public class GameStatisticsService {
     public void removeAllKradiyChoices(Long currentGameId) {
         List<GameStatistics> gameStatisticsList = gameRepository.findById(currentGameId)
                 .orElseThrow(() -> new NoGameWithSuchIdException(ExceptionConstants.NO_GAME_WITH_SUCH_ID)).getGameStatistics();
-        for (GameStatistics gameStatistics: gameStatisticsList) {
+        for (GameStatistics gameStatistics : gameStatisticsList) {
             gameStatistics.setWasMarkedByKradiy(false);
             gameStatisticsRepository.save(gameStatistics);
         }
+    }
+
+    public boolean checkIfAliveOrDontHaveRedCardsWithRole(Role currentRole, Long currentGameId) {
+        return !gameRepository.findById(currentGameId).get().getGameStatistics()
+                .stream()
+                .filter(gameStatistics ->
+                        gameStatistics.getRole().getRoleNameConstant()
+                                .equals(currentRole.getRoleNameConstant()) && gameStatistics.getRedCards() <= 0)
+                .toList().isEmpty();
     }
 }

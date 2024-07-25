@@ -257,6 +257,14 @@ public class SelectionRoleController implements Initializable,DisplayedPlayersCo
             avatarContainer.setSpacing(10); // Adjust spacing as needed
             avatarContainer.setPadding(new Insets(0, 0, 0, 10)); // Add padding from the left side
             avatarContainer.getChildren().add(avatar);
+            Label roleLabel = new Label("");
+            roleLabel.setStyle("-fx-text-fill: #f4ff67; -fx-border-radius: 5px; -fx-font-size: 12px;");
+            // Create an HBox to hold the nickname label and the role label
+            Role role = playerIdRoleMap.get(i);
+            if (role != null) {
+                roleLabel.setText(role.getTitle());
+            }
+            avatarContainer.getChildren().add(roleLabel);
             int yellowCardsIterator = Objects.isNull(gameStatistics) ? 0 : gameStatistics.getYellowCards();
             int redCardsIterator = Objects.isNull(gameStatistics) ? 0 : gameStatistics.getRedCards();
             int inGameNumber = Objects.isNull(gameStatistics) ? 0 : gameStatistics.getInGameNumber();
@@ -276,19 +284,14 @@ public class SelectionRoleController implements Initializable,DisplayedPlayersCo
             playerPanel.getChildren().add(avatarContainer);
 
             if (i > 0 && i < totalPlayers + 1) {
-                Label roleLabel = new Label("");
-                roleLabel.setStyle("-fx-text-fill: #f4ff67; -fx-border-radius: 5px; -fx-font-size: 12px;");
-                // Create an HBox to hold the nickname label and the role label
-                Role role = playerIdRoleMap.get(i);
-                if (role != null) {
-                    roleLabel.setText(role.getTitle());
-                }
+
                 HBox hbox = new HBox();
                 hbox.setSpacing(10); // Adjust spacing as needed
                 // Set a transparent background for the HBox
                 hbox.setStyle("-fx-background-color: rgba(31,31,31,0.5); -fx-border-radius: 5px; ");
                 hbox.setPadding(new Insets(0, 0, 0, 10));
-                hbox.getChildren().addAll(roleLabel, createNicknameLabel(i));
+//                hbox.getChildren().addAll(createNicknameLabel(i), roleLabel);
+                hbox.getChildren().addAll(viewController.createNicknameLabel(i,gameStatisticsList));
                 playerPanel.getChildren().add(hbox);
                 playerRoleLabelsMap.put(i, roleLabel);
             }
@@ -340,21 +343,7 @@ public class SelectionRoleController implements Initializable,DisplayedPlayersCo
         return button;
     }
 
-    private Label createNicknameLabel(int i) { // When value of button is "1", then get element with 0 index
-        GameStatistics currentGamer = gameStatisticsList.get(i - 1);
-        Player player = currentGamer.getPlayer();
-        Label nicknameLabel = new Label();
-        if (player != null) {
-            nicknameLabel.setText(player.getNickname());
-        } else if (currentGamer.getInGameNickname() != null) {
-            nicknameLabel.setText(currentGamer.getInGameNickname());
-        } else {
-            nicknameLabel.setText("Незнайомець");
-        }
 
-        nicknameLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #ffffff");
-        return nicknameLabel;
-    }
 
     private void assignRoleToPlayer(int playerNumber) {
         if (currentRole != null) {

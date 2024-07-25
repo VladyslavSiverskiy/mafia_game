@@ -5,8 +5,8 @@
 
 <AnchorPane prefHeight="400.0" prefWidth="600.0" style="-fx-background-color: #161616;" xmlns="http://javafx.com/javafx/19" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vsiverskyi.controllers.StarterController">
    <children>
-      <Button fx:id="start_btn" layoutX="235.0" layoutY="146.0" mnemonicParsing="false" onAction="#openGameSettingsPage" prefHeight="39.0" prefWidth="131.0" text="Почати гру" textAlignment="CENTER" />
+      <Button fx:id="start_btn" layoutX="235.0" layoutY="146.0" mnemonicParsing="false" onAction="#openGameSettingsPage" prefHeight="39.0" prefWidth="131.0" text="Почати гру" textAlignment="CENTER" style="-fx-background-color: #161616; -fx-text-fill: #ffffff;  -fx-border-color: #ffffff; -fx-border-radius: 5px;"/>
 
-      <Button fx:id="general_btn" layoutX="235.0" layoutY="220.0" mnemonicParsing="false" onAction="#openGeneralSettingsPage" prefHeight="39.0" prefWidth="131.0" text="Налаштування" textAlignment="CENTER" />
+      <Button fx:id="general_btn" layoutX="235.0" layoutY="220.0" mnemonicParsing="false" onAction="#openGeneralSettingsPage" prefHeight="39.0" prefWidth="131.0" text="Налаштування" textAlignment="CENTER" style="-fx-background-color: #161616; -fx-text-fill: #ffffff;  -fx-border-color: #ffffff; -fx-border-radius: 5px;"/>
    </children>
 </AnchorPane>

@@ -28,13 +28,17 @@ public class ComboBoxAutoComplete<T> {
 	private ComboBox<T> cmb;
 	String filter = "";
 	private ObservableList<T> originalItems;
+	private double x;
+	private double y;
 
-	public ComboBoxAutoComplete(ComboBox<T> cmb) {
+	public ComboBoxAutoComplete(ComboBox<T> cmb, double x, double y) {
 		this.cmb = cmb;
 		originalItems = FXCollections.observableArrayList(cmb.getItems());
 		cmb.setTooltip(new Tooltip());
 		cmb.setOnKeyPressed(this::handleOnKeyPressed);
 		cmb.setOnHidden(this::handleOnHiding);
+		this.x = x;
+		this.y = y;
 	}
 
 	public void handleOnKeyPressed(KeyEvent e) {
@@ -60,9 +64,9 @@ public class ComboBoxAutoComplete<T> {
 			itens.filter(el -> el.toString().toLowerCase().contains(txtUsr)).forEach(filteredList::add);
 			cmb.getTooltip().setText(txtUsr);
 			Window stage = cmb.getScene().getWindow();
-			double posX = stage.getX() + cmb.getBoundsInParent().getMinX();
-			double posY = stage.getY() + cmb.getBoundsInParent().getMinY();
-			cmb.getTooltip().show(stage, posX, posY);
+//			double posX = stage.getX() + cmb.getBoundsInParent().getMinX();
+//			double posY = stage.getY() + cmb.getBoundsInParent().getMinY();
+			cmb.getTooltip().show(stage, x + 340, y + 35);
 			cmb.show();
 		}
 		cmb.getItems().setAll(filteredList);

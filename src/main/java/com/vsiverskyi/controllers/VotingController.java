@@ -20,11 +20,13 @@ import javafx.scene.Cursor;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.scene.paint.ImagePattern;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.Modality;
@@ -37,6 +39,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.net.URL;
+import java.sql.Time;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -69,6 +72,8 @@ public class VotingController implements Initializable, DisplayedPlayersControll
     @FXML
     private AnchorPane votingAp;
     @FXML
+    private Label votingStateLabel;
+    @FXML
     private AnchorPane votingPlayersPane;
     @FXML
     private Button beginVoting;
@@ -92,11 +97,13 @@ public class VotingController implements Initializable, DisplayedPlayersControll
     private Label startLabel;
     @FXML
     private Button resetVote;
+    @FXML
+    private Button discussionButton;
     private Timeline countDownTimeLine;
     private Map<Integer, Integer> playerIdVotesMap;
     private Map<Integer, Button> playerIdButton;
     private List<GameStatistics> gameStatisticsList;
-    private Queue<Integer> gamersOrder;
+    private Deque<Integer> gamersOrder;
     private Integer currentVoterIndex;
     private Integer reverseCurrentVoterIndex;
     private boolean reverse;
@@ -140,13 +147,30 @@ public class VotingController implements Initializable, DisplayedPlayersControll
         startButton.setOnAction(actionEvent -> startVoting());
 
         resetVote.setOnAction(actionEvent -> resetVote());
+        discussionButton.setOnAction(actionEvent -> endEachPlayerPresentation());
     }
 
     private void resetVote() {
+        playerIdVotesMap.put(lastVotedNumber, playerIdVotesMap.get(lastVotedNumber) - lastVoiceAmount);
+        System.out.println(gamersOrder);
+//        Queue<Integer> q1= Collections.revers(gamersOrder);
+        gamersOrder.addFirst(lastVoterNumber);
+//        System.out.println(q1);
+        excuseTimeLine = null;
+        countDownTimeLine.stop();
+        countDownTimeLine = null;
+        System.out.println(gamersOrder);
+        updateVotesDisplay();
+        if (reverse) {
+            giveVoiceReverse(lastVoterNumber - 1);
+        } else {
+            giveVoiceForward(lastVoterNumber - 1);
+        }
 
     }
 
     private void startVoting() {
+        resetTimerAndSetVotingLabel();
         startLabel.setText("Оберіть гравця, з якого розпочнемо");
 
         for (Map.Entry<Integer, Button> entry : playerIdButton.entrySet()) {
@@ -195,7 +219,19 @@ public class VotingController implements Initializable, DisplayedPlayersControll
             }
 
             // Create a panel to represent each player
-            Circle avatar = new Circle(18, Color.LIGHTGRAY); // Example avatar
+            Circle avatar = new Circle(18); // Example avatar
+            if (gameStatistics != null) {
+                Image avatarImage = null;
+                try {
+                    avatarImage = new Image("images/" + gameStatistics.getRole().getRoleNameConstant() + ".jpg");
+                } catch (Exception e) {
+                    avatarImage = new Image("images/icon.jpg");
+                }
+                ImagePattern imagePattern = new ImagePattern(avatarImage);
+                avatar.setFill(imagePattern);
+            }
+
+
             VBox playerPanel = createPlayerPanel(x, y);
             // Create an HBox to hold the avatar and other elements
             HBox avatarContainer = new HBox();
@@ -203,6 +239,16 @@ public class VotingController implements Initializable, DisplayedPlayersControll
             avatarContainer.setSpacing(10); // Adjust spacing as needed
             avatarContainer.setPadding(new Insets(0, 0, 0, 10)); // Add padding from the left side
             avatarContainer.getChildren().add(avatar);
+
+            Label roleLabel = new Label("");
+            roleLabel.setStyle("-fx-text-fill: #f4ff67; -fx-border-radius: 5px; -fx-font-size: 12px;");
+            // Create an HBox to hold the nickname label and the role label
+            if (gameStatistics != null) {
+                Role role = gameStatistics.getRole();
+                roleLabel.setText(role.getTitle());
+            }
+            avatarContainer.getChildren().add(roleLabel);
+
             int yellowCardsIterator = Objects.isNull(gameStatistics) ? 0 : gameStatistics.getYellowCards();
             int redCardsIterator = Objects.isNull(gameStatistics) ? 0 : gameStatistics.getRedCards();
             int inGameNumber = Objects.isNull(gameStatistics) ? 0 : gameStatistics.getInGameNumber();
@@ -220,19 +266,13 @@ public class VotingController implements Initializable, DisplayedPlayersControll
             playerPanel.getChildren().add(avatarContainer);
 
             if (i > 0 && i < totalPlayers + 1) {
-                Label roleLabel = new Label("");
-                roleLabel.setStyle("-fx-text-fill: #f4ff67; -fx-border-radius: 5px; -fx-font-size: 12px;");
-                // Create an HBox to hold the nickname label and the role label
-                Role role = gameStatistics.getRole();
-                if (role != null) {
-                    roleLabel.setText(role.getTitle());
-                }
                 HBox hbox = new HBox();
                 hbox.setSpacing(10); // Adjust spacing as needed
                 // Set a transparent background for the HBox
                 hbox.setStyle("-fx-background-color: rgba(31,31,31,0.5); -fx-border-radius: 5px; ");
                 hbox.setPadding(new Insets(0, 0, 0, 10));
-                hbox.getChildren().addAll(roleLabel, createNicknameLabel(i));
+//                hbox.getChildren().addAll(roleLabel, createNicknameLabel(i));
+                hbox.getChildren().addAll(viewController.createNicknameLabel(i, gameStatisticsList));
                 playerPanel.getChildren().add(hbox);
             }
 
@@ -325,6 +365,24 @@ public class VotingController implements Initializable, DisplayedPlayersControll
         return inGameNumbers;
     }
 
+    private void endEachPlayerPresentation() {
+        // TODO: поміняти не нормальні змінні, а не в коді
+        votingStateLabel.setText("Обговорення");
+        secondsTillEnd = SettingsUtil.getSecondsPerDiscussion();
+        countDownTimeLine = new Timeline(new KeyFrame(Duration.seconds(1), (ActionEvent event) -> {
+            secondsLeft.setText(String.valueOf(secondsTillEnd--));
+        }));
+        // Set number of cycles (remaining duration in seconds):
+        countDownTimeLine.setCycleCount((int) SettingsUtil.getSecondsPerDiscussion());
+        countDownTimeLine.setOnFinished(event -> {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.initOwner(stage);
+            alert.show();
+            alert.setOnHidden(evt -> startVoting());
+        });
+        countDownTimeLine.play();
+        return;
+    }
 
     private void beginVotingReverse(int beginFromIndex) {
         reverse = true;
@@ -333,7 +391,6 @@ public class VotingController implements Initializable, DisplayedPlayersControll
     }
 
     private void giveVoiceForward(Integer currentVoterIndex) {
-
         if (!checkIfAlive(currentVoterIndex + 1, gameStatisticsList.size()) ||
             checkIfSkipVoting(currentVoterIndex + 1, gameStatisticsList.size()) ||
             checkIfMarkedByKradiy(currentVoterIndex + 1, gameStatisticsList.size())
@@ -396,12 +453,17 @@ public class VotingController implements Initializable, DisplayedPlayersControll
             updateButtonStates(currentVoterIndex);
             Button button = playerIdButton.get(currentVoterIndex + 1);
             button.setStyle("-fx-background-color: #00f100");
-            System.out.println("Style");
             //            button.setDisable(true);
             return;  // Exit the loop and method after starting the countdown
         }
     }
 
+    private void resetTimerAndSetVotingLabel() {
+        if (countDownTimeLine != null) {
+            countDownTimeLine.stop();
+        }
+        votingStateLabel.setText("Голосування");
+    }
 
     private void giveVoiceReverse(Integer reverseCurrentVoterIndex) {
         if (!checkIfAlive(reverseCurrentVoterIndex + 1, gameStatisticsList.size()) ||
@@ -458,11 +520,6 @@ public class VotingController implements Initializable, DisplayedPlayersControll
             countDownTimeLine.setCycleCount(Timeline.INDEFINITE);
             countDownTimeLine.play();
             unblockAllButtons();
-//            Button button = playerIdButton.get(reverseCurrentVoterIndex + 1);
-//            button.setDisable(true);
-//            button.setStyle();
-//            updateButtonStates(reverseCurrentVoterIndex);
-
             updateButtonStates(reverseCurrentVoterIndex);
             Button button = playerIdButton.get(reverseCurrentVoterIndex + 1);
             button.setStyle("-fx-background-color: #00f100");
@@ -478,8 +535,6 @@ public class VotingController implements Initializable, DisplayedPlayersControll
             if (playerId != reverseCurrentVoterIndex + 1) {
                 if (!checkIfAlive(playerId, gameStatisticsList.size())) {
                     anotherPlayerButton.setDisable(true);
-                    System.out.println("Style here");
-//                    anotherPlayerButton.setStyle("-fx-background-color: #4cff4c; -fx-border-radius: 1px; -fx-border-color: black; -fx-text-fill: black");
                 } else {
                     anotherPlayerButton.setDisable(false);
                     anotherPlayerButton.setStyle(IDLE_BUTTON_STYLE);
@@ -487,7 +542,6 @@ public class VotingController implements Initializable, DisplayedPlayersControll
             } else {
                 anotherPlayerButton.setDisable(true);
                 anotherPlayerButton.setStyle("-fx-background-color: #00f100");
-                System.out.println("Last else");
             }
         }
     }
@@ -518,7 +572,8 @@ public class VotingController implements Initializable, DisplayedPlayersControll
         int votesToAdd = isKradiy ? 2 : 1;
 
         if (playerVotes == null) {
-            playerIdVotesMap.put(playerNumber, votesToAdd);
+//            playerIdVotesMap.put(playerNumber, votesToAdd);
+            doVote(playerNumber, 0, votesToAdd, voterIndex);
             addPointsAndChangeVoterIndex(playerNumber, voterIndex);
         } else if (playerVotes == 2) {
             //Отримати гравця в якого голосують, щоб взяти його excusesAttempts
@@ -540,29 +595,40 @@ public class VotingController implements Initializable, DisplayedPlayersControll
                     gameStatisticsService.save(gameStatistics);
                     startExcuseTimer(playerNumber, voterIndex, gameStatistics, votesToAdd);
                 } else {
-                    playerIdVotesMap.put(playerNumber, playerVotes + votesToAdd);
+                    doVote(playerNumber, playerVotes, votesToAdd, voterIndex);
                     addPointsAndChangeVoterIndex(playerNumber, voterIndex);
                 }
             } else {
-                doVote(playerNumber, playerVotes, votesToAdd);
+                doVote(playerNumber, playerVotes, votesToAdd, voterIndex);
                 addPointsAndChangeVoterIndex(playerNumber, voterIndex);
             }
         } else {
-            playerIdVotesMap.put(playerNumber, playerVotes + votesToAdd);
+            doVote(playerNumber, playerVotes, votesToAdd, voterIndex);
             addPointsAndChangeVoterIndex(playerNumber, voterIndex);
         }
     }
 
-    private void doVote(int playerNumber, int playerVotes, int votesToAdd) {
+    private void doVote(int playerNumber, int playerVotes, int votesToAdd, int lastVoterIndex) {
         playerIdVotesMap.put(playerNumber, playerVotes + votesToAdd);
+        lastVoiceAmount = votesToAdd;
+        lastVotedNumber = playerNumber;
+        lastVoterNumber = lastVoterIndex + 1;
     }
 
     private void startExcuseTimer(int playerNumber, int voterIndex, GameStatistics gameStatistics, int votesToAdd) {
         secondsTillEnd = 10;
+        Timeline excuseTimeLineTextChanger = new Timeline(new KeyFrame(Duration.seconds(1), (ActionEvent event) -> {
+            secondsLeft.setText(String.valueOf(secondsTillEnd--));
+        }));
+        // Set number of cycles (remaining duration in seconds):
+        excuseTimeLineTextChanger.setCycleCount((int) secondsTillEnd);
+        excuseTimeLineTextChanger.play();
+
         excuseTimeLine = new Timeline(new KeyFrame(Duration.seconds(secondsTillEnd), ae -> {
             Platform.runLater(() -> {
                 excuseTimeLine.stop(); // Stop the timer when it ends
                 showExcuseChoiceDialog(playerNumber, voterIndex, gameStatistics, votesToAdd);
+                secondsLeft.setText(String.valueOf(secondsTillEnd--));
             });
         }));
         excuseTimeLine.setCycleCount(1);

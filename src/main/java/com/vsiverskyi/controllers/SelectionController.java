@@ -2,7 +2,9 @@ package com.vsiverskyi.controllers;
 
 import com.vsiverskyi.exception.NoGameWithSuchIdException;
 import com.vsiverskyi.model.GameStatistics;
+import com.vsiverskyi.model.Nickname;
 import com.vsiverskyi.model.enums.ERoleOrder;
+import com.vsiverskyi.repository.NicknameRepository;
 import com.vsiverskyi.service.GameService;
 import com.vsiverskyi.service.GameStatisticsService;
 import javafx.fxml.FXML;
@@ -34,6 +36,8 @@ import java.util.ResourceBundle;
 @FxmlView("Selection.fxml")
 public class SelectionController implements Initializable {
 
+    @Autowired
+    private NicknameRepository nicknameRepository;
     @Autowired
     private GameService gameService;
     @Autowired
@@ -104,14 +108,15 @@ public class SelectionController implements Initializable {
             // Selection of nickname from a list (You may replace this with a ComboBox)
             ComboBox<String> nicknameComboBox = new ComboBox<>();
             // Add nicknames to the ComboBox
-            nicknameComboBox.getItems().addAll("Nickname 1", "Nickname 2", "Nickname 3", "ORest", "Іван", "Патрон", "Сірко", "Кривенька качечка", "Сміхотун", "Нікудишко", "Бабай", "Семилітка", "Пан Коцький", "Колосок", "Лежень", "Ох", "П'яточкін", "Той що живе в річці", "Товсті щоки", "Таємний посол", "Котигорошко", "Літачок ЛІП", "Івасик Телесик", "Коровай", "Чарівний горох", "Капітошка", "Кожум'яка", "Лис Микита", "Солом'яний", "Круглячок", "Знахідка"); // Example nicknames
+
+            List<Nickname> nicknames = nicknameRepository.findAll();
+            nicknameComboBox.getItems().addAll(nicknames.stream().map(nickname -> nickname.getNickname().toUpperCase()).toList()); // Example nicknames
             nicknameComboBox.setTooltip(new Tooltip());
             nicknameComboBox.getSelectionModel().isEmpty(); // Select the first nickname by default
-
             //TODO: можливо дописати умову (якщо Player != null) тоді брати його nickname
 //            nicknameComboBox.getSelectionModel().select(); // Select the first nickname by default
             nicknameComboBox.setStyle("-fx-font-size: 12px;");
-            new ComboBoxAutoComplete<>(nicknameComboBox);
+            new ComboBoxAutoComplete<>(nicknameComboBox, x, y);
             int finalI = i;
             nicknameComboBox.getSelectionModel().selectedItemProperty().addListener((options, oldValue, newValue) -> {
                 if (finalI > 0 && finalI < totalPlayers + 1) {
