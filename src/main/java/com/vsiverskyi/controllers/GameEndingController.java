@@ -11,12 +11,15 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
+import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
 import javafx.stage.Stage;
 import net.rgielen.fxweaver.core.FxWeaver;
 import net.rgielen.fxweaver.core.FxmlView;
@@ -24,8 +27,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.net.URL;
+import java.util.Comparator;
 import java.util.List;
 import java.util.ResourceBundle;
+import java.util.stream.Collectors;
+
+import static com.vsiverskyi.utils.StyleConstants.HOVERED_BUTTON_STYLE;
+import static com.vsiverskyi.utils.StyleConstants.IDLE_BUTTON_STYLE;
 
 @Component
 @FxmlView("GameEnding.fxml")
@@ -54,6 +62,11 @@ public class GameEndingController implements Initializable {
     private TableColumn<GameStatistics, String> playerNameColumn;
     @FXML
     private TableColumn<GameStatistics, Integer> pointsColumn;
+    @FXML
+    private TableColumn<GameStatistics, Circle> avatarColumn;
+    @FXML
+    private HBox  podiumBox; // New VBox for the podium
+
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
@@ -66,17 +79,96 @@ public class GameEndingController implements Initializable {
         Game game = gameService.getGameInfo(SelectionController.currentGameId);
         pointsService.countPointsAfterGameWasFinished(game.getId());
         List<GameStatistics> gameStatisticsList = gameStatisticsService.getGameStatisticsByGameId(game.getId());
+        // Sort the list by points in descending order
+        List<GameStatistics> sortedList = gameStatisticsList.stream()
+                .sorted(Comparator.comparingInt(GameStatistics::getPoints).reversed())
+                .collect(Collectors.toList());
+        // Get the top 3 players by points
+        List<GameStatistics> top3Players = sortedList.stream().limit(3).collect(Collectors.toList());
+        // Get the rest of the players
+        List<GameStatistics> restOfPlayers = sortedList.stream().skip(3).collect(Collectors.toList());
 
         playerNameColumn.setCellValueFactory(new PropertyValueFactory<>("inGameNickname"));
         pointsColumn.setCellValueFactory(new PropertyValueFactory<>("points"));
+        avatarColumn.setCellValueFactory(new PropertyValueFactory<>("avatarCircle")); // Assuming you have a method in your model to get Circle
+
+        // Custom cell factory to add "+" sign to points
+        pointsColumn.setCellFactory(column -> new TableCell<GameStatistics, Integer>() {
+            @Override
+            protected void updateItem(Integer item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    HBox hbox = new HBox(item);
+                    hbox.setStyle("-fx-alignment: CENTER;");
+                    setText("+" + item);
+                }
+            }
+        });
+
         gameStatisticsTable.setItems(FXCollections.observableArrayList(gameStatisticsList));
 
-        winnerTitleLabel.setText(game.getWinnerSide().getTitle());
+        avatarColumn.setCellFactory(column -> new TableCell<GameStatistics, Circle>() {
+            @Override
+            protected void updateItem(Circle item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setGraphic(null);
+                } else {
+                    HBox hbox = new HBox(item);
+                    hbox.setStyle("-fx-alignment: CENTER;");
+                    setGraphic(hbox);     }
+            }
+        });
+
+        String winners = game.getWinnerSide().getTitle();
+        winnerTitleLabel.setText("Перемогли: " + (winners.equals(ETeam.MAFIA.getTitle()) ? "Корупціонери" : "Мирні"));
+        winnerTitleLabel.setStyle("-fx-text-fill: white;");
+
         toStarterPage.setOnAction(ev -> {
             StarterController.primaryStage = (Stage) toStarterPage.getScene().getWindow();
             fxWeaver.loadController(StarterController.class).show();
         });
+        toStarterPage.setStyle(IDLE_BUTTON_STYLE);
+        toStarterPage.setOnMouseEntered(ev -> toStarterPage.setStyle(HOVERED_BUTTON_STYLE));
+        toStarterPage.setOnMouseExited(ev -> toStarterPage.setStyle(IDLE_BUTTON_STYLE));
+
+        // Create the podium
+        createPodium(top3Players);
     }
+
+    private void createPodium(List<GameStatistics> top3Players) {
+        podiumBox.getChildren().clear();
+        String[] medals = {"/images/gold.png", "/images/silver.png", "/images/bronze.png"};
+
+        for (int i = 0; i < top3Players.size(); i++) {
+            GameStatistics player = top3Players.get(i);
+
+            ImageView medalView = new ImageView(new Image(getClass().getResourceAsStream(medals[i])));
+            medalView.setFitHeight(50);
+            medalView.setFitWidth(50);
+
+            Label nameLabel = new Label(player.getInGameNickname());
+            nameLabel.setStyle("-fx-text-fill: white;");
+
+            Label roleLabel = new Label(player.getRole().getTitle());
+            roleLabel.setStyle("-fx-text-fill: white;");
+
+            Label pointsLabel = new Label("+" + player.getPoints());
+            pointsLabel.setStyle("-fx-text-fill: white;");
+
+            // Create a grey circle to represent the avatar
+            Circle avatarCircle = new Circle(20, Color.GREY);
+
+            VBox playerBox = new VBox(medalView, avatarCircle, nameLabel, roleLabel, pointsLabel);
+            playerBox.setStyle("-fx-alignment: center; -fx-spacing: 10;");
+
+            podiumBox.getChildren().add(playerBox);
+        }
+    }
+
+
 
     public void show() {
         stage.show();

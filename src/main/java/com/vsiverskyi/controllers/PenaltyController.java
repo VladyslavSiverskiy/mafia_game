@@ -77,8 +77,8 @@ public class PenaltyController {
 
             String nickname = gs.getInGameNickname() != null ? gs.getInGameNickname() : "Незнайомець";
             String displayNickname = nickname;
-            if (nickname.length() > 18) {
-                displayNickname = nickname.substring(0, 15) + "...";
+            if (nickname.length() > 15) {
+                displayNickname = nickname.substring(0, 12) + "...";
             }
 
             Label playerLabel = new Label(gs.getInGameNumber() + "." + displayNickname.toUpperCase());

@@ -16,6 +16,9 @@ import org.springframework.stereotype.Component;
 import java.io.*;
 import java.util.Properties;
 
+import static com.vsiverskyi.utils.StyleConstants.HOVERED_BUTTON_STYLE;
+import static com.vsiverskyi.utils.StyleConstants.IDLE_BUTTON_STYLE;
+
 @Component
 @Getter
 @FxmlView("GeneralSettings.fxml")
@@ -58,6 +61,10 @@ public class GeneralSettingsController {
             StarterController.primaryStage = (Stage) applyButton.getScene().getWindow();
             fxWeaver.loadController(StarterController.class).show();
         });
+
+        applyButton.setStyle(IDLE_BUTTON_STYLE);
+        applyButton.setOnMouseEntered(ev -> applyButton.setStyle(HOVERED_BUTTON_STYLE));
+        applyButton.setOnMouseExited(ev -> applyButton.setStyle(IDLE_BUTTON_STYLE));
     }
 
     private void loadSettings() {

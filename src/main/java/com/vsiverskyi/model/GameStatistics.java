@@ -1,6 +1,8 @@
 package com.vsiverskyi.model;
 
 import jakarta.persistence.*;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -72,6 +74,11 @@ public class GameStatistics {
      * */
     @Column
     private boolean wasMarkedByKradiy;
+
+    public Circle getAvatarCircle() {
+        Circle circle = new Circle(10, Color.DARKGREY); // Set the desired radius
+        return circle;
+    }
 
     @Override
     public String toString() {

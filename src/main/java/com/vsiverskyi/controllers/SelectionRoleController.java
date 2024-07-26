@@ -19,6 +19,7 @@ import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
@@ -97,6 +98,11 @@ public class SelectionRoleController implements Initializable,DisplayedPlayersCo
         stage.setMaximized(true);
         stage.setFullScreen(true);
         fullScreen.setOnAction(ev -> stage.setFullScreen(true));
+        ImageView imageView = new ImageView(getClass().getResource("/images/fullscreen.png").toExternalForm());
+        fullScreen.setGraphic(imageView);
+        imageView.fitWidthProperty().bind(fullScreen.widthProperty().divide(10));
+        imageView.setPreserveRatio(true);
+
         roleSelectionIndex=0;
 
         playerButtonsMap = new HashMap<>();
@@ -105,7 +111,6 @@ public class SelectionRoleController implements Initializable,DisplayedPlayersCo
         assignedRolesList = FXCollections.observableArrayList();
 
         try {
-            System.out.println("ID " + SelectionController.currentGameId);
             // get list of gamers and sort them by their number
             gameStatisticsList = gameStatisticsService
                     .getGameStatisticsByGameIdSortedByInGameNumber(SelectionController.currentGameId);
@@ -382,7 +387,8 @@ public class SelectionRoleController implements Initializable,DisplayedPlayersCo
     private void updatePlayerRole(String oldAssignment, String newPlayerNumber) {
         if (newPlayerNumber.isEmpty()) return;
         String[] parts = oldAssignment.split(": ");
-        int oldPlayerNumber = Integer.parseInt(parts[0].split(" ")[1]);
+        System.out.println(Arrays.toString(parts));
+        int oldPlayerNumber = Integer.parseInt(parts[0]);
         String roleTitle = parts[1];
 
         int newPlayerNumberInt = Integer.parseInt(newPlayerNumber);
@@ -415,7 +421,7 @@ public class SelectionRoleController implements Initializable,DisplayedPlayersCo
         assignedRolesList.clear();
         playerIdRoleMap.forEach((playerNumber, role) -> {
             if (role != null) {
-                assignedRolesList.add("Гравець " + playerNumber + ": " + role.getTitle());
+                assignedRolesList.add(playerNumber + ": " + role.getTitle());
             }
         });
     }

@@ -6,22 +6,23 @@ import com.vsiverskyi.model.Player;
 import com.vsiverskyi.model.Role;
 import com.vsiverskyi.model.enums.ERoleOrder;
 import com.vsiverskyi.model.enums.ETeam;
+import com.vsiverskyi.repository.RoleRepository;
 import com.vsiverskyi.service.GameService;
 import com.vsiverskyi.service.GameStatisticsService;
 import com.vsiverskyi.service.PointsService;
 import com.vsiverskyi.service.RoleService;
 import com.vsiverskyi.utils.Action;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.ListView;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -30,6 +31,7 @@ import javafx.scene.paint.ImagePattern;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
+import javafx.util.Callback;
 import lombok.RequiredArgsConstructor;
 import net.rgielen.fxweaver.core.FxWeaver;
 import net.rgielen.fxweaver.core.FxmlView;
@@ -62,6 +64,8 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
     private PenaltyController penaltyController;
     @Autowired
     private GameStatisticsService gameStatisticsService;
+    @Autowired
+    private RoleRepository roleRepository;
     @Autowired
     private FxWeaver fxWeaver;
     @FXML
@@ -140,6 +144,10 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
         technicalDefeatMafia.setOnAction(e -> penaltyController.assignTechnicalDefeat("MAFIA"));
         penaltyController.initializePlayerCardList(gameStatisticsListSortedByInGameNumber, stage, this, playerCardListView);
         fullScreen.setOnAction(ev -> stage.setFullScreen(true));
+        ImageView imageView = new ImageView(getClass().getResource("/images/fullscreen.png").toExternalForm());
+        fullScreen.setGraphic(imageView);
+        imageView.fitWidthProperty().bind(fullScreen.widthProperty().divide(10));
+        imageView.setPreserveRatio(true);
 
         displayRolePlayers(gameStatisticsListSortedByRoleOrder.size());
         startRoleIterating();
@@ -174,10 +182,12 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
         // можна ліст замінити на сет ролей
         currentRole = actualInGameRoles.get(currentRoleIndex);
         currentRoleTitle.setText(currentRole.getTitle()); // буде писати мафія
+        updateAllRolesList();
     }
 
     private void setNextRole() {
 //        updatePlayersList();
+        updateAllRolesList();
         currentRoleIndex++;
         if (currentRoleIndex == actualInGameRoles.size()) {
             Alert alert = new Alert(Alert.AlertType.INFORMATION, queueToString(actionsQueue));
@@ -201,7 +211,7 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
             }
         } else if (currentRoleIndex < actualInGameRoles.size()) {
             currentRole = actualInGameRoles.get(currentRoleIndex);
-            if (!checkIfAliveOrDontHaveRedCardsWithRole(currentRole, SelectionController.currentGameId)){
+            if (!checkIfAliveOrDontHaveRedCardsWithRole(currentRole, SelectionController.currentGameId)) {
                 setNextRole();
             }
 
@@ -245,34 +255,64 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
         return gameStatisticsService.checkIfAliveOrDontHaveRedCardsWithRole(currentRole, currentGameId);
     }
 
+    private void updateAllRolesList() {
+        if (currentRole != null) {
+            List<String> roleTitles = gameStatisticsListSortedByRoleOrder.stream()
+                    .map(gameStatistics -> gameStatistics.getRole().getTitle()).distinct().collect(Collectors.toList());
+            allRolesPerGameList.getItems().clear(); // Clear existing items
+
+            allRolesPerGameList.getItems().clear(); // Clear existing items
+            allRolesPerGameList.getItems().addAll(roleTitles);
+
+            // Set a custom cell factory to style cells based on the role title
+            allRolesPerGameList.setCellFactory(lv -> new ListCell<String>() {
+                @Override
+                protected void updateItem(String item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setText(null);
+                        setStyle("");
+                    } else {
+                        setText(item);
+                        // Apply style if the title matches the current selected role title
+                        if (item.equals(currentRole.getTitle())) {
+                            setStyle("-fx-background-color: #bd1c1c; -fx-text-fill: white;");
+                        } else {
+                            setStyle("");
+                        }
+                    }
+                }
+            });
+        }
+    }
+
     private void updatePlayersList() {
         gameStatisticsListSortedByRoleOrder = gameStatisticsService
                 .getGameStatisticsByGameId(SelectionController.currentGameId);
-        List<String> roleTitles = gameStatisticsListSortedByRoleOrder.stream()
-                .map(gameStatistics -> gameStatistics.getRole().getTitle()).distinct().collect(Collectors.toList());
-        for (String title : roleTitles) {
-            allRolesPerGameList.getItems().add(title);
-        }
         gameStatisticsListSortedByInGameNumber = gameStatisticsService
                 .getGameStatisticsByGameIdSortedByInGameNumber(SelectionController.currentGameId);
         actualInGameRoles = gameStatisticsListSortedByRoleOrder.stream()
                 .filter(GameStatistics::isInGame)
-                .map(GameStatistics::getRole)
+                .map(gameStat -> {
+                    if (gameStat.getRole().getTitle().equals(ERoleOrder.DON.getTitle())) {
+                        return roleRepository.findByRoleNameConstant(ERoleOrder.MAFIA.name());
+                    } else {
+                        return gameStat.getRole();
+                    }
+                })
                 .distinct()
                 .toList();
+        updateAllRolesList();
     }
 
-    private Boolean isNextRolePeace() {
-        int tempCurrentRoleIndex = currentRoleIndex;
-        tempCurrentRoleIndex++;
-        if (tempCurrentRoleIndex == gameStatisticsListSortedByRoleOrder.size()) {
-            return false;
+    // Implement this method to find the Role object by its title
+    private Role getRoleByTitle(String title) {
+        for (GameStatistics gameStatistics : gameStatisticsListSortedByRoleOrder) {
+            if (gameStatistics.getRole().getTitle().equals(title)) {
+                return gameStatistics.getRole();
+            }
         }
-        while (!gameStatisticsListSortedByRoleOrder.get(tempCurrentRoleIndex).isInGame()) {
-            tempCurrentRoleIndex++;
-        }
-        Role roleToCheck = gameStatisticsListSortedByRoleOrder.get(tempCurrentRoleIndex).getRole();
-        return roleToCheck.getTeam() == ETeam.PEACE;
+        return null;
     }
 
     private void handlePlayerAction(int chosenPlayerNumber) {
@@ -285,18 +325,13 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
                     mafiaCantChooseHimselfAlert.show();
                 } else {
                     Action mafiaMoveLogger = null;
-                    if (gameStatisticsService.checkIfDonIsAlive(SelectionController.currentGameId)) {
-                        // якщо живий то мафія нікого не вбиває
-                        mafiaMoveLogger = gameService.doMafiaSelectionMove(SelectionController.currentGameId, chosenPlayerNumber);
-                        mafiaMoveLogger.setActionText("Мафія " + chosenPlayerNumber + mafiaMoveLogger.getActionText());
-                        Alert alert = new Alert(Alert.AlertType.INFORMATION, mafiaMoveLogger.getActionText());
-                        alert.initOwner(stage);
-                        alert.show();
-                    } else {
-                        // якщо ні, то мафія вибирає кого вбити
-                        selectedToKillPlayerNumber = chosenPlayerNumber;
-                        mafiaMoveLogger = gameService.doMafiaKillMove(SelectionController.currentGameId, chosenPlayerNumber);
-                    }
+                    // якщо ні, то мафія вибирає кого вбити
+                    selectedToKillPlayerNumber = chosenPlayerNumber;
+                    mafiaMoveLogger = gameService.doMafiaKillMove(SelectionController.currentGameId, chosenPlayerNumber);
+//                    Alert alert = new Alert(Alert.AlertType.INFORMATION, mafiaMoveLogger.getActionText());
+//                    alert.initOwner(stage);
+//                    alert.show();
+
                     pointsService.countPointsInOrderToNightAction(
                             SelectionController.currentGameId,
                             currentRole,
@@ -307,26 +342,6 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
                 }
                 break;
             // тут додавати logger в чергу?
-            case DON:
-                if (playerIdRoleMap.get(chosenPlayerNumber).getRoleNameConstant().equals(ERoleOrder.DON.name())) {
-                    Alert donCantChooseHimselfAlert =
-                            new Alert(Alert.AlertType.INFORMATION, ERoleOrder.DON.getTitle() + " не може проголосувати за себе");
-                    donCantChooseHimselfAlert.initOwner(stage);
-                    donCantChooseHimselfAlert.showAndWait();
-                } else {
-                    Action donMoveLogger = gameService.doMafiaKillMove(SelectionController.currentGameId, chosenPlayerNumber);
-                    pointsService.countPointsInOrderToNightAction(
-                            SelectionController.currentGameId,
-                            currentRole,
-                            chosenPlayerNumber
-                    );
-                    actionsQueue.add(donMoveLogger);
-                    Alert alert = new Alert(Alert.AlertType.INFORMATION, donMoveLogger.getActionText());
-                    alert.initOwner(stage);
-                    alert.showAndWait();
-                    setNextRole();
-                }
-                break;
             case PEREVERTEN_PEACE:
                 setNextRole();
                 break;
@@ -417,7 +432,6 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
                 }
                 break;
             case OTAMAN:
-                // TODO: нарахувати бали
                 pointsService.countPointsInOrderToNightAction(
                         SelectionController.currentGameId,
                         currentRole,

@@ -21,6 +21,7 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
@@ -128,7 +129,6 @@ public class VotingController implements Initializable, DisplayedPlayersControll
         kradiyHasStolenVoice = false;
 
         int secondsPerMove = SettingsUtil.getSecondsPerMove();
-        System.out.println("Seconds per move: " + secondsPerMove);
 
         gameStatisticsList = gameStatisticsService.getGameStatisticsByGameIdSortedByInGameNumber(SelectionController.currentGameId);
         reverseCurrentVoterIndex = gameStatisticsList.size() - 1;
@@ -143,11 +143,26 @@ public class VotingController implements Initializable, DisplayedPlayersControll
         displayRolePlayers(gameStatisticsList.size());
 
         fullScreen.setOnAction(ev -> stage.setFullScreen(true));
+        ImageView imageView = new ImageView(getClass().getResource("/images/fullscreen.png").toExternalForm());
+        fullScreen.setGraphic(imageView);
+        imageView.fitWidthProperty().bind(fullScreen.widthProperty().divide(10));
+        imageView.setPreserveRatio(true);
 
         startButton.setOnAction(actionEvent -> startVoting());
-
         resetVote.setOnAction(actionEvent -> resetVote());
+
         discussionButton.setOnAction(actionEvent -> endEachPlayerPresentation());
+        discussionButton.setStyle(IDLE_BUTTON_STYLE);
+        discussionButton.setOnMouseEntered(ev -> discussionButton.setStyle(HOVERED_BUTTON_STYLE));
+        discussionButton.setOnMouseExited(ev -> discussionButton.setStyle(IDLE_BUTTON_STYLE));
+
+        resetVote.setStyle(IDLE_BUTTON_STYLE);
+        resetVote.setOnMouseEntered(ev -> resetVote.setStyle(HOVERED_BUTTON_STYLE));
+        resetVote.setOnMouseExited(ev -> resetVote.setStyle(IDLE_BUTTON_STYLE));
+
+        startButton.setStyle(IDLE_BUTTON_STYLE);
+        startButton.setOnMouseEntered(ev -> startButton.setStyle(HOVERED_BUTTON_STYLE));
+        startButton.setOnMouseExited(ev -> startButton.setStyle(IDLE_BUTTON_STYLE));
     }
 
     private void resetVote() {
@@ -391,6 +406,7 @@ public class VotingController implements Initializable, DisplayedPlayersControll
     }
 
     private void giveVoiceForward(Integer currentVoterIndex) {
+        startLabel.setText("");
         if (!checkIfAlive(currentVoterIndex + 1, gameStatisticsList.size()) ||
             checkIfSkipVoting(currentVoterIndex + 1, gameStatisticsList.size()) ||
             checkIfMarkedByKradiy(currentVoterIndex + 1, gameStatisticsList.size())
@@ -466,6 +482,7 @@ public class VotingController implements Initializable, DisplayedPlayersControll
     }
 
     private void giveVoiceReverse(Integer reverseCurrentVoterIndex) {
+        startLabel.setText("");
         if (!checkIfAlive(reverseCurrentVoterIndex + 1, gameStatisticsList.size()) ||
             checkIfSkipVoting(currentVoterIndex + 1, gameStatisticsList.size()) ||
             checkIfMarkedByKradiy(currentVoterIndex + 1, gameStatisticsList.size()

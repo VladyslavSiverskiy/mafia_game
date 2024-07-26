@@ -66,7 +66,7 @@ public class ComboBoxAutoComplete<T> {
 			Window stage = cmb.getScene().getWindow();
 //			double posX = stage.getX() + cmb.getBoundsInParent().getMinX();
 //			double posY = stage.getY() + cmb.getBoundsInParent().getMinY();
-			cmb.getTooltip().show(stage, x + 340, y + 35);
+			cmb.getTooltip().show(stage, x + 255, y + 50);
 			cmb.show();
 		}
 		cmb.getItems().setAll(filteredList);

@@ -7,6 +7,7 @@ import com.vsiverskyi.model.enums.ERoleOrder;
 import com.vsiverskyi.repository.NicknameRepository;
 import com.vsiverskyi.service.GameService;
 import com.vsiverskyi.service.GameStatisticsService;
+import com.vsiverskyi.utils.StyleConstants;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
@@ -14,6 +15,7 @@ import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.GridPane;
@@ -69,6 +71,10 @@ public class SelectionController implements Initializable {
         stage.setMaximized(true);
         stage.setFullScreen(true);
         fullScreen.setOnAction(ev -> stage.setFullScreen(true));
+        ImageView imageView = new ImageView(getClass().getResource("/images/fullscreen.png").toExternalForm());
+        fullScreen.setGraphic(imageView);
+        imageView.fitWidthProperty().bind(fullScreen.widthProperty().divide(10));
+        imageView.setPreserveRatio(true);
 
         try {
             gameStatisticsList = gameStatisticsService.getGameStatisticsByGameId(currentGameId);
@@ -103,8 +109,8 @@ public class SelectionController implements Initializable {
             playerPanel.setLayoutY(y - 50); // Offset to center panel
             playerPanel.setSpacing(5); // Adjust spacing as needed
             // Avatar (You may replace this with an ImageView)
-            Circle avatar = new Circle(18, Color.LIGHTGRAY); // Example avatar
-            playerPanel.getChildren().add(avatar);
+//            Circle avatar = new Circle(18, Color.LIGHTGRAY); // Example avatar
+//            playerPanel.getChildren().add(avatar);
             // Selection of nickname from a list (You may replace this with a ComboBox)
             ComboBox<String> nicknameComboBox = new ComboBox<>();
             // Add nicknames to the ComboBox
@@ -128,9 +134,9 @@ public class SelectionController implements Initializable {
             selectionPane.getChildren().add(playerPanel);
 
             Button button = new Button(String.valueOf(i));
-            button.setLayoutX(x - 25);
-            button.setLayoutY(y - 25);
-            button.setStyle("-fx-background-color: #161616; -fx-text-fill: #ffffff;  -fx-border-color: #ffffff; -fx-border-radius: 5px;");
+            button.setLayoutX(x - 70);
+            button.setLayoutY(y - 50);
+            button.setStyle(StyleConstants.IDLE_BUTTON_STYLE);
 
             if (i == 0 || i == totalPlayers + 1) {
                 playerPanel.setVisible(false);

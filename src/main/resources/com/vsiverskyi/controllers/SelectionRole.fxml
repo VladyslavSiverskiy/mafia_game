@@ -9,7 +9,7 @@
 
 <AnchorPane fx:id="selectionRoleAP" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="800.0" prefWidth="1280.0" style="-fx-background-color: #161616;" xmlns="http://javafx.com/javafx/19" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vsiverskyi.controllers.SelectionRoleController">
     <children>
-        <Label fx:id="headerLabel" layoutX="24.0" layoutY="69.0" text="Оберіть ролі" textFill="WHITE">
+        <Label fx:id="headerLabel" layoutX="20.0" layoutY="56.0" text="Розподіліть ролі!" textFill="WHITE">
             <font>
                 <Font name="Lucida Console" size="18.0" />
             </font>
@@ -28,7 +28,7 @@
         </AnchorPane>
 
         <!-- Admin Menu for assigning cards -->
-        <AnchorPane layoutX="1081.0" layoutY="66.0" prefHeight="654.0" prefWidth="178.0" style="-fx-border-color: #ffffff; -fx-border-radius: 5px; -fx-background-color: #161616;">
+        <AnchorPane layoutX="1081.0" layoutY="66.0"  prefHeight="624.0" prefWidth="194.0" style="-fx-border-color: #ffffff; -fx-border-radius: 5px; -fx-background-color: #161616;">
             <children>
                 <Label layoutX="25.0" layoutY="17.0" text="Технічна поразка" textFill="WHITE" />
                 <Button fx:id="technicalDefeatPeaceful" layoutX="26.0" layoutY="46.0" mnemonicParsing="false" prefHeight="27.0" prefWidth="144.0" style="-fx-background-color: #161616; -fx-border-color: #ffffff; -fx-border-radius: 5px;" text="Мирним" textFill="WHITE" />
@@ -37,6 +37,6 @@
             <Line endX="100.7618408203125" layoutX="89.0" layoutY="128.0" startX="-89.0" stroke="WHITE" />
             </children>
         </AnchorPane>
-      <Button fx:id="fullScreen" layoutX="73.0" layoutY="35.0" mnemonicParsing="false" text="FullScreen" />
+        <Button fx:id="fullScreen" layoutX="1115.0" layoutY="23.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="124.0" text="Повний екран" />
     </children>
 </AnchorPane>

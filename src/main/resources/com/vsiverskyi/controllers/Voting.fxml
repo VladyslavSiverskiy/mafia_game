@@ -11,34 +11,34 @@
 
 <AnchorPane fx:id="votingAp" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="800.0" prefWidth="1280.0" style="-fx-background-color: #161616;" xmlns="http://javafx.com/javafx/19" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vsiverskyi.controllers.VotingController">
     <children>
-        <ScrollPane layoutX="21.0" layoutY="101.0" prefHeight="191.0" prefWidth="157.0" style="-fx-background: #161616; -fx-border-color: #ffffff; -fx-border-radius: 5px">
+        <ScrollPane layoutX="23.0" layoutY="99.0" prefHeight="191.0" prefWidth="157.0" style="-fx-background: #161616; -fx-border-color: #ffffff; -fx-border-radius: 5px">
             <VBox fx:id="votesDisplay" spacing="5" style="-fx-background-color: #161616; -fx-border-radius: 5px" />
         </ScrollPane>
         <!-- Admin Menu for assigning cards -->
-        <AnchorPane layoutX="1060.0" layoutY="80.0" prefHeight="654.0" prefWidth="178.0" style="-fx-border-color: #ffffff; -fx-border-radius: 5px; -fx-background-color: #161616;">
+        <AnchorPane layoutX="1062.0" layoutY="61.0" prefHeight="624.0" prefWidth="194.0" style="-fx-border-color: #ffffff; -fx-border-radius: 5px; -fx-background-color: #161616;">
             <children>
                 <Label layoutX="25.0" layoutY="17.0" text="Технічна поразка" textFill="WHITE" />
                 <Button fx:id="technicalDefeatPeaceful" layoutX="26.0" layoutY="46.0" mnemonicParsing="false" prefHeight="27.0" prefWidth="144.0" style="-fx-background-color: #161616; -fx-border-color: #ffffff; -fx-border-radius: 5px;" text="Мирним" textFill="WHITE" />
                 <Button fx:id="technicalDefeatMafia" layoutX="26.0" layoutY="81.0" mnemonicParsing="false" prefHeight="27.0" prefWidth="144.0" style="-fx-background-color: #161616; -fx-border-color: #ffffff; -fx-border-radius: 5px;" text="Мафії" textFill="WHITE" />
-                <ListView fx:id="playerCardListView" layoutY="129.0" prefHeight="523.0" prefWidth="191.0" />
+                <ListView fx:id="playerCardListView" layoutX="4.0" layoutY="129.0" prefHeight="491.0" prefWidth="187.0" />
                 <Line endX="100.7618408203125" layoutX="89.0" layoutY="128.0" startX="-89.0" stroke="WHITE" />
             </children>
         </AnchorPane>
-        <Button fx:id="fullScreen" layoutX="73.0" layoutY="35.0" mnemonicParsing="false" text="FullScreen" />
-        <Button fx:id="startButton" layoutX="34.0" layoutY="641.0" mnemonicParsing="false" prefHeight="27.0" prefWidth="103.0" text="Голосування" />
+        <Button fx:id="fullScreen" layoutX="1115.0" layoutY="23.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="124.0" text="Повний екран" />
+        <Button fx:id="startButton" layoutX="45.0" layoutY="640.0" mnemonicParsing="false" prefHeight="27.0" prefWidth="103.0" text="Голосування" />
         <AnchorPane fx:id="votingPlayersPane" layoutX="172.0" layoutY="55.0" prefHeight="700.0" prefWidth="878.0" />
-        <Label fx:id="startLabel" layoutX="45.0" layoutY="547.0" prefHeight="37.0" prefWidth="144.0" textFill="WHITE" />
-        <Label fx:id="secondsLeft" layoutX="55.0" layoutY="328.0" prefHeight="122.0" prefWidth="90.0" textFill="WHITE">
+        <Label fx:id="startLabel" layoutX="45.0" layoutY="528.0" prefHeight="68.0" prefWidth="144.0" textFill="WHITE" />
+        <Label fx:id="secondsLeft" layoutX="54.0" layoutY="380.0" prefHeight="122.0" prefWidth="90.0" textFill="WHITE">
             <font>
                 <Font size="83.0" />
             </font>
         </Label>
-      <Button fx:id="resetVote" layoutX="85.0" layoutY="67.0" mnemonicParsing="false" text="Reset" />
-      <Label fx:id="votingStateLabel" layoutX="597.0" layoutY="769.0" text="Label" textFill="WHITE">
+      <Button fx:id="resetVote" layoutX="45.0" layoutY="302.0" mnemonicParsing="false" text="Відмінити голос" />
+      <Label fx:id="votingStateLabel" layoutX="602.0" layoutY="765.0" textFill="WHITE">
          <font>
             <Font size="21.0" />
          </font>
       </Label>
-      <Button fx:id="discussionButton" layoutX="34.0" layoutY="600.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="103.0" text="Обговорення" />
+      <Button fx:id="discussionButton" layoutX="45.0" layoutY="601.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="103.0" text="Обговорення" />
     </children>
 </AnchorPane>

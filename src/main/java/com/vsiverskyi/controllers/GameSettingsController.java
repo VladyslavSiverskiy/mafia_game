@@ -16,6 +16,7 @@ import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -78,6 +79,11 @@ public class GameSettingsController implements Initializable {
         stage.setMaximized(true);
         stage.setFullScreen(true);
         fullScreen.setOnAction(ev -> stage.setFullScreen(true));
+        ImageView imageView = new ImageView(getClass().getResource("/images/fullscreen.png").toExternalForm());
+        fullScreen.setGraphic(imageView);
+        imageView.fitWidthProperty().bind(fullScreen.widthProperty().divide(10));
+        imageView.setPreserveRatio(true);
+
 
         playersAmountSpinnerValueFactory.setValue(10);
         playersAmountSpinner.setValueFactory(playersAmountSpinnerValueFactory);

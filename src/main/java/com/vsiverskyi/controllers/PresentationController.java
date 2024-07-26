@@ -18,6 +18,7 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -97,6 +98,10 @@ public class PresentationController implements Initializable, DisplayedPlayersCo
         stage.setScene(scene);
         scene.getStylesheets().add(getClass().getResource("/style/style.css").toExternalForm());
         fullScreen.setOnAction(ev -> stage.setFullScreen(true));
+        ImageView imageView = new ImageView(getClass().getResource("/images/fullscreen.png").toExternalForm());
+        fullScreen.setGraphic(imageView);
+        imageView.fitWidthProperty().bind(fullScreen.widthProperty().divide(10));
+        imageView.setPreserveRatio(true);
 
         playerIdButton = new HashMap<>();
         startVoting.setStyle(StyleConstants.IDLE_BUTTON_STYLE);
