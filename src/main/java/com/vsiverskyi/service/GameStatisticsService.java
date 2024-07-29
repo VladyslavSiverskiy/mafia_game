@@ -73,6 +73,14 @@ public class GameStatisticsService {
         }
     }
 
+    private void clearHealedOnThePreviousStage(Long gameId) {
+        List<GameStatistics> gameStatistics = gameRepository.findById(gameId).get().getGameStatistics();
+        for (GameStatistics gameStatistic : gameStatistics) {
+            gameStatistic.setHeadledOnThePreviousStage(false);
+            gameStatisticsRepository.save(gameStatistic);
+        }
+    }
+
     public GameStatistics killPlayer(long gameId, int playerToKillInGameNumber) {
         GameStatistics gameStatistics = gameStatisticsRepository
                 .findByGame_IdAndAndInGameNumber(gameId, playerToKillInGameNumber);
@@ -107,8 +115,10 @@ public class GameStatisticsService {
     public GameStatistics healPlayer(long gameId, int playerToKillInGameNumber) {
         GameStatistics gameStatistics = gameStatisticsRepository
                 .findByGame_IdAndAndInGameNumber(gameId, playerToKillInGameNumber);
+        clearHealedOnThePreviousStage(gameId);
         gameStatistics.setInGame(true);
         gameStatistics.setPoisonedByLady(false);
+        gameStatistics.setHeadledOnThePreviousStage(true);
         gameStatistics.setTimesWasHealed((short) (gameStatistics.getTimesWasHealed() + 1));
         gameStatisticsRepository.save(gameStatistics);
         return gameStatistics;
@@ -327,5 +337,9 @@ public class GameStatisticsService {
                         gameStatistics.getRole().getRoleNameConstant()
                                 .equals(currentRole.getRoleNameConstant()) && gameStatistics.getRedCards() <= 0)
                 .toList().isEmpty();
+    }
+
+    public boolean checkIfPlayerWasHealed(int chosenPlayerNumber, Long currentGameId) {
+        return gameStatisticsRepository.findByGame_IdAndAndInGameNumber(currentGameId, chosenPlayerNumber).isHeadledOnThePreviousStage();
     }
 }

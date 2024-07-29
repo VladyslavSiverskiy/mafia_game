@@ -74,6 +74,8 @@ public class GameStatistics {
      * */
     @Column
     private boolean wasMarkedByKradiy;
+    @Column
+    private boolean headledOnThePreviousStage;
 
     public Circle getAvatarCircle() {
         Circle circle = new Circle(10, Color.DARKGREY); // Set the desired radius

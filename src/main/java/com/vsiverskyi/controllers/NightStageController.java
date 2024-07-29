@@ -368,7 +368,12 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
                             new Alert(Alert.AlertType.INFORMATION, "Лікар не може лікувати себе більше двох разів");
                     doctorCantHealHimselfAlert.initOwner(stage);
                     doctorCantHealHimselfAlert.showAndWait();
-                } else {
+                } else if (gameStatisticsService.checkIfPlayerWasHealed(chosenPlayerNumber, SelectionController.currentGameId)) {
+                    Alert doctorCantHealHimselfAlert =
+                            new Alert(Alert.AlertType.INFORMATION, "Лікар не може лікувати два рази підряд");
+                    doctorCantHealHimselfAlert.initOwner(stage);
+                    doctorCantHealHimselfAlert.showAndWait();
+                }else {
                     // Метод - нарахувати поінти за хід вночі.
                     // Передамо поточну роль, і всі з такою роллю отримають стільки то балів
                     doDoctorMove(chosenPlayerNumber);

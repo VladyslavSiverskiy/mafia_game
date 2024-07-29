@@ -295,6 +295,8 @@ public class GameService {
     }
 
     public Action doDoctorMove(long gameId, int playerToHealInGameNumber) {
+
+
         GameStatistics gameStatistics = gameStatisticsService.healPlayer(gameId, playerToHealInGameNumber);
         Action logger = new Action();
         logger.setActionText("Лікар лікує гравця № " + playerToHealInGameNumber + "." + gameStatistics.getInGameNickname());
