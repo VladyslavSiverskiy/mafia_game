@@ -73,8 +73,11 @@ public class GameEndingController implements Initializable {
         this.stage = StarterController.primaryStage;
         scene = new Scene(endingGameAp);
         stage.setScene(scene);
-//        stage.setMaximized(true);
-//        stage.setFullScreen(true);
+        stage.setMaximized(true);
+        stage.setFullScreen(true);
+
+        stage.getIcons().add(new Image("/images/title.jpg"));
+        stage.setTitle("STOP КОРУПЦІЯ");
         scene.getStylesheets().add(getClass().getResource("/style/style.css").toExternalForm());
         Game game = gameService.getGameInfo(SelectionController.currentGameId);
         pointsService.countPointsAfterGameWasFinished(game.getId());
@@ -107,7 +110,7 @@ public class GameEndingController implements Initializable {
             }
         });
 
-        gameStatisticsTable.setItems(FXCollections.observableArrayList(gameStatisticsList));
+        gameStatisticsTable.setItems(FXCollections.observableArrayList(restOfPlayers));
 
         avatarColumn.setCellFactory(column -> new TableCell<GameStatistics, Circle>() {
             @Override
@@ -142,6 +145,9 @@ public class GameEndingController implements Initializable {
         podiumBox.getChildren().clear();
         String[] medals = {"/images/gold.png", "/images/silver.png", "/images/bronze.png"};
 
+        // Define fixed width for each card
+        final double cardWidth = 150;
+
         for (int i = 0; i < top3Players.size(); i++) {
             GameStatistics player = top3Players.get(i);
 
@@ -149,24 +155,38 @@ public class GameEndingController implements Initializable {
             medalView.setFitHeight(50);
             medalView.setFitWidth(50);
 
+            // Create a grey circle to represent the avatar
+            Circle avatarCircle = new Circle(30, Color.GREY);
+            avatarCircle.setStroke(Color.WHITE);
+            avatarCircle.setStrokeWidth(2);
+
             Label nameLabel = new Label(player.getInGameNickname());
-            nameLabel.setStyle("-fx-text-fill: white;");
+            nameLabel.setStyle("-fx-text-fill: white; -fx-font-size: 16px; -fx-font-family: 'Arial'; -fx-text-alignment: center");
+            nameLabel.setWrapText(true);  // Wrap text if it exceeds width
+            nameLabel.setMaxWidth(cardWidth - 20);  // Subtract padding
+            nameLabel.setAlignment(javafx.geometry.Pos.CENTER);
 
             Label roleLabel = new Label(player.getRole().getTitle());
-            roleLabel.setStyle("-fx-text-fill: white;");
+            roleLabel.setStyle("-fx-text-fill: white; -fx-font-size: 14px; -fx-font-family: 'Arial'; -fx-text-alignment: center");
+            roleLabel.setWrapText(true);  // Wrap text if it exceeds width
+            roleLabel.setMaxWidth(cardWidth - 20);  // Subtract padding
+            roleLabel.setAlignment(javafx.geometry.Pos.CENTER);
 
             Label pointsLabel = new Label("+" + player.getPoints());
-            pointsLabel.setStyle("-fx-text-fill: white;");
-
-            // Create a grey circle to represent the avatar
-            Circle avatarCircle = new Circle(20, Color.GREY);
+            pointsLabel.setStyle("-fx-text-fill: white; -fx-font-size: 14px; -fx-font-family: 'Arial'; -fx-text-alignment: center");
+            pointsLabel.setWrapText(true);  // Wrap text if it exceeds width
+            pointsLabel.setMaxWidth(cardWidth - 20);  // Subtract padding
+            pointsLabel.setAlignment(javafx.geometry.Pos.CENTER);
 
             VBox playerBox = new VBox(medalView, avatarCircle, nameLabel, roleLabel, pointsLabel);
-            playerBox.setStyle("-fx-alignment: center; -fx-spacing: 10;");
+            playerBox.setStyle("-fx-alignment: center; -fx-spacing: 10; -fx-padding: 10; -fx-pref-width: " + cardWidth + "px;");
 
             podiumBox.getChildren().add(playerBox);
         }
     }
+
+
+
 
 
 

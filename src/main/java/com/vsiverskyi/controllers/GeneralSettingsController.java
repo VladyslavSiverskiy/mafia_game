@@ -5,6 +5,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Spinner;
 import javafx.scene.control.SpinnerValueFactory;
+import javafx.scene.image.Image;
 import javafx.scene.layout.AnchorPane;
 import javafx.stage.Stage;
 import lombok.Getter;
@@ -33,6 +34,8 @@ public class GeneralSettingsController {
     @FXML
     private Spinner<Integer> secondsPerDiscussionSpinner;
     @FXML
+    private Spinner<Integer> secondsPerDefendSpinner;
+    @FXML
     private Button applyButton;
     @FXML
     private AnchorPane settingsPane;
@@ -42,6 +45,8 @@ public class GeneralSettingsController {
     public void initialize() {
         this.stage = StarterController.primaryStage;
         stage.setScene(new Scene(settingsPane));
+        stage.getIcons().add(new Image("/images/title.jpg"));
+        stage.setTitle("STOP КОРУПЦІЯ");
         // Initialize the spinner with a value factory
         SpinnerValueFactory<Integer> valueFactory = new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 60, 10);
         secondsPerMoveSpinner.setValueFactory(valueFactory);
@@ -51,6 +56,9 @@ public class GeneralSettingsController {
 
         SpinnerValueFactory<Integer> valueFactoryDiscussion = new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 120, 30);
         secondsPerDiscussionSpinner.setValueFactory(valueFactoryDiscussion);
+
+        SpinnerValueFactory<Integer> valueFactoryDefence = new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 60, 10);
+        secondsPerDefendSpinner.setValueFactory(valueFactoryDefence);
 
         // Load settings from the properties file
         loadSettings();
@@ -85,7 +93,12 @@ public class GeneralSettingsController {
 
             String secondsPerDiscussion = properties.getProperty("secondsPerDiscussion");
             if (secondsPerPresentation != null) {
-                secondsPerPresentationSpinner.getValueFactory().setValue(Integer.parseInt(secondsPerPresentation));
+                secondsPerPresentationSpinner.getValueFactory().setValue(Integer.parseInt(secondsPerDiscussion));
+            }
+
+            String secondsPerDefence = properties.getProperty("secondsPerDefence");
+            if (secondsPerDefence != null) {
+                secondsPerDefendSpinner.getValueFactory().setValue(Integer.parseInt(secondsPerDefence));
             }
 
         } catch (IOException e) {
@@ -98,6 +111,7 @@ public class GeneralSettingsController {
         properties.setProperty("secondsPerMove", String.valueOf(secondsPerMoveSpinner.getValue()));
         properties.setProperty("secondsPerPresentation", String.valueOf(secondsPerPresentationSpinner.getValue()));
         properties.setProperty("secondsPerDiscussion", String.valueOf(secondsPerDiscussionSpinner.getValue()));
+        properties.setProperty("secondsPerDefence", String.valueOf(secondsPerDefendSpinner.getValue()));
 
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(SETTINGS_FILE))) {
@@ -109,12 +123,5 @@ public class GeneralSettingsController {
 
     public void show() {
         // Your existing show method
-    }
-
-    // Public method to initialize without showing the stage
-    public void initializeWithoutShowing() {
-        if (secondsPerMoveSpinner == null) {
-            loadSettings();
-        }
     }
 }

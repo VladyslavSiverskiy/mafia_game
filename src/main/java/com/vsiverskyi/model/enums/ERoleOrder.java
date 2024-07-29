@@ -9,7 +9,7 @@ public enum ERoleOrder {
     DOCTOR("Знахар"),
     LEDY("Діва ночі"),
     MANIAK("Маніяк"),
-    STRILOCHNYK("Кармалюк"),
+    STRILOCHNYK("Месник"),
     BOMBA("Писар"),
     ZATYCHKA("Пастор"),
     ZATYCHKA_SUDDYA("Суддя"),

@@ -10,6 +10,7 @@ import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.image.Image;
 import javafx.stage.Stage;
 import lombok.RequiredArgsConstructor;
 import net.rgielen.fxweaver.core.FxWeaver;
@@ -38,11 +39,19 @@ public class StarterController {
     Button start_btn;
     @FXML
     Button general_btn;
+    @FXML
+    Button eveningRate;
 
     @FXML
     public void openGameSettingsPage(ActionEvent actionEvent) throws IOException {
         primaryStage = (Stage) start_btn.getScene().getWindow();
         fxWeaver.loadController(GameSettingsController.class).show();
+    }
+
+    @FXML
+    public void openEveningRate(ActionEvent actionEvent) throws IOException {
+        primaryStage = (Stage) start_btn.getScene().getWindow();
+        fxWeaver.loadController(EveningRateController.class).show();
     }
 
     @FXML
@@ -53,8 +62,11 @@ public class StarterController {
 
     public void show() {
         Parent root = fxWeaver.loadView(StarterController.class);
+        primaryStage.getIcons().add(new Image("/images/title.jpg"));
         Scene scene = new Scene(root);
+//        primaryStage = (Stage) general_btn.getScene().getWindow();
         primaryStage.setScene(scene);
         primaryStage.show();
+
     }
 }

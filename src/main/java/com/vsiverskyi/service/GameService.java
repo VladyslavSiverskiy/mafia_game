@@ -33,6 +33,19 @@ public class GameService {
     private final GameStatisticsRepository gameStatisticsRepository;
     private int playerNumber = 1;
 
+    // Method to get games from today
+    public List<Game> findLastGames() {
+        LocalDateTime todayStart = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0).withNano(0);
+        LocalDateTime todayEnd = todayStart.plusDays(1);
+        return gameRepository.findGamesByDateRange(todayStart, todayEnd);
+    }
+
+    // Method to get the latest games with a limit (if needed)
+    public List<Game> findRecentGames(int limit) {
+        LocalDateTime todayStart = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0).withNano(0);
+        return gameRepository.findRecentGames(todayStart, limit);
+    }
+
     public Game getGameInfo(Long id) {
         return gameRepository.findById(id).get();
     }
@@ -275,16 +288,16 @@ public class GameService {
             logger.setLocalDateTime(LocalDateTime.now());
         }else{
             gameStatisticsService.killPlayer(gameId, playerToKillInGameNumber);
-            logger.setActionText("Мафія вистрілила у гравця № " + playerToKillInGameNumber);
+            logger.setActionText("Мафія вистрілила у гравця №" + playerToKillInGameNumber + "." + gameStatistics.getInGameNickname());
             logger.setLocalDateTime(LocalDateTime.now());
         }
         return logger;
     }
 
     public Action doDoctorMove(long gameId, int playerToHealInGameNumber) {
-        gameStatisticsService.healPlayer(gameId, playerToHealInGameNumber);
+        GameStatistics gameStatistics = gameStatisticsService.healPlayer(gameId, playerToHealInGameNumber);
         Action logger = new Action();
-        logger.setActionText("Лікар лікує гравця № " + playerToHealInGameNumber);
+        logger.setActionText("Лікар лікує гравця № " + playerToHealInGameNumber + "." + gameStatistics.getInGameNickname());
         logger.setLocalDateTime(LocalDateTime.now());
         return logger;
     }
@@ -298,17 +311,17 @@ public class GameService {
     }
 
     public Action doManiakMove(Long currentGameId, int chosenPlayerNumber) {
-        gameStatisticsService.killPlayer(currentGameId, chosenPlayerNumber);
+        GameStatistics gameStatistics = gameStatisticsService.killPlayer(currentGameId, chosenPlayerNumber);
         Action logger = new Action();
-        logger.setActionText("Маніяк вистрілив у гравця № " + chosenPlayerNumber);
+        logger.setActionText(ERoleOrder.MANIAK.getTitle() + " вистрілив у гравця № " + chosenPlayerNumber + "." + gameStatistics.getInGameNickname());
         logger.setLocalDateTime(LocalDateTime.now());
         return logger;
     }
 
     public Action doStrilochnykMove(Long currentGameId, int chosenPlayerNumber) {
-        gameStatisticsService.killPlayer(currentGameId, chosenPlayerNumber);
+        GameStatistics gameStatistics = gameStatisticsService.killPlayer(currentGameId, chosenPlayerNumber);
         Action logger = new Action();
-        logger.setActionText(ERoleOrder.STRILOCHNYK + " вистрілив у гравця № " + chosenPlayerNumber);
+        logger.setActionText(ERoleOrder.STRILOCHNYK.getTitle() + " вистрілив у гравця № " + chosenPlayerNumber + gameStatistics.getInGameNickname());
         logger.setLocalDateTime(LocalDateTime.now());
         return logger;
     }
@@ -336,7 +349,7 @@ public class GameService {
         gameStatistics.setPoisonedByLady(true);
         gameStatistics.setNightsTillDeath((short) 1);
         Action logger = new Action();
-        logger.setActionText(ERoleOrder.LEDY.getTitle() + " отруює гравця № " + chosenPlayerNumber);
+        logger.setActionText(ERoleOrder.LEDY.getTitle() + " отруює гравця №" + chosenPlayerNumber + "." + gameStatistics.getInGameNickname());
         logger.setLocalDateTime(LocalDateTime.now());
         return logger;
     }

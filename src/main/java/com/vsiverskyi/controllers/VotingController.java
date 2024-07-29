@@ -29,7 +29,6 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.ImagePattern;
 import javafx.scene.shape.Circle;
-import javafx.scene.shape.Rectangle;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.Duration;
@@ -40,10 +39,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.net.URL;
-import java.sql.Time;
 import java.util.*;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 import static com.vsiverskyi.utils.StyleConstants.HOVERED_BUTTON_STYLE;
 import static com.vsiverskyi.utils.StyleConstants.IDLE_BUTTON_STYLE;
@@ -124,6 +121,8 @@ public class VotingController implements Initializable, DisplayedPlayersControll
         scene.getStylesheets().add(getClass().getResource("/style/style.css").toExternalForm());
         stage.setMaximized(true);
         stage.setFullScreen(true);
+        stage.getIcons().add(new Image("/images/title.jpg"));
+        stage.setTitle("STOP КОРУПЦІЯ");
         playerIdVotesMap = new HashMap<>();
         playerIdButton = new HashMap<>();
         kradiyHasStolenVoice = false;
@@ -240,7 +239,7 @@ public class VotingController implements Initializable, DisplayedPlayersControll
                 try {
                     avatarImage = new Image("images/" + gameStatistics.getRole().getRoleNameConstant() + ".jpg");
                 } catch (Exception e) {
-                    avatarImage = new Image("images/icon.jpg");
+                    avatarImage = new Image("images/icon.ico");
                 }
                 ImagePattern imagePattern = new ImagePattern(avatarImage);
                 avatar.setFill(imagePattern);
@@ -653,15 +652,21 @@ public class VotingController implements Initializable, DisplayedPlayersControll
     }
 
     private void showExcuseChoiceDialog(int playerNumber, int voterIndex, GameStatistics gameStatistics, int votesToAdd) {
-        Alert excuseAlert = new Alert(Alert.AlertType.CONFIRMATION);
+
+        ButtonType foo = new ButtonType("Так", ButtonBar.ButtonData.YES);
+        ButtonType bar = new ButtonType("Ні", ButtonBar.ButtonData.CANCEL_CLOSE);
+
+        Alert excuseAlert = new Alert(Alert.AlertType.CONFIRMATION, "Зберегти голос?", foo, bar);
         excuseAlert.setTitle("Оправдання");
         excuseAlert.setHeaderText("Час на оправдання завершився");
         excuseAlert.setContentText("Виберіть опцію:");
-        excuseAlert.getButtonTypes().setAll(ButtonType.OK, ButtonType.CANCEL);
+//        Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "Скористатись правом на оправдання?", foo, bar);
+
+//        excuseAlert.getButtonTypes().setAll(ButtonType.OK, ButtonType.CANCEL);
         excuseAlert.initOwner(stage);
 
         Optional<ButtonType> excuseResult = excuseAlert.showAndWait();
-        if (excuseResult.isPresent() && excuseResult.get() == ButtonType.OK) {
+        if (excuseResult.isPresent() && excuseResult.get().getText().equals("Так")) {
             // Proceed with voting logic here if the player chooses to vote
             playerIdVotesMap.put(playerNumber, playerIdVotesMap.get(playerNumber) + votesToAdd);
             addPointsAndChangeVoterIndex(playerNumber, voterIndex);
@@ -741,6 +746,10 @@ public class VotingController implements Initializable, DisplayedPlayersControll
         window.initModality(Modality.APPLICATION_MODAL);
         window.setTitle("Roulette");
         GridPane layout = new GridPane();
+        layout.setHgap(10);
+        layout.setVgap(10);
+        layout.setPadding(new Insets(10));
+        layout.setStyle("-fx-background-color: #161616;");
 
         final Integer[] playerToDeleteInGameNumber = new Integer[1];
         int numberOfPlayers = playersIdWithMaxVotes.size();
@@ -750,14 +759,25 @@ public class VotingController implements Initializable, DisplayedPlayersControll
         int deathButtonIndex = random.nextInt(totalButtons);
         int[] currentPlayerIndex = {0};
 
+        Label currentPlayerLabel = new Label();
+        currentPlayerLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #ffffff;");
+        layout.add(currentPlayerLabel, 0, 0, 3, 1);
+
+        GameStatistics gameStatistics = gameStatisticsService.findByInGameNumberAndGameId(playersIdWithMaxVotes.get(currentPlayerIndex[0]), SelectionController.currentGameId);
+        currentPlayerLabel.setText("Current Player: " + gameStatistics.getInGameNickname());
+
         for (int i = 0; i < totalButtons; i++) {
             Button button = new Button(String.valueOf(i + 1));
+            button.setStyle("-fx-font-size: 12px; -fx-min-width: 40px; -fx-min-height: 30px; -fx-background-color: #9e9e9e; -fx-text-fill: #ffffff; -fx-border-radius: 5px;");
             int buttonIndex = i;
             button.setOnAction(event -> {
                 Integer currentPlayer = playersIdWithMaxVotes.get(currentPlayerIndex[0]);
+                System.out.println(currentPlayer);
+
+
                 if (buttonIndex == deathButtonIndex) {
                     Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                    alert.initOwner(stage);
+                    alert.initOwner(window);
                     alert.setContentText("Player " + currentPlayer + " clicked the death button! Player is out.");
                     alert.setOnHidden(e -> {
                         playerToDeleteInGameNumber[0] = currentPlayer;
@@ -766,26 +786,32 @@ public class VotingController implements Initializable, DisplayedPlayersControll
                     alert.show();
                 } else {
                     Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                    alert.initOwner(stage);
+                    alert.initOwner(window);
                     alert.setContentText("Player " + currentPlayer + " is safe! Next player's turn.");
                     alert.setOnHidden(e -> {
                         currentPlayerIndex[0] = (currentPlayerIndex[0] + 1) % numberOfPlayers;
+                        GameStatistics gameStatistics2 = gameStatisticsService.findByInGameNumberAndGameId(playersIdWithMaxVotes.get(currentPlayerIndex[0]), SelectionController.currentGameId);
+                        currentPlayerLabel.setText("Стріляє: " + gameStatistics2.getInGameNickname());
                     });
                     alert.show();
                 }
                 button.setDisable(true);
+                button.setStyle("-fx-background-color: #f44336;"); // Change color when button is disabled
+
             });
-            layout.add(button, i % 3, i / 3);
+            layout.add(button, i % 3, (i / 3) + 1);
         }
 
         Scene scene = new Scene(layout, 300, 200);
-        countDownTimeLine.stop();
+        if (countDownTimeLine != null) {
+            countDownTimeLine.stop();
+        }
         window.setScene(scene);
         window.show();
-
         // Add a listener to handle the window closing event
         window.setOnHidden(e -> onWindowClosed.accept(playerToDeleteInGameNumber[0]));
     }
+
 
     private List<Integer> findPlayersWithMaxVotesAmount(Map<Integer, Integer> map) {
         if (map == null || map.isEmpty()) {

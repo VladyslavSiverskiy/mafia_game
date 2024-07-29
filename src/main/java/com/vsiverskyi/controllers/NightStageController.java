@@ -1,19 +1,15 @@
 package com.vsiverskyi.controllers;
 
-import com.vsiverskyi.model.Game;
 import com.vsiverskyi.model.GameStatistics;
 import com.vsiverskyi.model.Player;
 import com.vsiverskyi.model.Role;
 import com.vsiverskyi.model.enums.ERoleOrder;
-import com.vsiverskyi.model.enums.ETeam;
 import com.vsiverskyi.repository.RoleRepository;
 import com.vsiverskyi.service.GameService;
 import com.vsiverskyi.service.GameStatisticsService;
 import com.vsiverskyi.service.PointsService;
 import com.vsiverskyi.service.RoleService;
 import com.vsiverskyi.utils.Action;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
@@ -29,9 +25,7 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.ImagePattern;
 import javafx.scene.shape.Circle;
-import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
-import javafx.util.Callback;
 import lombok.RequiredArgsConstructor;
 import net.rgielen.fxweaver.core.FxWeaver;
 import net.rgielen.fxweaver.core.FxmlView;
@@ -116,6 +110,8 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
         scene.getStylesheets().add(getClass().getResource("/style/style.css").toExternalForm());
         stage.setMaximized(true);
         stage.setFullScreen(true);
+        stage.getIcons().add(new Image("/images/title.jpg"));
+        stage.setTitle("STOP КОРУПЦІЯ");
 
         currentNightIndicator = gameService.increaseNightIndicator(SelectionController.currentGameId)
                 .getCurrentNightIndicator();
@@ -359,9 +355,9 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
                             chosenPlayerNumber
                     );
                     actionsQueue.add(perevertenMoveLogger);
-                    Alert alert = new Alert(Alert.AlertType.INFORMATION, perevertenMoveLogger.getActionText());
-                    alert.initOwner(stage);
-                    alert.showAndWait();
+//                    Alert alert = new Alert(Alert.AlertType.INFORMATION, perevertenMoveLogger.getActionText());
+//                    alert.initOwner(stage);
+//                    alert.showAndWait();
                     setNextRole();
                 }
                 break;
@@ -463,6 +459,11 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
                         chosenPlayerNumber
                 );
                 doZatychkaMove(chosenPlayerNumber);
+                Action zatychkaMoveLogger = new Action();
+                zatychkaMoveLogger.setActionText(ERoleOrder.ZATYCHKA.getTitle() + " голосує в гравця " + chosenPlayerNumber);
+                zatychkaMoveLogger.setLocalDateTime(LocalDateTime.now());
+                // тут додавати logger в чергу?
+                actionsQueue.add(zatychkaMoveLogger);
                 setNextRole();
                 break;
             case ZATYCHKA_SUDDYA:
@@ -473,6 +474,11 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
                 );
                 doZatychkaMove(chosenPlayerNumber);
                 setNextRole();
+                Action zatychkaSuddyaMoveLogger = new Action();
+                zatychkaSuddyaMoveLogger.setActionText(ERoleOrder.ZATYCHKA_SUDDYA.getTitle() + " голосує в гравця " + chosenPlayerNumber);
+                zatychkaSuddyaMoveLogger.setLocalDateTime(LocalDateTime.now());
+                // тут додавати logger в чергу?
+                actionsQueue.add(zatychkaSuddyaMoveLogger);
                 break;
             case BOMBA:
                 if (currentNightIndicator == 1) {
@@ -511,7 +517,6 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
                             button.setOnMouseExited(e -> button.setStyle(IDLE_BUTTON_STYLE_RED));
                             button.setOnAction(actionEvent -> {
                                 if (currentRole.getTitle().equals(ERoleOrder.BOMBA.getTitle())) {
-                                    System.out.println("GERE");
                                     selectedByBombPlayerButtonsMap.remove(chosenPlayerNumber);
                                     button.setStyle(IDLE_BUTTON_STYLE);
                                     button.setOnMouseEntered(e -> button.setStyle(HOVERED_BUTTON_STYLE));
@@ -547,11 +552,12 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
     }
 
     private void doKradiyMove(int chosenPlayerNumber) {
-        gameStatisticsService.markPlayerByKradiy(chosenPlayerNumber, SelectionController.currentGameId);
+        Action action = gameStatisticsService.markPlayerByKradiy(chosenPlayerNumber, SelectionController.currentGameId);
+        actionsQueue.add(action);
     }
 
     private void endBombMove() {
-        gameStatisticsService.markPlayersByBomb(selectedByBombPlayerButtonsMap.keySet(), SelectionController.currentGameId);
+        Action action = gameStatisticsService.markPlayersByBomb(selectedByBombPlayerButtonsMap.keySet(), SelectionController.currentGameId);
         for (Integer number : selectedByBombPlayerButtonsMap.keySet()) {
             pointsService.countPointsInOrderToNightAction(
                     SelectionController.currentGameId,
@@ -559,14 +565,14 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
                     number
             );
         }
+        actionsQueue.add(action);
         // for all chosen buttons set default handler
         setNextRole();
     }
 
     private void doZatychkaMove(int chosenPlayerNumber) {
-        Action zatychkaMoveLogger = gameService.doZatychkaMove(SelectionController.currentGameId, chosenPlayerNumber);
-        // тут додавати logger в чергу?
-        actionsQueue.add(zatychkaMoveLogger);
+         gameService.doZatychkaMove(SelectionController.currentGameId, chosenPlayerNumber);
+
     }
 
     private void doOtamanMove(int chosenPlayerNumber) {
@@ -584,41 +590,41 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
     private void doManiakMove(int chosenPlayerNumber) {
         Action maniakMoveLogger = gameService.doManiakMove(SelectionController.currentGameId, chosenPlayerNumber);
         // тут додавати logger в чергу?
-        Alert alert = new Alert(Alert.AlertType.INFORMATION, maniakMoveLogger.getActionText());
-        // тут додавати logger в чергу?
-        alert.initOwner(stage);
-        alert.showAndWait();
+//        Alert alert = new Alert(Alert.AlertType.INFORMATION, maniakMoveLogger.getActionText());
+//        // тут додавати logger в чергу?
+//        alert.initOwner(stage);
+//        alert.showAndWait();
         actionsQueue.add(maniakMoveLogger);
     }
 
     private void doSheryfMove(int chosenPlayerNumber) {
         Action sheryfMoveLogger = new Action();
-        sheryfMoveLogger.setActionText("Шериф обирає гравця "
+        sheryfMoveLogger.setActionText(ERoleOrder.SHERYF.getTitle() + " обирає гравця "
                                        + chosenPlayerNumber
                                        + " з роллю '" + playerIdRoleMap.get(chosenPlayerNumber).getTitle() + "'");
         sheryfMoveLogger.setLocalDateTime(LocalDateTime.now());
-        Alert alert = new Alert(Alert.AlertType.INFORMATION, sheryfMoveLogger.getActionText());
+//        Alert alert = new Alert(Alert.AlertType.INFORMATION, sheryfMoveLogger.getActionText());
         // тут додавати logger в чергу?
-        alert.initOwner(stage);
-        alert.showAndWait();
+//        alert.initOwner(stage);
+//        alert.showAndWait();
         actionsQueue.add(sheryfMoveLogger);
     }
 
     private void doDoctorMove(int chosenPlayerNumber) {
         Action doctorMoveLogger = gameService.doDoctorMove(SelectionController.currentGameId, chosenPlayerNumber);
         // тут додавати logger в чергу?
-        Alert alert = new Alert(Alert.AlertType.INFORMATION, doctorMoveLogger.getActionText());
-        alert.initOwner(stage);
-        alert.showAndWait();
+//        Alert alert = new Alert(Alert.AlertType.INFORMATION, doctorMoveLogger.getActionText());
+//        alert.initOwner(stage);
+//        alert.showAndWait();
         actionsQueue.add(doctorMoveLogger);
     }
 
     private void doLedyMove(int chosenPlayerNumber) {
         Action ledyMoveLogger = gameService.doLedyMove(SelectionController.currentGameId, chosenPlayerNumber);
         // тут додавати logger в чергу?
-        Alert alert = new Alert(Alert.AlertType.INFORMATION, ledyMoveLogger.getActionText());
-        alert.initOwner(stage);
-        alert.showAndWait();
+//        Alert alert = new Alert(Alert.AlertType.INFORMATION, ledyMoveLogger.getActionText());
+//        alert.initOwner(stage);
+//        alert.showAndWait();
         actionsQueue.add(ledyMoveLogger);
     }
 
@@ -652,7 +658,7 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
                 try {
                     avatarImage = new Image("images/" + gameStatistics.getRole().getRoleNameConstant() + ".jpg");
                 } catch (Exception e) {
-                    avatarImage = new Image("images/icon.jpg");
+                    avatarImage = new Image("images/icon.ico");
                 }
                 // Create an ImagePattern using the loaded image
                 ImagePattern imagePattern = new ImagePattern(avatarImage);

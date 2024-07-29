@@ -27,11 +27,26 @@ public class SettingsUtil {
         return 10; // Default value
     }
 
-    public static int getSecondsPerPresentation() {
+    public static int getSecondsPerDefence() {
         Properties properties = new Properties();
         try (BufferedReader reader = new BufferedReader(new FileReader(SETTINGS_FILE))) {
             properties.load(reader);
 
+            // Get the value for secondsPerMove
+            String secondsPerDefence = properties.getProperty("secondsPerDefence");
+            if (secondsPerDefence != null) {
+                return Integer.parseInt(secondsPerDefence);
+            }
+        } catch (IOException e) {
+            System.out.println("Error loading settings: " + e.getMessage());
+        }
+        return 10; // Default value
+    }
+
+    public static int getSecondsPerPresentation() {
+        Properties properties = new Properties();
+        try (BufferedReader reader = new BufferedReader(new FileReader(SETTINGS_FILE))) {
+            properties.load(reader);
             // Get the value for secondsPerMove
             String secondsPerMove = properties.getProperty("secondsPerPresentation");
             if (secondsPerMove != null) {

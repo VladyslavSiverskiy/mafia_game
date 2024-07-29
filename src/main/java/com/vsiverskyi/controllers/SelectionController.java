@@ -15,6 +15,7 @@ import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
@@ -70,6 +71,8 @@ public class SelectionController implements Initializable {
         stage.setScene(new Scene(selectionAP));
         stage.setMaximized(true);
         stage.setFullScreen(true);
+        stage.getIcons().add(new Image("/images/title.jpg"));
+        stage.setTitle("STOP КОРУПЦІЯ");
         fullScreen.setOnAction(ev -> stage.setFullScreen(true));
         ImageView imageView = new ImageView(getClass().getResource("/images/fullscreen.png").toExternalForm());
         fullScreen.setGraphic(imageView);

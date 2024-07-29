@@ -16,6 +16,7 @@ import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
@@ -76,6 +77,8 @@ public class GameSettingsController implements Initializable {
     public void initialize(URL url, ResourceBundle resourceBundle) {
         this.stage = StarterController.primaryStage;
         stage.setScene(new Scene(anchorPane));
+        stage.getIcons().add(new Image("/images/title.jpg"));
+        stage.setTitle("STOP КОРУПЦІЯ");
         stage.setMaximized(true);
         stage.setFullScreen(true);
         fullScreen.setOnAction(ev -> stage.setFullScreen(true));

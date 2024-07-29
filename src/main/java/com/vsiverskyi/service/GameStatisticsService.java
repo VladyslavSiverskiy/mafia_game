@@ -9,10 +9,12 @@ import com.vsiverskyi.model.enums.ERoleOrder;
 import com.vsiverskyi.repository.GameRepository;
 import com.vsiverskyi.repository.GameStatisticsRepository;
 import com.vsiverskyi.repository.RoleRepository;
+import com.vsiverskyi.utils.Action;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -35,6 +37,10 @@ public class GameStatisticsService {
         return gameStatisticsRepository.save(gameStatistics);
     }
 
+    public GameStatistics findByInGameNumberAndGameId(int inGameNumber, long gameId){
+        return gameStatisticsRepository.findByGame_IdAndAndInGameNumber(gameId, inGameNumber);
+    }
+
     public List<Integer> getMarkedByBombAlivePlayersInGameNumbers(Long gameId) {
         return gameRepository.findById(gameId).get()
                 .getGameStatistics()
@@ -44,14 +50,19 @@ public class GameStatisticsService {
                 .toList();
     }
 
-    public void markPlayersByBomb(Set<Integer> playersToMark, Long gameId) {
+    public Action markPlayersByBomb(Set<Integer> playersToMark, Long gameId) {
         clearPreviousMarks(gameId);
+        List<String> markedNicknames = new ArrayList<>();
         for (Integer playerInGameNumber : playersToMark) {
             GameStatistics gameStatistics = gameStatisticsRepository
                     .findByGame_IdAndAndInGameNumber(gameId, playerInGameNumber);
             gameStatistics.setWasMarkedByBomb(true);
             gameStatisticsRepository.save(gameStatistics);
+            markedNicknames.add(gameStatistics.getInGameNickname());
         }
+        Action action = new Action();
+        action.setActionText(ERoleOrder.BOMBA.getTitle() + " мінує гравців " + markedNicknames);
+        return action;
     }
 
     private void clearPreviousMarks(Long gameId) {
@@ -289,11 +300,15 @@ public class GameStatisticsService {
         return killedDueToPoisoningInGameNumbers;
     }
 
-    public void markPlayerByKradiy(int chosenPlayerNumber, Long currentGameId) {
+    public Action markPlayerByKradiy(int chosenPlayerNumber, Long currentGameId) {
         GameStatistics gameStatistics = gameStatisticsRepository
                 .findByGame_IdAndAndInGameNumber(currentGameId, chosenPlayerNumber);
         gameStatistics.setWasMarkedByKradiy(true);
         gameStatisticsRepository.save(gameStatistics);
+        Action action = new Action();
+        action.setActionText(ERoleOrder.KRADIY.getTitle() + " забирає голос в гравця " + gameStatistics.getInGameNickname());
+        action.setLocalDateTime(LocalDateTime.now());
+        return action;
     }
 
     public void removeAllKradiyChoices(Long currentGameId) {

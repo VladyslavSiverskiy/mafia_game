@@ -1,7 +1,6 @@
 package com.vsiverskyi.controllers;
 
 import com.vsiverskyi.model.GameStatistics;
-import com.vsiverskyi.model.Player;
 import com.vsiverskyi.model.Role;
 import com.vsiverskyi.service.GameService;
 import com.vsiverskyi.service.GameStatisticsService;
@@ -96,6 +95,8 @@ public class PresentationController implements Initializable, DisplayedPlayersCo
         scene = new Scene(presentationAp);
         stage.setMaximized(true);
         stage.setScene(scene);
+        stage.getIcons().add(new Image("/images/title.jpg"));
+        stage.setTitle("STOP КОРУПЦІЯ");
         scene.getStylesheets().add(getClass().getResource("/style/style.css").toExternalForm());
         fullScreen.setOnAction(ev -> stage.setFullScreen(true));
         ImageView imageView = new ImageView(getClass().getResource("/images/fullscreen.png").toExternalForm());
@@ -167,7 +168,7 @@ public class PresentationController implements Initializable, DisplayedPlayersCo
                 try {
                     avatarImage = new Image("images/" + gameStatistics.getRole().getRoleNameConstant() + ".jpg");
                 } catch (Exception e) {
-                    avatarImage = new Image("images/icon.jpg");
+                    avatarImage = new Image("images/icon.ico");
                 }
                 // Create an ImagePattern using the loaded image
                 ImagePattern imagePattern = new ImagePattern(avatarImage);
