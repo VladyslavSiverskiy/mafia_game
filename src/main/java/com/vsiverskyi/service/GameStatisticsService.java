@@ -15,10 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -52,6 +49,7 @@ public class GameStatisticsService {
 
     public Action markPlayersByBomb(Set<Integer> playersToMark, Long gameId) {
         clearPreviousMarks(gameId);
+
         List<String> markedNicknames = new ArrayList<>();
         for (Integer playerInGameNumber : playersToMark) {
             GameStatistics gameStatistics = gameStatisticsRepository
@@ -66,6 +64,7 @@ public class GameStatisticsService {
     }
 
     private void clearPreviousMarks(Long gameId) {
+        System.out.println("Clea previous");
         List<GameStatistics> gameStatistics = gameRepository.findById(gameId).get().getGameStatistics();
         for (GameStatistics gameStatistic : gameStatistics) {
             gameStatistic.setWasMarkedByBomb(false);
@@ -81,19 +80,21 @@ public class GameStatisticsService {
         }
     }
 
+    public void killMarkedByBombPlayers(long gameId) {
+        List<GameStatistics> gamersMarkedByBomb = gameRepository.findById(gameId).get().getGameStatistics();
+        for (GameStatistics gamer : gamersMarkedByBomb) {
+            if (gamer.isWasMarkedByBomb()) {
+                gamer.setInGame(false);
+                gameStatisticsRepository.save(gamer);
+            }
+        }
+    }
+
     public GameStatistics killPlayer(long gameId, int playerToKillInGameNumber) {
         GameStatistics gameStatistics = gameStatisticsRepository
                 .findByGame_IdAndAndInGameNumber(gameId, playerToKillInGameNumber);
         if (gameStatistics.getRole().getRoleNameConstant().equals(ERoleOrder.STRILOCHNYK.name())) {
             gameStatistics.setTimesWasKilled((short) (gameStatistics.getTimesWasKilled() + 1));
-        } else if (gameStatistics.getRole().getRoleNameConstant().equals(ERoleOrder.BOMBA.name())) {
-            List<GameStatistics> gamersMarkedByBomb = gameRepository.findById(gameId).get().getGameStatistics();
-            for (GameStatistics gamer : gamersMarkedByBomb) {
-                if (gamer.isWasMarkedByBomb()) {
-                    gamer.setInGame(false);
-                }
-            }
-            gameStatistics.setInGame(false);
         } else {
             gameStatistics.setInGame(false);
         }
@@ -341,5 +342,32 @@ public class GameStatisticsService {
 
     public boolean checkIfPlayerWasHealed(int chosenPlayerNumber, Long currentGameId) {
         return gameStatisticsRepository.findByGame_IdAndAndInGameNumber(currentGameId, chosenPlayerNumber).isHeadledOnThePreviousStage();
+    }
+
+    public boolean checkIfBombIsAlive(Long currentGameId) {
+        List<GameStatistics> gameStatisticsList = gameRepository
+                .findById(currentGameId).get()
+                .getGameStatistics();
+
+        Optional<GameStatistics> bomb = gameStatisticsList
+                .stream()
+                .filter(gameStatistics -> gameStatistics.getRole().getRoleNameConstant().equals(ERoleOrder.BOMBA.name())).findFirst();
+
+        if (bomb.isPresent()){
+            return bomb.get().isInGame();
+        }else {
+            return false;
+        }
+    }
+
+    public boolean checkIfBombIsAddedToGame(Long currentGameId) {
+        List<GameStatistics> gameStatisticsList = gameRepository
+                .findById(currentGameId).get()
+                .getGameStatistics();
+
+        return !gameStatisticsList
+                       .stream()
+                       .filter(gameStatistics -> gameStatistics.getRole().getRoleNameConstant()
+                               .equals(ERoleOrder.BOMBA.name())).toList().isEmpty();
     }
 }

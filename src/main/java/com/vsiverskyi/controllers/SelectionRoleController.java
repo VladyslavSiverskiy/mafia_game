@@ -266,7 +266,7 @@ public class SelectionRoleController implements Initializable,DisplayedPlayersCo
             avatarContainer.setPadding(new Insets(0, 0, 0, 10)); // Add padding from the left side
             avatarContainer.getChildren().add(avatar);
             Label roleLabel = new Label("");
-            roleLabel.setStyle("-fx-text-fill: #f4ff67; -fx-border-radius: 5px; -fx-font-size: 12px;");
+            roleLabel.setStyle("-fx-text-fill: #ffffff; -fx-border-radius: 5px; -fx-font-size: 12px;");
             // Create an HBox to hold the nickname label and the role label
             Role role = playerIdRoleMap.get(i);
             if (role != null) {
@@ -319,17 +319,6 @@ public class SelectionRoleController implements Initializable,DisplayedPlayersCo
             playerButtonsMap.put(i, button);
             selectionRolePane.getChildren().add(button);
         }
-    }
-
-    /**
-     * returns true if player is alive
-     * TODO: make that method in one controller, and reuse it
-     */
-    private Boolean checkIfAlive(int playerNumber, int totalPlayers) {
-        return playerNumber != 0 && playerNumber != totalPlayers + 1
-               && gameStatisticsService
-                       .getGameStatisticsByGameIdSortedByInGameNumber(SelectionController.currentGameId)
-                       .get(playerNumber - 1).isInGame();
     }
 
     private VBox createPlayerPanel(double x, double y) {

@@ -184,7 +184,7 @@ public class PresentationController implements Initializable, DisplayedPlayersCo
             avatarContainer.setPadding(new Insets(0, 0, 0, 10)); // Add padding from the left side
             avatarContainer.getChildren().add(avatar);
             Label roleLabel = new Label("");
-            roleLabel.setStyle("-fx-text-fill: #f4ff67; -fx-border-radius: 5px; -fx-font-size: 12px;");
+            roleLabel.setStyle("-fx-text-fill: #ffffff; -fx-border-radius: 5px; -fx-font-size: 12px;");
             // Create an HBox to hold the nickname label and the role label
             if (gameStatistics != null) {
                 Role role = gameStatistics.getRole();
@@ -295,10 +295,7 @@ public class PresentationController implements Initializable, DisplayedPlayersCo
                 // Show alert when time is up:
                 int finalIndex = index + 1;
                 countDownTimeLine.setOnFinished(event -> {
-//                    Alert alert = new Alert(Alert.AlertType.INFORMATION);
-//                    alert.initOwner(stage);
-//                    alert.show();
-//                    alert.setOnHidden(evt -> doPresentation(finalIndex));
+
                     gamersOrder.remove();
                     Integer nextGamer = gamersOrder.peek();
                     if (nextGamer == null) {

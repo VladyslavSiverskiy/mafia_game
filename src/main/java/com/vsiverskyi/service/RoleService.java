@@ -33,8 +33,10 @@ public class RoleService {
         List<ERoleOrder> roles = Arrays.asList(ERoleOrder.values());
         for (ERoleOrder roleFromEnum : roles) {
             if (roleRepository.findByRoleNameConstant(roleFromEnum.name()) == null) {
+                System.out.println(roleFromEnum);
                 Role role = Role.builder()
                         .title(roleFromEnum.getTitle())
+                        .team(roleFromEnum.getTeam())
                         .roleNameConstant(roleFromEnum.name())
                         .build();
                 roleRepository.save(role);

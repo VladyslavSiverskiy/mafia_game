@@ -2,6 +2,7 @@ package com.vsiverskyi.controllers;
 
 import com.vsiverskyi.model.Nickname;
 import com.vsiverskyi.repository.NicknameRepository;
+import com.vsiverskyi.repository.RoleRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
@@ -12,7 +13,8 @@ public class DatabaseLoader {
 
     @Autowired
     private NicknameRepository nicknameRepository;
-
+    @Autowired
+    private RoleRepository roleRepository;
     @Bean
     CommandLineRunner initDatabase() {
         return args -> {

@@ -119,8 +119,7 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
         currentRoleIndex = 0;
         archerAttemptsAmount = 0;
         strilochnykIndex = 0;
-        chosenByBombPlayerAmount = gameStatisticsService
-                .getMarkedByBombAlivePlayersInGameNumbers(SelectionController.currentGameId).size();
+        chosenByBombPlayerAmount = 0;
 
         actualInGameRoles = new ArrayList<>();
         playerIdRoleMap = new HashMap<>();
@@ -186,6 +185,13 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
         updateAllRolesList();
         currentRoleIndex++;
         if (currentRoleIndex == actualInGameRoles.size()) {
+
+            //Якщо бомба була в грі, але мертва
+            if (gameStatisticsService.checkIfBombIsAddedToGame(SelectionController.currentGameId)
+                && !gameStatisticsService.checkIfBombIsAlive(SelectionController.currentGameId)) {
+                gameStatisticsService.killMarkedByBombPlayers(SelectionController.currentGameId);
+            }
+
             Alert alert = new Alert(Alert.AlertType.INFORMATION, queueToString(actionsQueue));
             alert.initOwner(stage);
             alert.showAndWait();
@@ -219,27 +225,10 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
                     setNextRole();
                 }
             }
-            if (currentNightIndicator == 2 && currentRole.getRoleNameConstant().equalsIgnoreCase(ERoleOrder.BOMBA.name())) {
-                List<Integer> markedInGameNumbers =
-                        gameStatisticsService
-                                .getMarkedByBombAlivePlayersInGameNumbers(SelectionController.currentGameId);
-                for (Integer markedInGameNumber : markedInGameNumbers) {
-                    Button buttonToSelect = playerButtonsMap.get(markedInGameNumber);
-                    buttonToSelect.setStyle(IDLE_BUTTON_STYLE_RED);
-                    buttonToSelect.setOnMouseEntered(e -> buttonToSelect.setStyle(HOVERED_BUTTON_STYLE_RED));
-                    buttonToSelect.setOnMouseExited(e -> buttonToSelect.setStyle(IDLE_BUTTON_STYLE_RED));
-                    buttonToSelect.setOnMouseClicked(ev -> {
-                        selectedByBombPlayerButtonsMap.remove(markedInGameNumber);
-                        buttonToSelect.setStyle(IDLE_BUTTON_STYLE);
-                        buttonToSelect.setOnMouseEntered(e -> buttonToSelect.setStyle(HOVERED_BUTTON_STYLE));
-                        buttonToSelect.setOnMouseExited(e -> buttonToSelect.setStyle(IDLE_BUTTON_STYLE));
-                        chosenByBombPlayerAmount--;
-                        availableAmountOfPlayersForMarking++;
-                        buttonToSelect.setOnAction(actionEvent1 -> handlePlayerAction(markedInGameNumber));
-                    });
-                    selectedByBombPlayerButtonsMap.put(markedInGameNumber, buttonToSelect);
-                }
+            if (currentRole.getRoleNameConstant().equalsIgnoreCase(ERoleOrder.BOMBA.name()) && currentNightIndicator > 2) {
+                setNextRole();
             }
+
             if (currentRole.getRoleNameConstant().equalsIgnoreCase(ERoleOrder.PEACE.name())
                 || currentRole.getRoleNameConstant().equalsIgnoreCase(ERoleOrder.PEREVERTEN_PEACE.name())) {
                 setNextRole();
@@ -486,8 +475,14 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
                 actionsQueue.add(zatychkaSuddyaMoveLogger);
                 break;
             case BOMBA:
-                if (currentNightIndicator == 1) {
-                    if (chosenByBombPlayerAmount < 5) {
+                if (currentNightIndicator == 1 || currentNightIndicator == 2) {
+
+                    if (playerIdRoleMap.get(chosenPlayerNumber).getRoleNameConstant().equals(ERoleOrder.BOMBA.name())) {
+                        Alert bombCantChooseHerselfAlert =
+                                new Alert(Alert.AlertType.INFORMATION, ERoleOrder.BOMBA.getTitle() + " не може голосувати за себе");
+                        bombCantChooseHerselfAlert.initOwner(stage);
+                        bombCantChooseHerselfAlert.showAndWait();
+                    } else if (chosenByBombPlayerAmount < 5) {
                         Button button = playerButtonsMap.get(chosenPlayerNumber);
                         selectedByBombPlayerButtonsMap.put(chosenPlayerNumber, button);
                         button.setStyle(IDLE_BUTTON_STYLE_RED);
@@ -510,36 +505,6 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
                     } else {
                         endBombMove();
                     }
-                } else if (currentNightIndicator == 2) {
-                    if (selectedByBombPlayerButtonsMap.containsKey(chosenPlayerNumber)) {
-                        System.out.println("TRUE");
-                    } else {
-                        if (chosenByBombPlayerAmount < 5) {
-                            Button button = playerButtonsMap.get(chosenPlayerNumber);
-                            selectedByBombPlayerButtonsMap.put(chosenPlayerNumber, button);
-                            button.setStyle(IDLE_BUTTON_STYLE_RED);
-                            button.setOnMouseEntered(e -> button.setStyle(HOVERED_BUTTON_STYLE_RED));
-                            button.setOnMouseExited(e -> button.setStyle(IDLE_BUTTON_STYLE_RED));
-                            button.setOnAction(actionEvent -> {
-                                if (currentRole.getTitle().equals(ERoleOrder.BOMBA.getTitle())) {
-                                    selectedByBombPlayerButtonsMap.remove(chosenPlayerNumber);
-                                    button.setStyle(IDLE_BUTTON_STYLE);
-                                    button.setOnMouseEntered(e -> button.setStyle(HOVERED_BUTTON_STYLE));
-                                    button.setOnMouseExited(e -> button.setStyle(IDLE_BUTTON_STYLE));
-                                    chosenByBombPlayerAmount--;
-                                    availableAmountOfPlayersForMarking++;
-                                    button.setOnAction(actionEvent1 -> handlePlayerAction(chosenPlayerNumber));
-                                }
-                            });
-                            chosenByBombPlayerAmount++;
-                            if (chosenByBombPlayerAmount == 5) {
-                                endBombMove();
-                            }
-                        } else {
-                            endBombMove();
-                        }
-                    }
-
                 } else {
                     setNextRole();
                 }
@@ -563,6 +528,7 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
 
     private void endBombMove() {
         Action action = gameStatisticsService.markPlayersByBomb(selectedByBombPlayerButtonsMap.keySet(), SelectionController.currentGameId);
+        System.out.println(selectedByBombPlayerButtonsMap);
         for (Integer number : selectedByBombPlayerButtonsMap.keySet()) {
             pointsService.countPointsInOrderToNightAction(
                     SelectionController.currentGameId,
@@ -679,7 +645,7 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
             avatarContainer.setPadding(new Insets(0, 0, 0, 10)); // Add padding from the left side
             avatarContainer.getChildren().add(avatar);
             Label roleLabel = new Label("");
-            roleLabel.setStyle("-fx-text-fill: #f4ff67; -fx-border-radius: 5px; -fx-font-size: 12px;");
+            roleLabel.setStyle("-fx-text-fill: #ffffff; -fx-border-radius: 5px; -fx-font-size: 12px;");
             // Create an HBox to hold the nickname label and the role label
             Role role = playerIdRoleMap.get(i);
             if (role != null) {
@@ -744,21 +710,6 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
     private Boolean checkIfAlive(int playerNumber, int totalPlayers) {
         return playerNumber != 0 && playerNumber != totalPlayers + 1
                && gameStatisticsListSortedByInGameNumber.get(playerNumber - 1).isInGame();
-    }
-
-    private Label createNicknameLabel(int i) { // When value of button is "1", then get element with 0 index
-        GameStatistics currentGamer = gameStatisticsListSortedByInGameNumber.get(i - 1);
-        Player player = currentGamer.getPlayer();
-        Label nicknameLabel = new Label();
-        if (player != null) {
-            nicknameLabel.setText(player.getNickname());
-        } else if (currentGamer.getInGameNickname() != null) {
-            nicknameLabel.setText(currentGamer.getInGameNickname());
-        } else {
-            nicknameLabel.setText("Незнайомець");
-        }
-        nicknameLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #ffffff");
-        return nicknameLabel;
     }
 
     private VBox createPlayerPanel(double x, double y) {

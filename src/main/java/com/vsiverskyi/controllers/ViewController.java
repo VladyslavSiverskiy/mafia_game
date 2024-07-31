@@ -68,7 +68,7 @@ public class ViewController {
             nicknameLabel.setText("НЕЗНАЙОМЕЦЬ");
         }
 
-        nicknameLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #ffffff");
+        nicknameLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #f4ff67");
         return nicknameLabel;
     }
 }
