@@ -69,7 +69,6 @@ public class PenaltyController {
             DisplayedPlayersController controller,
             ListView<HBox> playerCardListView
     ) {
-        System.out.println("INIT");
         ObservableList<HBox> playerCards = FXCollections.observableArrayList();
 
         for (GameStatistics gs : gameStatisticsList) {
@@ -96,11 +95,11 @@ public class PenaltyController {
             redCardButton.setStyle("-fx-background-color: red; -fx-width: 15px; -fx-min-height: 20px;");
 
             int playerNumber = gs.getInGameNumber();
-            yellowCardButton.setOnAction(e -> {
+            yellowCardButton.setOnMouseClicked(e -> {
                 giveYellowCard(playerNumber, yellowCardButton, redCardButton, stage);
                 controller.displayRolePlayers(gameStatisticsList.size());
             });
-            redCardButton.setOnAction(e -> {
+            redCardButton.setOnMouseClicked(e -> {
                 giveRedCard(playerNumber, yellowCardButton, redCardButton, stage);
                 controller.displayRolePlayers(gameStatisticsList.size());
             });
@@ -108,7 +107,6 @@ public class PenaltyController {
             Region spacer = new Region();
             HBox.setHgrow(spacer, Priority.ALWAYS);
 
-            System.out.println(gs);
             if (!gs.isInGame()) {
                 yellowCardButton.setDisable(true);
                 redCardButton.setDisable(true);

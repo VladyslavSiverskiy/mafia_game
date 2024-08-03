@@ -9,10 +9,24 @@
 
 <AnchorPane fx:id="presentationAp" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="800.0" prefWidth="1280.0" style="-fx-background-color: #161616;" xmlns="http://javafx.com/javafx/19" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vsiverskyi.controllers.PresentationController">
     <children>
-        <Button fx:id="startVoting" layoutX="29.0" layoutY="511.0" mnemonicParsing="false" text="Розпочати представлення" />
-        <Button fx:id="skip" layoutX="29.0" layoutY="686.0" mnemonicParsing="false" text="Пропустити" />
 
-        <AnchorPane fx:id="presentationPlayersPane" layoutX="192.0" layoutY="75.0" prefHeight="645.0" prefWidth="863.0" />
+        <AnchorPane fx:id="presentationPlayersPane" layoutX="192.0" layoutY="75.0" prefHeight="645.0" prefWidth="863.0">
+         <children>
+              <Button fx:id="skip" layoutX="406.0" layoutY="478.0" mnemonicParsing="false" text="Пропустити" />
+            <Button fx:id="nextPlayerButton" layoutX="367.0" layoutY="416.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="160.0" text="Наступний гравець" />
+              <Button fx:id="startVoting" layoutX="367.0" layoutY="371.0" mnemonicParsing="false" text="Розпочати представлення" />
+                <Label fx:id="playerLbl" layoutX="368.0" layoutY="315.0" text="Гравець" textAlignment="CENTER" textFill="WHITE" />
+                <Label fx:id="presentationPlayerId" layoutX="464.0" layoutY="315.0" textFill="WHITE">
+                    <font>
+                        <Font name="System Bold" size="12.0" />
+                    </font>
+                </Label>
+                <Label fx:id="secondsLeft" layoutX="391.0" layoutY="185.0" prefHeight="122.0" prefWidth="112.0" textAlignment="CENTER" textFill="WHITE">
+                    <font>
+                        <Font size="83.0" />
+                    </font>
+                </Label>
+         </children></AnchorPane>
         <Button fx:id="fullScreen" layoutX="1115.0" layoutY="23.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="124.0" text="Повний екран" />
         <!-- Admin Menu for assigning cards -->
         <AnchorPane layoutX="1064.0" layoutY="58.0" prefHeight="624.0" prefWidth="194.0" style="-fx-border-color: #ffffff; -fx-border-radius: 5px; -fx-background-color: #161616;">
@@ -24,18 +38,6 @@
                 <Line endX="100.7618408203125" layoutX="89.0" layoutY="128.0" startX="-89.0" stroke="WHITE" />
             </children>
         </AnchorPane>
-          <Label fx:id="secondsLeft" layoutX="41.0" layoutY="232.0" prefHeight="122.0" prefWidth="112.0" textAlignment="CENTER" textFill="WHITE">
-              <font>
-                  <Font size="83.0" />
-              </font>
-          </Label>
-          <Label layoutX="57.0" layoutY="343.0" text="Гравець №" textAlignment="CENTER" textFill="WHITE" />
-          <Label fx:id="presentationPlayerId" layoutX="122.0" layoutY="343.0" text="1" textFill="WHITE">
-              <font>
-                  <Font name="System Bold" size="12.0" />
-              </font>
-          </Label>
-      <Button fx:id="nextPlayerButton" layoutX="29.0" layoutY="551.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="160.0" text="Наступний гравець" />
-      <Label fx:id="startLabel" layoutX="26.0" layoutY="639.0" textFill="WHITE" />
+      <Label fx:id="startLabel" layoutX="539.0" layoutY="690.0" textFill="WHITE" />
     </children>
 </AnchorPane>

@@ -7,6 +7,7 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
 @Entity
 @Builder
@@ -80,6 +81,19 @@ public class GameStatistics {
     public Circle getAvatarCircle() {
         Circle circle = new Circle(10, Color.DARKGREY); // Set the desired radius
         return circle;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        GameStatistics that = (GameStatistics) o;
+        return Objects.equals(id, that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
     }
 
     @Override

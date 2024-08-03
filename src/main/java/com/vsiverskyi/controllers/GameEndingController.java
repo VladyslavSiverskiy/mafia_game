@@ -2,6 +2,7 @@ package com.vsiverskyi.controllers;
 
 import com.vsiverskyi.model.Game;
 import com.vsiverskyi.model.GameStatistics;
+import com.vsiverskyi.model.enums.ERoleOrder;
 import com.vsiverskyi.model.enums.ETeam;
 import com.vsiverskyi.service.GameService;
 import com.vsiverskyi.service.GameStatisticsService;
@@ -94,7 +95,6 @@ public class GameEndingController implements Initializable {
         playerNameColumn.setCellValueFactory(new PropertyValueFactory<>("inGameNickname"));
         pointsColumn.setCellValueFactory(new PropertyValueFactory<>("points"));
         avatarColumn.setCellValueFactory(new PropertyValueFactory<>("avatarCircle")); // Assuming you have a method in your model to get Circle
-
         // Custom cell factory to add "+" sign to points
         pointsColumn.setCellFactory(column -> new TableCell<GameStatistics, Integer>() {
             @Override
@@ -109,9 +109,7 @@ public class GameEndingController implements Initializable {
                 }
             }
         });
-
         gameStatisticsTable.setItems(FXCollections.observableArrayList(restOfPlayers));
-
         avatarColumn.setCellFactory(column -> new TableCell<GameStatistics, Circle>() {
             @Override
             protected void updateItem(Circle item, boolean empty) {
@@ -124,21 +122,37 @@ public class GameEndingController implements Initializable {
                     setGraphic(hbox);     }
             }
         });
-
         String winners = game.getWinnerSide().getTitle();
-        winnerTitleLabel.setText("Перемогли: " + (winners.equals(ETeam.MAFIA.getTitle()) ? "Корупціонери" : "Мирні"));
+        if (winners.equals(ETeam.MAFIA.getTitle())) {
+            if (checkIfYanucharMafiaExisted(game)) {
+                winners = "Яничар";
+            }else {
+                winners = "Корупціонери";
+            }
+        } else {
+            winners = "Мирні";
+        }
+        winnerTitleLabel.setText("Перемогли: " + winners);
         winnerTitleLabel.setStyle("-fx-text-fill: white;");
-
-        toStarterPage.setOnAction(ev -> {
+        toStarterPage.setOnMouseClicked(ev -> {
             StarterController.primaryStage = (Stage) toStarterPage.getScene().getWindow();
             fxWeaver.loadController(StarterController.class).show();
         });
         toStarterPage.setStyle(IDLE_BUTTON_STYLE);
         toStarterPage.setOnMouseEntered(ev -> toStarterPage.setStyle(HOVERED_BUTTON_STYLE));
         toStarterPage.setOnMouseExited(ev -> toStarterPage.setStyle(IDLE_BUTTON_STYLE));
-
         // Create the podium
         createPodium(top3Players);
+    }
+
+    private boolean checkIfYanucharMafiaExisted(Game game) {
+        List<GameStatistics> gameStatisticsList = game.getGameStatistics();
+        for (GameStatistics gameStatistics: gameStatisticsList) {
+            if (gameStatistics.getRole().getRoleNameConstant().equals(ERoleOrder.PEREVERTEN_MAFIA.name())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void createPodium(List<GameStatistics> top3Players) {

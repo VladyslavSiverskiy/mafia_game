@@ -64,6 +64,8 @@ public class PresentationController implements Initializable, DisplayedPlayersCo
     @FXML
     private Label startLabel;
     @FXML
+    private Label playerLbl;
+    @FXML
     private Label presentationPlayerId;
     @FXML
     private Button startVoting;
@@ -98,7 +100,7 @@ public class PresentationController implements Initializable, DisplayedPlayersCo
         stage.getIcons().add(new Image("/images/title.jpg"));
         stage.setTitle("STOP КОРУПЦІЯ");
         scene.getStylesheets().add(getClass().getResource("/style/style.css").toExternalForm());
-        fullScreen.setOnAction(ev -> stage.setFullScreen(true));
+        fullScreen.setOnMouseClicked(ev -> stage.setFullScreen(true));
         ImageView imageView = new ImageView(getClass().getResource("/images/fullscreen.png").toExternalForm());
         fullScreen.setGraphic(imageView);
         imageView.fitWidthProperty().bind(fullScreen.widthProperty().divide(10));
@@ -117,17 +119,16 @@ public class PresentationController implements Initializable, DisplayedPlayersCo
         skip.setOnMouseEntered(e -> skip.setStyle(HOVERED_BUTTON_STYLE));
         skip.setOnMouseExited(e -> skip.setStyle(IDLE_BUTTON_STYLE));
 
-        technicalDefeatPeaceful.setOnAction(e -> penaltyController.assignTechnicalDefeat("PEACE"));
-        technicalDefeatMafia.setOnAction(e -> penaltyController.assignTechnicalDefeat("MAFIA"));
-
+        technicalDefeatPeaceful.setOnMouseClicked(e -> penaltyController.assignTechnicalDefeat("PEACE"));
+        technicalDefeatMafia.setOnMouseClicked(e -> penaltyController.assignTechnicalDefeat("MAFIA"));
         gameStatisticsList = gameStatisticsService
                 .getGameStatisticsByGameIdSortedByInGameNumber(SelectionController.currentGameId);
         penaltyController.initializePlayerCardList(gameStatisticsList, stage, this, playerCardListView);
 
         displayRolePlayers(gameStatisticsList.size());
-        startVoting.setOnAction(actionEvent -> startPresentation());
-        nextPlayerButton.setOnAction(actionEvent -> skipToNextPlayer());
-        skip.setOnAction(event -> {
+        startVoting.setOnMouseClicked(actionEvent -> startPresentation());
+        nextPlayerButton.setOnMouseClicked(actionEvent -> skipToNextPlayer());
+        skip.setOnMouseClicked(event -> {
             if (countDownTimeLine != null) {
                 countDownTimeLine.stop();
             }
@@ -140,6 +141,13 @@ public class PresentationController implements Initializable, DisplayedPlayersCo
     public void displayRolePlayers(int totalPlayers) {
         // Clear the previous content from the selectionRolePane
         presentationPlayersPane.getChildren().clear();
+
+        presentationPlayersPane.getChildren().add(skip);
+        presentationPlayersPane.getChildren().add(nextPlayerButton);
+        presentationPlayersPane.getChildren().add(startVoting);
+        presentationPlayersPane.getChildren().add(secondsLeft);
+        presentationPlayersPane.getChildren().add(presentationPlayerId);
+        presentationPlayersPane.getChildren().add(playerLbl);
 
         double centerX = presentationPlayersPane.getWidth() / 2;
         double centerY = presentationPlayersPane.getHeight() / 2;
@@ -249,6 +257,8 @@ public class PresentationController implements Initializable, DisplayedPlayersCo
     }
 
     private void endEachPlayerPresentation() {
+        nextPlayerButton.setDisable(true);
+        removeAllColors();
         // TODO: поміняти не нормальні змінні, а не в коді
         secondsTillEnd = SettingsUtil.getSecondsPerDiscussion();
         presentationPlayerId.setText("-");
@@ -265,6 +275,16 @@ public class PresentationController implements Initializable, DisplayedPlayersCo
         });
         countDownTimeLine.play();
         return;
+    }
+
+    private void removeAllColors() {
+        for (Map.Entry<Integer, Button> entry : playerIdButton.entrySet()) {
+            Button anotherPlayerButton = entry.getValue();
+
+            anotherPlayerButton.setDisable(true);
+            anotherPlayerButton.setStyle(IDLE_BUTTON_STYLE);
+
+        }
     }
 
     private void doPresentation(int index) {
@@ -285,10 +305,10 @@ public class PresentationController implements Initializable, DisplayedPlayersCo
                 }
             } else {
                 secondsTillEnd = SettingsUtil.getSecondsPerPresentation();
-                presentationPlayerId.setText(gameStatistics.getInGameNumber().toString());
+                presentationPlayerId.setText(gameStatistics.getInGameNickname());
                 countDownTimeLine = new Timeline(new KeyFrame(Duration.seconds(1), (ActionEvent event) -> {
                     secondsLeft.setText(String.valueOf(secondsTillEnd--));
-                    presentationPlayerId.setText(gameStatistics.getInGameNumber().toString());
+                    presentationPlayerId.setText(gameStatistics.getInGameNickname());
                 }));
                 // Set number of cycles (remaining duration in seconds):
                 countDownTimeLine.setCycleCount(SettingsUtil.getSecondsPerPresentation());
@@ -305,6 +325,25 @@ public class PresentationController implements Initializable, DisplayedPlayersCo
                     }
                 });
                 countDownTimeLine.play();
+                updateButtonStates(index);
+            }
+        }
+    }
+
+    private void updateButtonStates(int reverseCurrentVoterIndex) {
+        for (Map.Entry<Integer, Button> entry : playerIdButton.entrySet()) {
+            int playerId = entry.getKey();
+            Button anotherPlayerButton = entry.getValue();
+            if (playerId != reverseCurrentVoterIndex + 1) {
+                if (!checkIfAlive(playerId, gameStatisticsList.size())) {
+                    anotherPlayerButton.setDisable(true);
+                } else {
+                    anotherPlayerButton.setDisable(true);
+                    anotherPlayerButton.setStyle(IDLE_BUTTON_STYLE);
+                }
+            } else {
+                anotherPlayerButton.setDisable(true);
+                anotherPlayerButton.setStyle("-fx-background-color: #00f100");
             }
         }
     }
@@ -314,7 +353,7 @@ public class PresentationController implements Initializable, DisplayedPlayersCo
 
         for (Map.Entry<Integer, Button> entry : playerIdButton.entrySet()) {
             Button button = entry.getValue();
-            button.setOnAction(actionEvent -> {
+            button.setOnMouseClicked(actionEvent -> {
                 ButtonType foo = new ButtonType("За годинниковою стрілкою", ButtonBar.ButtonData.YES);
                 ButtonType bar = new ButtonType("Проти годинникової стрілки", ButtonBar.ButtonData.YES);
                 Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "Виберіть напрямок", foo, bar);

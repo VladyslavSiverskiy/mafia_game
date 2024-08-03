@@ -64,7 +64,7 @@ public class GeneralSettingsController {
         loadSettings();
 
         // Set the action for the apply button
-        applyButton.setOnAction(event ->{
+        applyButton.setOnMouseClicked(event ->{
             saveSettings();
             StarterController.primaryStage = (Stage) applyButton.getScene().getWindow();
             fxWeaver.loadController(StarterController.class).show();

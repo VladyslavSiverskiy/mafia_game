@@ -112,7 +112,7 @@ public class EveningRateController implements Initializable {
         // Load and display player scores
         loadPlayerScores();
 
-        backToHome.setOnAction(ev -> {
+        backToHome.setOnMouseClicked(ev -> {
             StarterController.primaryStage = (Stage) backToHome.getScene().getWindow();
             fxWeaver.loadController(StarterController.class).show();
         });

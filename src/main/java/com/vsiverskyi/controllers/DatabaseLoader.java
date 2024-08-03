@@ -13,8 +13,7 @@ public class DatabaseLoader {
 
     @Autowired
     private NicknameRepository nicknameRepository;
-    @Autowired
-    private RoleRepository roleRepository;
+
     @Bean
     CommandLineRunner initDatabase() {
         return args -> {

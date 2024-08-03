@@ -4,18 +4,18 @@ public enum ERoleOrder {
     UNDEFINED("Undefined", ETeam.PEACE),
     MAFIA("Хабарник", ETeam.MAFIA),
     DON("Корупціонер", ETeam.MAFIA),
-    OTAMAN("Отаман", ETeam.PEACE),
+    PEREVERTEN_MAFIA("Яничар-мафія", ETeam.MAFIA),
     SHERYF("Гетьман", ETeam.PEACE),
+    OTAMAN("Отаман", ETeam.PEACE),
     LEDY("Діва ночі", ETeam.PEACE),
-    DOCTOR("Знахар", ETeam.PEACE),
     MANIAK("Маніяк", ETeam.PEACE),
-    STRILOCHNYK("Месник", ETeam.PEACE),
-    BOMBA("Писар", ETeam.PEACE),
     ZATYCHKA("Пастор", ETeam.PEACE),
     ZATYCHKA_SUDDYA("Суддя", ETeam.PEACE),
     PEREVERTEN_PEACE("Яничар-мирний", ETeam.PEACE),
-    PEREVERTEN_MAFIA("Яничар-мафія", ETeam.MAFIA),
+    STRILOCHNYK("Месник", ETeam.PEACE),
     KRADIY("Крадій", ETeam.PEACE),
+    DOCTOR("Знахар", ETeam.PEACE),
+    BOMBA("Писар", ETeam.PEACE),
     PEACE("Козак", ETeam.PEACE);
 
     ERoleOrder(final String title, final ETeam eTeam) {

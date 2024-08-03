@@ -100,7 +100,7 @@ public class SelectionRoleController implements Initializable,DisplayedPlayersCo
         stage.setFullScreen(true);
         stage.getIcons().add(new Image("/images/title.jpg"));
         stage.setTitle("STOP КОРУПЦІЯ");
-        fullScreen.setOnAction(ev -> stage.setFullScreen(true));
+        fullScreen.setOnMouseClicked(ev -> stage.setFullScreen(true));
         ImageView imageView = new ImageView(getClass().getResource("/images/fullscreen.png").toExternalForm());
         fullScreen.setGraphic(imageView);
         imageView.fitWidthProperty().bind(fullScreen.widthProperty().divide(10));
@@ -132,8 +132,10 @@ public class SelectionRoleController implements Initializable,DisplayedPlayersCo
             roleTitle.setText(currentRole.getTitle());
 
             // Initialize technical defeat buttons
-            technicalDefeatPeaceful.setOnAction(e -> penaltyController.assignTechnicalDefeat("PEACE"));
-            technicalDefeatMafia.setOnAction(e -> penaltyController.assignTechnicalDefeat("MAFIA"));
+            technicalDefeatPeaceful.setOnMouseClicked(e -> penaltyController.assignTechnicalDefeat("PEACE"));
+            technicalDefeatPeaceful.setDisable(true);
+            technicalDefeatMafia.setOnMouseClicked(e -> penaltyController.assignTechnicalDefeat("MAFIA"));
+            technicalDefeatMafia.setDisable(true);
 
             // Initialize player card list view
             penaltyController.initializePlayerCardList(gameStatisticsList, stage,this, playerCardListView);
@@ -163,7 +165,7 @@ public class SelectionRoleController implements Initializable,DisplayedPlayersCo
 
                 {
                     hbox.setSpacing(5);
-                    updateButton.setOnAction(event -> updatePlayerRole(getItem(), textField.getText()));
+                    updateButton.setOnMouseClicked(event -> updatePlayerRole(getItem(), textField.getText()));
                     updateButton.setStyle(IDLE_BUTTON_STYLE);
                     updateButton.setOnMouseEntered(e -> updateButton.setStyle(HOVERED_BUTTON_STYLE));
                     updateButton.setOnMouseExited(e -> updateButton.setStyle(IDLE_BUTTON_STYLE));
@@ -195,7 +197,7 @@ public class SelectionRoleController implements Initializable,DisplayedPlayersCo
 
             selectedRolesAp.getChildren().add(assignedRolesListView);
             //end
-            startVoting.setOnAction(actionEvent -> startPresentationProcess());
+            startVoting.setOnMouseClicked(actionEvent -> startPresentationProcess());
         } catch (NoGameWithSuchIdException e) {
             Alert alert = new Alert(Alert.AlertType.ERROR, e.getMessage());
             alert.initOwner(stage);
@@ -248,10 +250,6 @@ public class SelectionRoleController implements Initializable,DisplayedPlayersCo
                 int finalI1 = i;
                 gameStatisticsList = gameStatisticsService
                         .getGameStatisticsByGameIdSortedByInGameNumber(SelectionController.currentGameId);
-                System.out.println(SelectionController.currentGameId);
-                System.out.println(gameStatisticsList);
-
-
                 gameStatistics = gameStatisticsList
                         .stream()
                         .filter(gs -> gs.getInGameNumber() == finalI1).findFirst().get();
@@ -310,7 +308,7 @@ public class SelectionRoleController implements Initializable,DisplayedPlayersCo
             }
             selectionRolePane.getChildren().add(playerPanel);
             int finalI = i;
-            button.setOnAction(event -> assignRoleToPlayer(finalI));
+            button.setOnMouseClicked(event -> assignRoleToPlayer(finalI));
             if (i == 0 || i == totalPlayers + 1) {
                 playerPanel.setVisible(false);
                 button.setVisible(false);
@@ -379,7 +377,6 @@ public class SelectionRoleController implements Initializable,DisplayedPlayersCo
     private void updatePlayerRole(String oldAssignment, String newPlayerNumber) {
         if (newPlayerNumber.isEmpty()) return;
         String[] parts = oldAssignment.split(": ");
-        System.out.println(Arrays.toString(parts));
         int oldPlayerNumber = Integer.parseInt(parts[0]);
         String roleTitle = parts[1];
 

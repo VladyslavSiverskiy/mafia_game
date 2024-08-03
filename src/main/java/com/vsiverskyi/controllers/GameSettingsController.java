@@ -81,12 +81,14 @@ public class GameSettingsController implements Initializable {
         stage.setTitle("STOP КОРУПЦІЯ");
         stage.setMaximized(true);
         stage.setFullScreen(true);
-        fullScreen.setOnAction(ev -> stage.setFullScreen(true));
+        fullScreen.setOnMouseClicked(ev -> stage.setFullScreen(true));
         ImageView imageView = new ImageView(getClass().getResource("/images/fullscreen.png").toExternalForm());
         fullScreen.setGraphic(imageView);
         imageView.fitWidthProperty().bind(fullScreen.widthProperty().divide(10));
         imageView.setPreserveRatio(true);
 
+        settingsState = new HashMap<>();
+        roleAmounts = new HashMap<>();
 
         playersAmountSpinnerValueFactory.setValue(10);
         playersAmountSpinner.setValueFactory(playersAmountSpinnerValueFactory);
@@ -161,29 +163,18 @@ public class GameSettingsController implements Initializable {
 
         roleAmountSpinner.valueProperty().addListener((observable, oldValue, newValue) -> {
             roleAmounts.put(text, newValue);
-            if (newValue > oldValue) {
-                selectedPlayersAmount++;
-            }else if(newValue > 1) {
-                selectedPlayersAmount--;
-            }
         });
 
         checkBox.selectedProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue) {
-                selectedPlayersAmount++;
                 roleAmounts.put(text, 1);
                 roleAmountSpinner.setDisable(false);
             } else {
-                selectedPlayersAmount--;
                 roleAmountSpinner.setDisable(true);
-                selectedPlayersAmount = selectedPlayersAmount - roleAmountSpinner.getValue() + 1;
                 roleAmountSpinner.getValueFactory().setValue(1); // Reset spinner value to 1
                 roleAmounts.remove(text); // Reset role amount to 1
             }
-            if (selectedPlayersAmount + mafiaAmountSpinner.getValue() >= currentPlayersAmount) {
-                playersAmountSpinnerValueFactory.setValue(++currentPlayersAmount);
-                playersAmountSpinner.setValueFactory(playersAmountSpinnerValueFactory);
-            }
+
             settingsState.put(text, newValue);
         });
         HBox row = new HBox();

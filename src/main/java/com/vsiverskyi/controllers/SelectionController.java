@@ -51,7 +51,6 @@ public class SelectionController implements Initializable {
     private Stage stage;
     private Scene scene;
     private Parent root;
-
     @FXML
     private AnchorPane selectionAP;
     @FXML
@@ -73,7 +72,7 @@ public class SelectionController implements Initializable {
         stage.setFullScreen(true);
         stage.getIcons().add(new Image("/images/title.jpg"));
         stage.setTitle("STOP КОРУПЦІЯ");
-        fullScreen.setOnAction(ev -> stage.setFullScreen(true));
+        fullScreen.setOnMouseClicked(ev -> stage.setFullScreen(true));
         ImageView imageView = new ImageView(getClass().getResource("/images/fullscreen.png").toExternalForm());
         fullScreen.setGraphic(imageView);
         imageView.fitWidthProperty().bind(fullScreen.widthProperty().divide(10));
@@ -88,7 +87,7 @@ public class SelectionController implements Initializable {
         }
         int totalPlayers = gameStatisticsList.size();
         displayPlayers(totalPlayers);
-        startVoting.setOnAction(actionEvent -> fxWeaver.loadController(SelectionRoleController.class).show());
+        startVoting.setOnMouseClicked(actionEvent -> fxWeaver.loadController(SelectionRoleController.class).show());
     }
 
     public void show() {

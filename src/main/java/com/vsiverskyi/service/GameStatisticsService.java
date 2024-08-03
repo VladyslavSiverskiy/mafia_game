@@ -64,7 +64,6 @@ public class GameStatisticsService {
     }
 
     private void clearPreviousMarks(Long gameId) {
-        System.out.println("Clea previous");
         List<GameStatistics> gameStatistics = gameRepository.findById(gameId).get().getGameStatistics();
         for (GameStatistics gameStatistic : gameStatistics) {
             gameStatistic.setWasMarkedByBomb(false);
@@ -97,6 +96,7 @@ public class GameStatisticsService {
             gameStatistics.setTimesWasKilled((short) (gameStatistics.getTimesWasKilled() + 1));
         } else {
             gameStatistics.setInGame(false);
+            gameStatistics.setTimesWasKilled((short) (gameStatistics.getTimesWasKilled() + 1));
         }
         gameStatisticsRepository.save(gameStatistics);
         return gameStatistics;
@@ -117,10 +117,14 @@ public class GameStatisticsService {
         GameStatistics gameStatistics = gameStatisticsRepository
                 .findByGame_IdAndAndInGameNumber(gameId, playerToKillInGameNumber);
         clearHealedOnThePreviousStage(gameId);
-        gameStatistics.setInGame(true);
         gameStatistics.setPoisonedByLady(false);
         gameStatistics.setHeadledOnThePreviousStage(true);
         gameStatistics.setTimesWasHealed((short) (gameStatistics.getTimesWasHealed() + 1));
+        if (gameStatistics.getTimesWasKilled() > 1) {
+            gameStatistics.setInGame(false);
+        } else {
+            gameStatistics.setInGame(true);
+        }
         gameStatisticsRepository.save(gameStatistics);
         return gameStatistics;
     }
@@ -152,7 +156,6 @@ public class GameStatisticsService {
             gameStatistics = gameStatisticsRepository.save(gameStatistics);
         }
         if (gameStatistics.getRole().getTitle().equals(ERoleOrder.BOMBA.getTitle())) {
-            System.out.println("HERE");
             killNearestPlayers(gameStatistics.getInGameNumber(), gameId);
         }
         return gameStatistics;
@@ -170,7 +173,6 @@ public class GameStatisticsService {
             if (currentPlayerNumberToCheck > amountOfPlayers) {
                 currentPlayerNumberToCheck = 1;
             }
-            System.out.println(currentPlayerNumberToCheck);
             GameStatistics gameStatistics = gameStatisticsRepository
                     .findByGame_IdAndAndInGameNumber(gameId, currentPlayerNumberToCheck);
             if (gameStatistics.isInGame()) {
@@ -249,7 +251,6 @@ public class GameStatisticsService {
                         && gameStatistics.getRole().getRoleNameConstant().equals(ERoleOrder.STRILOCHNYK.name()))
                 .mapToInt(GameStatistics::getTimesWasKilled)
                 .sum();
-        System.out.println(sum);
         return sum;
     }
 

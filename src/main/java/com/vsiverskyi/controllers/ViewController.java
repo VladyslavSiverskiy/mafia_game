@@ -68,7 +68,11 @@ public class ViewController {
             nicknameLabel.setText("НЕЗНАЙОМЕЦЬ");
         }
 
-        nicknameLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #f4ff67");
+        if (currentGamer.isInGame()) {
+            nicknameLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #f4ff67");
+        }else {
+            nicknameLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #cc2323");
+        }
         return nicknameLabel;
     }
 }

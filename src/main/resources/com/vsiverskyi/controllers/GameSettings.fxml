@@ -9,24 +9,24 @@
 
 <AnchorPane fx:id="anchorPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="800.0" prefWidth="1280.0" style="-fx-background-color: #161616;" xmlns="http://javafx.com/javafx/19" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vsiverskyi.controllers.GameSettingsController">
    <children>
-      <Spinner fx:id="playersAmountSpinner" editable="true" layoutX="518.0" layoutY="156.0" prefHeight="25.0" prefWidth="134.0" />
-      <Label layoutX="418.0" layoutY="160.0" text="Кількість гравців:" textFill="WHITE" />
+      <Spinner fx:id="playersAmountSpinner" editable="true" layoutX="519.0" layoutY="77.0" prefHeight="25.0" prefWidth="134.0" />
+      <Label layoutX="419.0" layoutY="81.0" text="Кількість гравців:" textFill="WHITE" />
       <Button layoutX="636.0" layoutY="682.0" mnemonicParsing="false" onAction="#startGame" style="-fx-background-color: #161616; -fx-border-color: #ffffff; -fx-border-radius: 5px;" text="Розпочати гру!" textFill="WHITE" />
-      <Rectangle arcHeight="5.0" arcWidth="5.0" fill="#293037" height="6.0" layoutX="419.0" layoutY="143.0" stroke="BLACK" strokeType="INSIDE" width="509.0" />
-      <Rectangle arcHeight="5.0" arcWidth="5.0" fill="#293037" height="6.0" layoutX="419.0" layoutY="188.0" stroke="BLACK" strokeType="INSIDE" width="509.0" />
-      <Label layoutX="686.0" layoutY="160.0" prefHeight="17.0" prefWidth="84.0" text="Кількість мафії:" textFill="WHITE" />
-      <Spinner fx:id="mafiaAmountSpinner" layoutX="779.0" layoutY="156.0" />
-      <Label layoutX="419.0" layoutY="96.0" text="Основні налаштування гри" textFill="WHITE">
+      <Rectangle arcHeight="5.0" arcWidth="5.0" fill="#293037" height="6.0" layoutX="419.0" layoutY="64.0" stroke="BLACK" strokeType="INSIDE" width="509.0" />
+      <Rectangle arcHeight="5.0" arcWidth="5.0" fill="#293037" height="6.0" layoutX="420.0" layoutY="109.0" stroke="BLACK" strokeType="INSIDE" width="509.0" />
+      <Label layoutX="687.0" layoutY="81.0" prefHeight="17.0" prefWidth="84.0" text="Кількість мафії:" textFill="WHITE" />
+      <Spinner fx:id="mafiaAmountSpinner" layoutX="780.0" layoutY="77.0" />
+      <Label layoutX="418.0" layoutY="23.0" text="Основні налаштування гри" textFill="WHITE">
          <font>
             <Font name="System Bold" size="23.0" />
          </font>
       </Label>
-      <Label layoutX="419.0" layoutY="219.0" text="Додаткові ролі" textFill="WHITE">
+      <Label layoutX="420.0" layoutY="125.0" text="Додаткові ролі" textFill="WHITE">
          <font>
             <Font name="System Bold" size="23.0" />
          </font>
       </Label>
-      <AnchorPane fx:id="anchorPaneScrollPlace" layoutX="426.0" layoutY="262.0" prefHeight="374.0" prefWidth="515.0" style="-fx-border-color: #FFFFFF; -fx-border-radius: 5px;" />
+      <AnchorPane fx:id="anchorPaneScrollPlace" layoutX="426.0" layoutY="161.0" prefHeight="514.0" prefWidth="515.0" style="-fx-border-color: #FFFFFF; -fx-border-radius: 5px;" />
       <Button fx:id="fullScreen" layoutX="1115.0" layoutY="23.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="124.0" text="Повний екран" />
 
    </children>

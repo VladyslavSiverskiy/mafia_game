@@ -11,17 +11,21 @@ import com.vsiverskyi.utils.SettingsUtil;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
+import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
@@ -41,6 +45,7 @@ import org.springframework.stereotype.Component;
 import java.net.URL;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import static com.vsiverskyi.utils.StyleConstants.HOVERED_BUTTON_STYLE;
 import static com.vsiverskyi.utils.StyleConstants.IDLE_BUTTON_STYLE;
@@ -94,9 +99,13 @@ public class VotingController implements Initializable, DisplayedPlayersControll
     @FXML
     private Label startLabel;
     @FXML
+    private Label dayLbl;
+    @FXML
     private Button resetVote;
     @FXML
     private Button discussionButton;
+    @FXML
+    private Button goAheadButton;
     private Timeline countDownTimeLine;
     private Map<Integer, Integer> playerIdVotesMap;
     private Map<Integer, GameStatistics> playerInGameNumberGameStatistics;
@@ -137,24 +146,24 @@ public class VotingController implements Initializable, DisplayedPlayersControll
         currentVoterIndex = 0;
 // Initialize player card list view
         // Initialize technical defeat buttons
-        technicalDefeatPeaceful.setOnAction(e -> penaltyController.assignTechnicalDefeat("PEACE"));
-        technicalDefeatMafia.setOnAction(e -> penaltyController.assignTechnicalDefeat("MAFIA"));
+        technicalDefeatPeaceful.setOnMouseClicked(e -> penaltyController.assignTechnicalDefeat("PEACE"));
+        technicalDefeatMafia.setOnMouseClicked(e -> penaltyController.assignTechnicalDefeat("MAFIA"));
 
         penaltyController.initializePlayerCardList(gameStatisticsList, stage, this, playerCardListView);
 
         displayRolePlayers(gameStatisticsList.size());
 
-        fullScreen.setOnAction(ev -> stage.setFullScreen(true));
+        fullScreen.setOnMouseClicked(ev -> stage.setFullScreen(true));
         ImageView imageView = new ImageView(getClass().getResource("/images/fullscreen.png").toExternalForm());
         fullScreen.setGraphic(imageView);
         imageView.fitWidthProperty().bind(fullScreen.widthProperty().divide(10));
         imageView.setPreserveRatio(true);
 
-        startButton.setOnAction(actionEvent -> startVoting());
-        resetVote.setOnAction(actionEvent -> resetVote());
+        startButton.setOnMouseClicked(actionEvent -> startVoting());
+        resetVote.setOnMouseClicked(actionEvent -> resetVote());
         resetVote.setDisable(true);
 
-        discussionButton.setOnAction(actionEvent -> endEachPlayerPresentation());
+        discussionButton.setOnMouseClicked(actionEvent -> endEachPlayerPresentation());
         discussionButton.setStyle(IDLE_BUTTON_STYLE);
         discussionButton.setOnMouseEntered(ev -> discussionButton.setStyle(HOVERED_BUTTON_STYLE));
         discussionButton.setOnMouseExited(ev -> discussionButton.setStyle(IDLE_BUTTON_STYLE));
@@ -166,17 +175,18 @@ public class VotingController implements Initializable, DisplayedPlayersControll
         startButton.setStyle(IDLE_BUTTON_STYLE);
         startButton.setOnMouseEntered(ev -> startButton.setStyle(HOVERED_BUTTON_STYLE));
         startButton.setOnMouseExited(ev -> startButton.setStyle(IDLE_BUTTON_STYLE));
+        startButton.toFront();
+
     }
 
     private void initPlayerInGameNumberGameStatistics() {
-        for (GameStatistics gameStatistics: gameStatisticsList) {
-            playerInGameNumberGameStatistics.put(gameStatistics.getInGameNumber(),gameStatistics);
+        for (GameStatistics gameStatistics : gameStatisticsList) {
+            playerInGameNumberGameStatistics.put(gameStatistics.getInGameNumber(), gameStatistics);
         }
     }
 
     private void resetVote() {
         playerIdVotesMap.put(lastVotedNumber, playerIdVotesMap.get(lastVotedNumber) - lastVoiceAmount);
-        System.out.println(gamersOrder);
         gamersOrder.addFirst(lastVoterNumber);
 
         if (excuseTimeLine != null) {
@@ -187,7 +197,7 @@ public class VotingController implements Initializable, DisplayedPlayersControll
             countDownTimeLine.stop();
             countDownTimeLine = null;
         }
-//        System.out.println(gamersOrder);
+
         updateVotesDisplay();
         if (reverse) {
             giveVoiceReverse(lastVoterNumber - 1);
@@ -204,7 +214,7 @@ public class VotingController implements Initializable, DisplayedPlayersControll
 
         for (Map.Entry<Integer, Button> entry : playerIdButton.entrySet()) {
             Button button = entry.getValue();
-            button.setOnAction(actionEvent -> {
+            button.setOnMouseClicked(actionEvent -> {
                 ButtonType foo = new ButtonType("За годинниковою стрілкою", ButtonBar.ButtonData.YES);
                 ButtonType bar = new ButtonType("Проти годинникової стрілки", ButtonBar.ButtonData.YES);
                 Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "Виберіть напрямок", foo, bar);
@@ -226,7 +236,12 @@ public class VotingController implements Initializable, DisplayedPlayersControll
     @Override
     public void displayRolePlayers(int totalPlayers) {
         votingPlayersPane.getChildren().clear();
-
+        votingPlayersPane.getChildren().add(startButton);
+        votingPlayersPane.getChildren().add(discussionButton);
+        votingPlayersPane.getChildren().add(goAheadButton);
+        votingPlayersPane.getChildren().add(secondsLeft);
+        votingPlayersPane.getChildren().add(dayLbl);
+        votingPlayersPane.getChildren().add(startLabel);
         double centerX = votingPlayersPane.getWidth() / 2;
         double centerY = votingPlayersPane.getHeight() / 2;
         double radius = Math.min(centerX, centerY) - 5;
@@ -259,7 +274,6 @@ public class VotingController implements Initializable, DisplayedPlayersControll
                 ImagePattern imagePattern = new ImagePattern(avatarImage);
                 avatar.setFill(imagePattern);
             }
-
 
             VBox playerPanel = createPlayerPanel(x, y);
             // Create an HBox to hold the avatar and other elements
@@ -300,7 +314,6 @@ public class VotingController implements Initializable, DisplayedPlayersControll
                 // Set a transparent background for the HBox
                 hbox.setStyle("-fx-background-color: rgba(31,31,31,0.5); -fx-border-radius: 5px; ");
                 hbox.setPadding(new Insets(0, 0, 0, 10));
-//                hbox.getChildren().addAll(roleLabel, createNicknameLabel(i));
                 hbox.getChildren().addAll(viewController.createNicknameLabel(i, gameStatisticsList));
                 playerPanel.getChildren().add(hbox);
             }
@@ -317,13 +330,19 @@ public class VotingController implements Initializable, DisplayedPlayersControll
             }
 
             if (checkIfSkipVoting(i, totalPlayers)) {
-                Label label = new Label("S");
-                playerPanel.getChildren().add(label);
+                Image deathImage = new Image(getClass().getResource("/images/pause.png").toExternalForm());
+                ImageView deathImageView = new ImageView(deathImage);
+                deathImageView.setFitWidth(15); // Adjust width as needed
+                deathImageView.setFitHeight(15); // Adjust height as needed
+                playerPanel.getChildren().add(deathImageView);
             }
 
             if (checkIfMarkedByKradiy(i, totalPlayers)) {
-                Label label = new Label("K");
-                playerPanel.getChildren().add(label);
+                Image deathImage = new Image(getClass().getResource("/images/kradiy.png").toExternalForm());
+                ImageView deathImageView = new ImageView(deathImage);
+                deathImageView.setFitWidth(15); // Adjust width as needed
+                deathImageView.setFitHeight(15); // Adjust height as needed
+                playerPanel.getChildren().add(deathImageView);
                 kradiyHasStolenVoice = true;
             }
 
@@ -424,6 +443,7 @@ public class VotingController implements Initializable, DisplayedPlayersControll
 
     private void giveVoiceForward(Integer currentVoterIndex) {
         startLabel.setText("");
+        startLabel.setText("Голосує: " + playerInGameNumberGameStatistics.get(currentVoterIndex + 1).getInGameNickname());
         if (!checkIfAlive(currentVoterIndex + 1, gameStatisticsList.size()) ||
             checkIfSkipVoting(currentVoterIndex + 1, gameStatisticsList.size()) ||
             checkIfMarkedByKradiy(currentVoterIndex + 1, gameStatisticsList.size())
@@ -433,63 +453,88 @@ public class VotingController implements Initializable, DisplayedPlayersControll
             //take next. If next is null and game
             Integer nextPlayerNumber = gamersOrder.peek();
             if (nextPlayerNumber == null) {
-                blockAllButtons();
-                defineVotingResult();
+                lastVoiceReverse();
             } else {
                 giveVoiceForward(nextPlayerNumber - 1); // і дістаємо номер наступного, робимо - 1
             }
         } else {
-            for (Map.Entry<Integer, Button> entry : playerIdButton.entrySet()) {
-                Button button = entry.getValue();
-                Integer finalCurrentVoterIndex1 = currentVoterIndex;
-                button.setOnAction(actionEvent -> {
-                    if (countDownTimeLine != null) {
-                        countDownTimeLine.stop();
+            goAheadButton.setDisable(false);
+
+            Scene scene = goAheadButton.getScene();
+            scene.setOnKeyTyped(event -> {
+
+                if (event.getCharacter().equals(" ")) {
+                    // Check if the button is not disabled to avoid re-triggering
+                    if (!goAheadButton.isDisabled()) {
+                        // Disable the "Start Timer" button
+                        goAheadButton.setDisable(true);
+                        startTimerForPlayer(currentVoterIndex); // Start the timer for the player
                     }
-                    setVote(Integer.parseInt(button.getText()), finalCurrentVoterIndex1);
-                });
-                button.setDisable(true);
-            }
-
-            secondsTillEnd = SettingsUtil.getSecondsPerMove();
-            Integer finalCurrentVoterIndex = currentVoterIndex;
-
-            countDownTimeLine = new Timeline(new KeyFrame(Duration.seconds(1), (ActionEvent event) -> {
-                if (secondsTillEnd > 0) {
-                    secondsLeft.setText(String.valueOf(secondsTillEnd--));
-                } else {
-                    Platform.runLater(() -> {
-                        int setVoteTo = 0;
-                        if (finalCurrentVoterIndex == findLastAliveIndex()) {
-                            for (int i = gameStatisticsList.size() - 1; i >= 0; i--) {
-                                if (checkIfAlive(i + 1, gameStatisticsList.size())) {
-                                    setVoteTo = i + 1;
-                                }
-                            }
-                        } else {
-                            for (int i = finalCurrentVoterIndex + 1; i < gameStatisticsList.size(); i++) {
-                                if (checkIfAlive(i + 1, gameStatisticsList.size())) {
-                                    setVoteTo = i + 1;
-                                    break; // Exit loop as soon as a valid player is found
-                                }
-                            }
-                        }
-                        setVote(setVoteTo, finalCurrentVoterIndex);
-                    });
-                    countDownTimeLine.stop();
                 }
-            }));
+            });
 
-            countDownTimeLine.setCycleCount(Timeline.INDEFINITE);
-            countDownTimeLine.play();
-            unblockAllButtons();
+            goAheadButton.setOnMouseClicked(actionEvent -> {
+                // Disable the "Start Timer" button
+                goAheadButton.setDisable(true);
+                startTimerForPlayer(currentVoterIndex); // Start the timer for the player
+            });
+
+
             updateButtonStates(currentVoterIndex);
+            blockAllButtons();
             Button button = playerIdButton.get(currentVoterIndex + 1);
             button.setStyle("-fx-background-color: #00f100");
-            //            button.setDisable(true);
-            return;  // Exit the loop and method after starting the countdown
         }
     }
+
+    private void startTimerForPlayer(Integer currentVoterIndex) {
+        for (Map.Entry<Integer, Button> entry : playerIdButton.entrySet()) {
+            Button button = entry.getValue();
+            Integer finalCurrentVoterIndex = currentVoterIndex;
+            button.setOnMouseClicked(actionEvent -> {
+                if (countDownTimeLine != null) {
+                    countDownTimeLine.stop();
+                }
+                setVote(Integer.parseInt(button.getText()), finalCurrentVoterIndex);
+            });
+            button.setDisable(true);
+        }
+
+        secondsTillEnd = SettingsUtil.getSecondsPerMove();
+        Integer finalCurrentVoterIndex = currentVoterIndex;
+
+        countDownTimeLine = new Timeline(new KeyFrame(Duration.seconds(1), (ActionEvent event) -> {
+            if (secondsTillEnd > 0) {
+                secondsLeft.setText(String.valueOf(secondsTillEnd--));
+            } else {
+                Platform.runLater(() -> {
+                    int setVoteTo = 0;
+                    if (finalCurrentVoterIndex == findLastAliveIndex()) {
+                        for (int i = gameStatisticsList.size() - 1; i >= 0; i--) {
+                            if (checkIfAlive(i + 1, gameStatisticsList.size())) {
+                                setVoteTo = i + 1;
+                            }
+                        }
+                    } else {
+                        for (int i = finalCurrentVoterIndex + 1; i < gameStatisticsList.size(); i++) {
+                            if (checkIfAlive(i + 1, gameStatisticsList.size())) {
+                                setVoteTo = i + 1;
+                                break; // Exit loop as soon as a valid player is found
+                            }
+                        }
+                    }
+                    setVote(setVoteTo, finalCurrentVoterIndex);
+                });
+                countDownTimeLine.stop();
+            }
+        }));
+        countDownTimeLine.setCycleCount(Timeline.INDEFINITE);
+        countDownTimeLine.play();
+        unblockAllButtons();
+        blockAllButtons();
+        updateButtonStates(currentVoterIndex);
+    }
+
 
     private void resetTimerAndSetVotingLabel() {
         if (countDownTimeLine != null) {
@@ -500,6 +545,7 @@ public class VotingController implements Initializable, DisplayedPlayersControll
 
     private void giveVoiceReverse(Integer reverseCurrentVoterIndex) {
         startLabel.setText("");
+        startLabel.setText("Голосує: " + playerInGameNumberGameStatistics.get(reverseCurrentVoterIndex + 1).getInGameNickname());
         if (!checkIfAlive(reverseCurrentVoterIndex + 1, gameStatisticsList.size()) ||
             checkIfSkipVoting(currentVoterIndex + 1, gameStatisticsList.size()) ||
             checkIfMarkedByKradiy(currentVoterIndex + 1, gameStatisticsList.size()
@@ -508,59 +554,102 @@ public class VotingController implements Initializable, DisplayedPlayersControll
             //take next. If next is null and game
             Integer nextPlayerNumber = gamersOrder.peek();
             if (nextPlayerNumber == null) {
-                blockAllButtons();
-                defineVotingResult();
+                lastVoiceReverse();
             } else {
-                giveVoiceForward(nextPlayerNumber - 1); // і дістаємо номер наступного, робимо - 1
+                giveVoiceReverse(nextPlayerNumber - 1); // і дістаємо номер наступного, робимо - 1
             }
         } else {
-            for (Map.Entry<Integer, Button> entry : playerIdButton.entrySet()) {
-                Button button = entry.getValue();
-                Integer finalReverseCurrentVoterIndex1 = reverseCurrentVoterIndex;
-                button.setOnAction(actionEvent -> {
-                    if (countDownTimeLine != null) {
-                        countDownTimeLine.stop();
+            goAheadButton.setDisable(false);
+            Scene scene = goAheadButton.getScene();
+            scene.setOnKeyTyped(event -> {
+
+                if (event.getCharacter().equals(" ")) {
+                    // Check if the button is not disabled to avoid re-triggering
+                    if (!goAheadButton.isDisabled()) {
+                        // Disable the "Start Timer" button
+                        goAheadButton.setDisable(true);
+                        startTimerForPlayer(reverseCurrentVoterIndex); // Start the timer for the player
                     }
-                    setVote(Integer.parseInt(button.getText()), finalReverseCurrentVoterIndex1);
-                });
-                button.setDisable(true);
-            }
-            secondsTillEnd = 10;
-            Integer finalReverseCurrentVoterIndex = reverseCurrentVoterIndex;
-            countDownTimeLine = new Timeline(new KeyFrame(Duration.seconds(1), (ActionEvent event) -> {
-                if (secondsTillEnd > 0) {
-                    secondsLeft.setText(String.valueOf(secondsTillEnd--));
-                } else {
-                    Platform.runLater(() -> {
-                        int setVoteTo = 0;
-                        if (finalReverseCurrentVoterIndex == findFirstAliveIndex()) {
-                            for (int i = 0; i < gameStatisticsList.size(); i++) {
-                                if (checkIfAlive(i + 1, gameStatisticsList.size())) {
-                                    setVoteTo = i + 1;
-                                }
-                            }
-                        } else {
-                            for (int i = 0; i < finalReverseCurrentVoterIndex; i++) {
-                                if (checkIfAlive(i + 1, gameStatisticsList.size())) {
-                                    setVoteTo = i + 1;
-                                }
-                            }
-                        }
-                        setVote(setVoteTo, finalReverseCurrentVoterIndex);
-                    });
-                    countDownTimeLine.stop();
                 }
-            }));
-            countDownTimeLine.setCycleCount(Timeline.INDEFINITE);
-            countDownTimeLine.play();
-            unblockAllButtons();
+            });
+
+            goAheadButton.setOnKeyPressed(event -> {
+                if (event.getCode() == KeyCode.SPACE) {
+                    // Check if the button is not disabled to avoid re-triggering
+                    if (!goAheadButton.isDisabled()) {
+                        // Disable the "Start Timer" button
+                        goAheadButton.setDisable(true);
+                        startTimerForPlayer(reverseCurrentVoterIndex); // Start the timer for the player
+                    }
+                }
+            });
+            goAheadButton.setOnMouseClicked(actionEvent -> {
+                // Disable the "Start Timer" button
+                goAheadButton.setDisable(true);
+                unblockAllButtons();
+                startTimerForReversePlayer(reverseCurrentVoterIndex); // Start the timer for the player
+            });
+
+
+
             updateButtonStates(reverseCurrentVoterIndex);
+            blockAllButtons();
             Button button = playerIdButton.get(reverseCurrentVoterIndex + 1);
             button.setStyle("-fx-background-color: #00f100");
-
-            return;  // Exit the loop and method after starting the count down
         }
     }
+
+    private void startTimerForReversePlayer(Integer reverseCurrentVoterIndex) {
+        for (Map.Entry<Integer, Button> entry : playerIdButton.entrySet()) {
+            Button button = entry.getValue();
+            Integer finalReverseCurrentVoterIndex = reverseCurrentVoterIndex;
+            button.setOnMouseClicked(actionEvent -> {
+                if (countDownTimeLine != null) {
+                    countDownTimeLine.stop();
+                }
+                setVote(Integer.parseInt(button.getText()), finalReverseCurrentVoterIndex);
+            });
+            button.setDisable(true);
+
+        }
+
+        secondsTillEnd = SettingsUtil.getSecondsPerMove(); // Set your countdown duration here
+        Integer finalReverseCurrentVoterIndex = reverseCurrentVoterIndex;
+
+        countDownTimeLine = new Timeline(new KeyFrame(Duration.seconds(1), (ActionEvent event) -> {
+            if (secondsTillEnd > 0) {
+                secondsLeft.setText(String.valueOf(secondsTillEnd--));
+            } else {
+                Platform.runLater(() -> {
+                    int setVoteTo = 0;
+                    if (finalReverseCurrentVoterIndex == findFirstAliveIndex()) {
+                        for (int i = 0; i < gameStatisticsList.size(); i++) {
+                            if (checkIfAlive(i + 1, gameStatisticsList.size())) {
+                                setVoteTo = i + 1;
+                            }
+                        }
+                    } else {
+                        for (int i = 0; i < finalReverseCurrentVoterIndex; i++) {
+                            if (checkIfAlive(i + 1, gameStatisticsList.size())) {
+                                setVoteTo = i + 1;
+                            }
+                        }
+                    }
+                    setVote(setVoteTo, finalReverseCurrentVoterIndex);
+
+                });
+                countDownTimeLine.stop();
+            }
+        }));
+
+        countDownTimeLine.setCycleCount(Timeline.INDEFINITE);
+        countDownTimeLine.play();
+        unblockAllButtons();
+        updateButtonStates(reverseCurrentVoterIndex);
+        Button button = playerIdButton.get(reverseCurrentVoterIndex + 1);
+        button.setStyle("-fx-background-color: #00f100");
+    }
+
 
     private void updateButtonStates(int reverseCurrentVoterIndex) {
         for (Map.Entry<Integer, Button> entry : playerIdButton.entrySet()) {
@@ -582,7 +671,14 @@ public class VotingController implements Initializable, DisplayedPlayersControll
 
     private void updateVotesDisplay() {
         votesDisplay.getChildren().clear(); // Clear existing labels
-        for (Map.Entry<Integer, Integer> entry : playerIdVotesMap.entrySet()) {
+        // Convert the map to a list and sort it based on votes
+        List<Map.Entry<Integer, Integer>> sortedVotesList = playerIdVotesMap.entrySet()
+                .stream()
+                .sorted(Map.Entry.<Integer, Integer>comparingByValue().reversed())
+                .collect(Collectors.toList());
+
+        // Iterate through the sorted list and update the display
+        for (Map.Entry<Integer, Integer> entry : sortedVotesList) {
             int playerId = entry.getKey();
             int votes = entry.getValue();
             Label voteLabel = new Label();
@@ -592,7 +688,7 @@ public class VotingController implements Initializable, DisplayedPlayersControll
             }
             if (votes == 1) {
                 voteLabel.setText(nickname + ": " + votes + " голос");
-            } else if (votes > 1){
+            } else if (votes > 1) {
                 voteLabel.setText(nickname + ": " + votes + " голосів");
             }
             voteLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #ffffff");
@@ -602,7 +698,6 @@ public class VotingController implements Initializable, DisplayedPlayersControll
 
     private void setVote(int playerNumber, Integer voterIndex) {
         Integer playerVotes = playerIdVotesMap.get(playerNumber);
-
         GameStatistics gameStatisticsVoter = gameStatisticsService
                 .getGameStatisticsByGameIdSortedByInGameNumber(SelectionController.currentGameId).get(voterIndex);
         boolean isKradiy = kradiyHasStolenVoice && gameStatisticsVoter.getRole().getRoleNameConstant().equals(ERoleOrder.KRADIY.name());
@@ -630,10 +725,12 @@ public class VotingController implements Initializable, DisplayedPlayersControll
                 alert.setResizable(false);
                 Optional<ButtonType> result = alert.showAndWait();
                 if (result.isPresent() && result.get().getText().equals("Так")) {
+                    votingStateLabel.setText("Оправдання");
                     gameStatistics.setExcusesAttempts((short) (gameStatistics.getExcusesAttempts() + 1));
                     gameStatisticsService.save(gameStatistics);
                     startExcuseTimer(playerNumber, voterIndex, gameStatistics, votesToAdd);
                 } else {
+                    votingStateLabel.setText("Голосування");
                     doVote(playerNumber, playerVotes, votesToAdd, voterIndex);
                     addPointsAndChangeVoterIndex(playerNumber, voterIndex);
                 }
@@ -676,33 +773,51 @@ public class VotingController implements Initializable, DisplayedPlayersControll
     }
 
     private void showExcuseChoiceDialog(int playerNumber, int voterIndex, GameStatistics gameStatistics, int votesToAdd) {
-
         ButtonType foo = new ButtonType("Зберегти голос", ButtonBar.ButtonData.YES);
         ButtonType bar = new ButtonType("Інший гравець", ButtonBar.ButtonData.CANCEL_CLOSE);
-
         Alert excuseAlert = new Alert(Alert.AlertType.CONFIRMATION, "Зберегти голос?", foo, bar);
         excuseAlert.setTitle("Оправдання");
         excuseAlert.setHeaderText("Час на оправдання завершився");
         excuseAlert.setContentText("Виберіть опцію:");
-//        Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "Скористатись правом на оправдання?", foo, bar);
-
-//        excuseAlert.getButtonTypes().setAll(ButtonType.OK, ButtonType.CANCEL);
         excuseAlert.initOwner(stage);
-
         Optional<ButtonType> excuseResult = excuseAlert.showAndWait();
         if (excuseResult.isPresent() && excuseResult.get().getText().equals("Зберегти голос")) {
-            // Proceed with voting logic here if the player chooses to vote
             playerIdVotesMap.put(playerNumber, playerIdVotesMap.get(playerNumber) + votesToAdd);
             addPointsAndChangeVoterIndex(playerNumber, voterIndex);
         } else {
-       // Player decides not to vote, handle accordingly
             if (reverse) {
                 giveVoiceReverse(gamersOrder.peek() - 1);
             } else {
                 giveVoiceForward(gamersOrder.peek() - 1);
             }
-            // Do not change the voter index to allow the player to vote again
         }
+        votingStateLabel.setText("Голосування");
+    }
+
+    private void lastVoiceReverse() {
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.initOwner(stage);
+        alert.setTitle("Кінець голосування");
+        alert.setHeaderText(null);
+        alert.setContentText("Це ОСТАННІЙ голос перед етапом НОЧІ, бажаєте його залишити?");
+
+        ButtonType buttonYes = new ButtonType("Так");
+        ButtonType buttonNo = new ButtonType("Ні");
+
+        alert.getButtonTypes().setAll(buttonYes, buttonNo);
+
+        alert.showAndWait().ifPresent(response -> {
+            if (response == buttonYes) {
+                if (countDownTimeLine != null) {
+                    countDownTimeLine.stop();
+                }
+                blockAllButtons();
+                defineVotingResult();
+            } else if (response == buttonNo) {
+                // Let the player vote again
+                resetVote();
+            }
+        });
     }
 
     private void addPointsAndChangeVoterIndex(int playerNumber, int voterIndex) {
@@ -719,14 +834,13 @@ public class VotingController implements Initializable, DisplayedPlayersControll
         );
         //перевірити на кінець голосування
         if (checkTheEndOfVoting(voterIndex)) {
-            blockAllButtons();
-            defineVotingResult();
+            lastVoiceReverse();
+
         } else {
             gamersOrder.remove();//видаляємо з черги того хто голосував
             Integer nextPlayerNumber = gamersOrder.peek();
             if (nextPlayerNumber == null) {
-                blockAllButtons();
-                defineVotingResult();
+                lastVoiceReverse();
             } else if (reverse) {
                 giveVoiceReverse(nextPlayerNumber - 1);
             } else {
@@ -744,22 +858,17 @@ public class VotingController implements Initializable, DisplayedPlayersControll
         if (playersIdWithMaxVotes.size() > 1) {
             showRouletteWindow(playersIdWithMaxVotes, eliminatedPlayer -> {
                 // Handle the elimination of the player here
-                gameStatisticsService.deletePlayerAfterVoting(SelectionController.currentGameId, eliminatedPlayer);
-                //тут можливо ще зробити сервіс, який буде перевіряти чи гру закінчено, і дьоргати його методи
-                Alert alert = new Alert(Alert.AlertType.INFORMATION, "Кінець голосування");
-                alert.initOwner(stage);
-                alert.show();
-                if (countDownTimeLine != null) {
-                    countDownTimeLine.stop();
-                }
+                GameStatistics gameStatistics = gameStatisticsService.deletePlayerAfterVoting(SelectionController.currentGameId, eliminatedPlayer);
+                showResultWindow(gameStatistics);
                 pointsService.countOnePointAfterDayAndNight(SelectionController.currentGameId);
                 fxWeaver.loadController(NightStageController.class).show();
             });
         } else {
             playerInGameNumberToDelete = playersIdWithMaxVotes.get(0);
-            gameStatisticsService.deletePlayerAfterVoting(SelectionController.currentGameId, playerInGameNumberToDelete);
+            GameStatistics gameStatistics =  gameStatisticsService.deletePlayerAfterVoting(SelectionController.currentGameId, playerInGameNumberToDelete);
             pointsService.countOnePointAfterDayAndNight(SelectionController.currentGameId);
             //тут можливо ще зробити сервіс, який буде перевіряти чи гру закінчено, і дьоргати його методи
+            showResultWindow(gameStatistics);
             if (gameService.checkIfGameIsOver(SelectionController.currentGameId)) {
                 fxWeaver.loadController(GameEndingController.class);
             } else {
@@ -768,10 +877,33 @@ public class VotingController implements Initializable, DisplayedPlayersControll
         }
     }
 
+    private void showResultWindow(GameStatistics gameStatistics) {
+
+        Image image = new Image(getClass().getResource("/images/stop.png").toExternalForm());
+        ImageView imageView = new ImageView(image);
+        imageView.setFitWidth(50);  // Set the desired width
+        imageView.setFitHeight(50); // Set the desired height
+
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setGraphic(imageView);
+        DialogPane dialogPane = alert.getDialogPane();
+        dialogPane.getStylesheets().add(
+                getClass().getResource("/style/myDialogs.css").toExternalForm());
+        dialogPane.getStyleClass().add("myDialog");
+        alert.setTitle("Підсумки дня");
+        alert.setHeaderText("Результат голосування");
+        String res = gameStatistics.isDefendedPerNextVoting() ? " не вибуває, бо отримав захист на день."
+                : " вибуває. Його роль " + gameStatistics.getRole().getTitle();
+        alert.setContentText(gameStatistics.getInGameNickname() + res);
+
+        alert.initOwner(stage);
+        alert.showAndWait();
+    }
+
     private void showRouletteWindow(List<Integer> playersIdWithMaxVotes, Consumer<Integer> onWindowClosed) {
         Stage window = new Stage();
         window.initModality(Modality.APPLICATION_MODAL);
-        window.setTitle("Roulette");
+        window.setTitle("Перестрілка");
         GridPane layout = new GridPane();
         layout.setHgap(10);
         layout.setVgap(10);
@@ -790,19 +922,45 @@ public class VotingController implements Initializable, DisplayedPlayersControll
         currentPlayerLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #ffffff;");
         layout.add(currentPlayerLabel, 0, 0, 3, 1);
 
-        GameStatistics gameStatistics = gameStatisticsService.findByInGameNumberAndGameId(playersIdWithMaxVotes.get(currentPlayerIndex[0]), SelectionController.currentGameId);
+        List<String> allPerRoulette = new ArrayList<>();
+        for (Integer number : playersIdWithMaxVotes) {
+            allPerRoulette.add(gameStatisticsService
+                    .findByInGameNumberAndGameId(number, SelectionController.currentGameId)
+                    .getInGameNickname());
+        }
+
+        GameStatistics gameStatistics = gameStatisticsService
+                .findByInGameNumberAndGameId(playersIdWithMaxVotes.get(currentPlayerIndex[0]), SelectionController.currentGameId);
         currentPlayerLabel.setText("Стріляє: " + gameStatistics.getInGameNickname());
+
+        // Create and populate ListView with nicknames
+        ObservableList<String> nicknames = FXCollections.observableArrayList(allPerRoulette);
+        ListView<String> listView = new ListView<>(nicknames);
+        listView.setPrefSize(200, 150);
+        listView.setStyle("-fx-font-size: 14px; -fx-text-fill: #ffffff; -fx-background-color: #161616;");
+
+        // Add ListView to layout
+        layout.add(listView, 3, 0, 1, totalButtons / 3 + 2);
 
         for (int i = 0; i < totalButtons; i++) {
             Button button = new Button(String.valueOf(i + 1));
             button.setStyle("-fx-font-size: 12px; -fx-min-width: 40px; -fx-min-height: 30px; -fx-background-color: #9e9e9e; -fx-text-fill: #ffffff; -fx-border-radius: 5px;");
             int buttonIndex = i;
-            button.setOnAction(event -> {
+            button.setOnMouseClicked(event -> {
                 Integer currentPlayer = playersIdWithMaxVotes.get(currentPlayerIndex[0]);
-                GameStatistics gameStatistics2 = gameStatisticsService.findByInGameNumberAndGameId(playersIdWithMaxVotes.get(currentPlayerIndex[0]), SelectionController.currentGameId);
+                GameStatistics gameStatistics2 = gameStatisticsService
+                        .findByInGameNumberAndGameId(playersIdWithMaxVotes.get(currentPlayerIndex[0]), SelectionController.currentGameId);
                 if (buttonIndex == deathButtonIndex) {
+                    Image image = new Image(getClass().getResource("/images/death.png").toExternalForm());
+                    ImageView imageView = new ImageView(image);
+                    imageView.setFitWidth(50);  // Set the desired width
+                    imageView.setFitHeight(50); // Set the desired height
+
                     Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                    alert.setGraphic(imageView);
                     alert.initOwner(window);
+                    alert.setTitle("СМЕРТЬ");
+                    alert.setContentText("СМЕРТЬ");
                     alert.setContentText(gameStatistics2.getInGameNickname() + " обрав смертельну кнопку! Гравець вибуває.");
                     alert.setOnHidden(e -> {
                         playerToDeleteInGameNumber[0] = currentPlayer;
@@ -811,26 +969,32 @@ public class VotingController implements Initializable, DisplayedPlayersControll
                     alert.show();
                 } else {
                     Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                    alert.setTitle("БЕЗПЕКА");
+                    alert.setContentText("БЕЗПЕКА");
                     alert.initOwner(window);
+
                     alert.setContentText(gameStatistics2.getInGameNickname() + " у безпеці! Хід наступного гравця.");
                     alert.setOnHidden(e -> {
                         currentPlayerIndex[0] = (currentPlayerIndex[0] + 1) % numberOfPlayers;
-                        currentPlayerLabel.setText("Стріляє: " + gameStatistics2.getInGameNickname());
+                        GameStatistics nextGameStatistics = gameStatisticsService
+                                .findByInGameNumberAndGameId(playersIdWithMaxVotes.get(currentPlayerIndex[0]), SelectionController.currentGameId);
+                        currentPlayerLabel.setText("Стріляє: " + nextGameStatistics.getInGameNickname());
                     });
                     alert.show();
                 }
                 button.setDisable(true);
-                button.setStyle("-fx-background-color: #f44336;"); // Change color when button is disabled
-
+                button.setAlignment(Pos.CENTER);
+                button.setStyle("-fx-background-color: #f44336; -fx-alignment: center"); // Change color when button is disabled
             });
             layout.add(button, i % 3, (i / 3) + 1);
         }
 
-        Scene scene = new Scene(layout, 300, 200);
+        Scene scene = new Scene(layout, 500, 300); // Adjust size to accommodate ListView
         if (countDownTimeLine != null) {
             countDownTimeLine.stop();
         }
         window.setScene(scene);
+        scene.getStylesheets().add(getClass().getResource("/style/style.css").toExternalForm()); // Add CSS stylesheet
         window.show();
         // Add a listener to handle the window closing event
         window.setOnHidden(e -> onWindowClosed.accept(playerToDeleteInGameNumber[0]));
@@ -901,8 +1065,6 @@ public class VotingController implements Initializable, DisplayedPlayersControll
         button.setLayoutY(y - 33);
         button.setStyle(IDLE_BUTTON_STYLE);
         button.setCursor(Cursor.OPEN_HAND);
-//        button.setOnMouseEntered(e -> button.setStyle(HOVERED_BUTTON_STYLE));
-//        button.setOnMouseExited(e -> button.setStyle(IDLE_BUTTON_STYLE));
         return button;
     }
 

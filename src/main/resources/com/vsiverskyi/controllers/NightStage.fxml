@@ -8,7 +8,7 @@
 <?import javafx.scene.text.Font?>
 
 <AnchorPane fx:id="nightStageAp" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="800.0" prefWidth="1280.0" style="-fx-background-color: #161616;" xmlns="http://javafx.com/javafx/19" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vsiverskyi.controllers.NightStageController">
-    <AnchorPane fx:id="nightStagePlayersPane" layoutX="180.0" layoutY="41.0" prefHeight="700.0" prefWidth="878.0" />
+    <AnchorPane fx:id="nightStagePlayersPane" layoutX="175.0" layoutY="36.0" prefHeight="700.0" prefWidth="878.0" />
    <AnchorPane layoutX="13.0" layoutY="82.0" prefHeight="200.0" prefWidth="110.0" style="-fx-border-color: #ffffff; -fx-border-radius: 5px;">
       <children>
          <Label fx:id="currentRoleTitle" alignment="CENTER" layoutX="-2.0" prefHeight="200.0" prefWidth="162.0" textAlignment="CENTER" textFill="WHITE">
@@ -34,5 +34,10 @@
          <ListView fx:id="allRolesPerGameList" layoutX="2.0" layoutY="10.0" prefHeight="202.0" prefWidth="163.0" />
       </children>
    </AnchorPane>
+   <Label layoutX="68.0" layoutY="25.0" text="НІЧ" textFill="WHITE">
+      <font>
+         <Font size="31.0" />
+      </font>
+   </Label>
 
 </AnchorPane>

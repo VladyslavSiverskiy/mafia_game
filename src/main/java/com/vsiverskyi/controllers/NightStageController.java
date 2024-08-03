@@ -1,7 +1,6 @@
 package com.vsiverskyi.controllers;
 
 import com.vsiverskyi.model.GameStatistics;
-import com.vsiverskyi.model.Player;
 import com.vsiverskyi.model.Role;
 import com.vsiverskyi.model.enums.ERoleOrder;
 import com.vsiverskyi.repository.RoleRepository;
@@ -35,6 +34,7 @@ import org.springframework.stereotype.Component;
 import java.net.URL;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import static com.vsiverskyi.utils.StyleConstants.*;
@@ -84,11 +84,13 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
     private ListView<String> allRolesPerGameList;
     private List<GameStatistics> gameStatisticsListSortedByRoleOrder;
     private List<GameStatistics> gameStatisticsListSortedByInGameNumber;
+    private List<GameStatistics> firstInputCopy;
     private List<Role> actualInGameRoles; //here should be converted set -> list
     private Map<Integer, Role> playerIdRoleMap;
     private Map<Integer, Button> playerButtonsMap; // Map to store buttons
     private Map<Integer, Button> selectedByBombPlayerButtonsMap; // Map to store buttons
     private Map<Integer, Label> playerRoleLabelsMap; // Map to store labels
+    private Map<Integer, HBox> playerNumberNicknameHbox;
     private Queue<Action> actionsQueue = new LinkedList<>();
     private Role currentRole;
     private int currentRoleIndex;
@@ -101,6 +103,9 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
     private int chosenByBombPlayerAmount;
     private int currentNightIndicator;
     private int availableAmountOfPlayersForMarking;
+    private int alivePlayersAtTheBeggining;
+    private int alivePlayersAtTheEnd;
+
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
@@ -122,27 +127,35 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
         chosenByBombPlayerAmount = 0;
 
         actualInGameRoles = new ArrayList<>();
+        firstInputCopy = new ArrayList<>();
         playerIdRoleMap = new HashMap<>();
         playerButtonsMap = new HashMap<>();
         playerRoleLabelsMap = new HashMap<>();
         selectedByBombPlayerButtonsMap = new HashMap<>();
-        gameService.resetStrilochnykAttempts(SelectionController.currentGameId);
+        playerNumberNicknameHbox = new HashMap<>();
         updatePlayersList();
         initPlayerRoleMap();
 
+        gameService.resetKillingAttempts(SelectionController.currentGameId);
         gameStatisticsService.removeAllVotingSkipsPerDay(SelectionController.currentGameId);
         gameStatisticsService.removeAllVotingDefencesPerDay(SelectionController.currentGameId);
         gameStatisticsService.removeAllKradiyChoices(SelectionController.currentGameId);
 
         // Initialize player card list view
-        technicalDefeatPeaceful.setOnAction(e -> penaltyController.assignTechnicalDefeat("PEACE"));
-        technicalDefeatMafia.setOnAction(e -> penaltyController.assignTechnicalDefeat("MAFIA"));
+        technicalDefeatPeaceful.setOnMouseClicked(e -> penaltyController.assignTechnicalDefeat("PEACE"));
+        technicalDefeatMafia.setOnMouseClicked(e -> penaltyController.assignTechnicalDefeat("MAFIA"));
         penaltyController.initializePlayerCardList(gameStatisticsListSortedByInGameNumber, stage, this, playerCardListView);
-        fullScreen.setOnAction(ev -> stage.setFullScreen(true));
+        fullScreen.setOnMouseClicked(ev -> stage.setFullScreen(true));
         ImageView imageView = new ImageView(getClass().getResource("/images/fullscreen.png").toExternalForm());
         fullScreen.setGraphic(imageView);
         imageView.fitWidthProperty().bind(fullScreen.widthProperty().divide(10));
         imageView.setPreserveRatio(true);
+
+        firstInputCopy = gameStatisticsService
+                .getGameStatisticsByGameIdSortedByInGameNumber(SelectionController.currentGameId)
+                .stream()
+                .filter(gameStatistics -> gameStatistics.isInGame()).collect(Collectors.toList());
+        alivePlayersAtTheBeggining = firstInputCopy.size();
 
         displayRolePlayers(gameStatisticsListSortedByRoleOrder.size());
         startRoleIterating();
@@ -196,10 +209,51 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
             alert.initOwner(stage);
             alert.showAndWait();
             List<GameStatistics> killedDueToPoisoning = gameStatisticsService.processPoisonedPlayers(SelectionController.currentGameId);
+            List<GameStatistics> endAliveGameStatisticsList = gameStatisticsService
+                    .getGameStatisticsByGameIdSortedByInGameNumber(SelectionController.currentGameId)
+                    .stream()
+                    .filter(gameStatistics -> gameStatistics.isInGame())
+                    .collect(Collectors.toList());
+            alivePlayersAtTheEnd = (int) endAliveGameStatisticsList.size();
+
+
+            System.out.println(firstInputCopy);
+            System.out.println(endAliveGameStatisticsList);
+            List<String> difference = firstInputCopy.stream()
+                    .filter(item -> !endAliveGameStatisticsList.contains(item))
+                    .map(gameStatistics -> gameStatistics.getInGameNickname())
+                    .collect(Collectors.toList());
+            String result = "";
+            for (String nickname: difference) {
+                result += nickname + "; ";
+            }
+            System.out.println(difference); // Output: [apple]
+
+
+            Image image = new Image(getClass().getResource("/images/stop.png").toExternalForm());
+            ImageView imageView = new ImageView(image);
+            imageView.setFitWidth(50);  // Set the desired width
+            imageView.setFitHeight(50); // Set the desired height
+
+            Alert deadPlayersAmount = new Alert(Alert.AlertType.INFORMATION);
+            deadPlayersAmount.setGraphic(imageView);
+            DialogPane dialogPane = deadPlayersAmount.getDialogPane();
+            dialogPane.getStylesheets().add(
+                    getClass().getResource("/style/myDialogs.css").toExternalForm());
+            dialogPane.getStyleClass().add("myDialog");
+            deadPlayersAmount.setTitle("Підсумки ночі");
+            deadPlayersAmount.setHeaderText("Загинуло гравців під час ночі: " + Math.abs(alivePlayersAtTheEnd - alivePlayersAtTheBeggining));
+
+            deadPlayersAmount.setContentText("Вибувають: " + result);
+
+
+            deadPlayersAmount.initOwner(stage);
+            deadPlayersAmount.showAndWait();
+
             if (killedDueToPoisoning.size() > 0) {
                 String killedString = " Через отруєння загинули: ";
                 for (GameStatistics killedDueToPoisoningPlayer : killedDueToPoisoning) {
-                    killedString += killedDueToPoisoningPlayer.getInGameNumber() + " ";
+                    killedString += killedDueToPoisoningPlayer.getInGameNickname() + " ";
                 }
                 Alert killedAlert = new Alert(Alert.AlertType.INFORMATION, killedString);
                 killedAlert.initOwner(stage);
@@ -317,13 +371,14 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
 //                    alert.initOwner(stage);
 //                    alert.show();
 
+                    setBulletMarker(chosenPlayerNumber);
                     pointsService.countPointsInOrderToNightAction(
                             SelectionController.currentGameId,
                             currentRole,
                             chosenPlayerNumber
                     );
-                    setNextRole();
                     actionsQueue.add(mafiaMoveLogger);
+                    setNextRole();
                 }
                 break;
             // тут додавати logger в чергу?
@@ -338,6 +393,7 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
                     donCantChooseHimselfAlert.showAndWait();
                 } else {
                     Action perevertenMoveLogger = gameService.doMafiaKillMove(SelectionController.currentGameId, chosenPlayerNumber);
+                    setBulletMarker(chosenPlayerNumber);
                     pointsService.countPointsInOrderToNightAction(
                             SelectionController.currentGameId,
                             currentRole,
@@ -354,18 +410,19 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
                 if (playerIdRoleMap.get(chosenPlayerNumber).getRoleNameConstant().equals(ERoleOrder.DOCTOR.name())
                     && (findByInGameNumber(chosenPlayerNumber).getTimesWasHealed() >= 2)) {
                     Alert doctorCantHealHimselfAlert =
-                            new Alert(Alert.AlertType.INFORMATION, "Лікар не може лікувати себе більше двох разів");
+                            new Alert(Alert.AlertType.INFORMATION, ERoleOrder.DOCTOR.getTitle() + " не може лікувати себе більше двох разів");
                     doctorCantHealHimselfAlert.initOwner(stage);
                     doctorCantHealHimselfAlert.showAndWait();
                 } else if (gameStatisticsService.checkIfPlayerWasHealed(chosenPlayerNumber, SelectionController.currentGameId)) {
                     Alert doctorCantHealHimselfAlert =
-                            new Alert(Alert.AlertType.INFORMATION, "Лікар не може лікувати два рази підряд");
+                            new Alert(Alert.AlertType.INFORMATION, ERoleOrder.DOCTOR.getTitle() + " не може лікувати два рази підряд");
                     doctorCantHealHimselfAlert.initOwner(stage);
                     doctorCantHealHimselfAlert.showAndWait();
-                }else {
+                } else {
                     // Метод - нарахувати поінти за хід вночі.
                     // Передамо поточну роль, і всі з такою роллю отримають стільки то балів
                     doDoctorMove(chosenPlayerNumber);
+                    setDoctorMarker(chosenPlayerNumber);
                     pointsService.countPointsInOrderToNightAction(
                             SelectionController.currentGameId,
                             currentRole,
@@ -377,7 +434,7 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
             case SHERYF:
                 if (playerIdRoleMap.get(chosenPlayerNumber).getRoleNameConstant().equals(ERoleOrder.SHERYF.name())) {
                     Alert sheryfCantChooseHimselfAlert =
-                            new Alert(Alert.AlertType.INFORMATION, ERoleOrder.SHERYF.getTitle() + " не може голосувати за себе");
+                            new Alert(Alert.AlertType.INFORMATION, ERoleOrder.SHERYF.getTitle() + " не може перевіряти себе");
                     sheryfCantChooseHimselfAlert.initOwner(stage);
                     sheryfCantChooseHimselfAlert.showAndWait();
                 } else {
@@ -398,6 +455,7 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
                     maniakCantChooseHimselfAlert.showAndWait();
                 } else {
                     doManiakMove(chosenPlayerNumber);
+                    setManiakMarker(chosenPlayerNumber);
                     pointsService.countPointsInOrderToNightAction(
                             SelectionController.currentGameId,
                             currentRole,
@@ -409,6 +467,7 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
             case STRILOCHNYK:
                 if (strilochnykIndex < archerAttemptsAmount) {
                     doStrilochnykMove(chosenPlayerNumber);
+                    setMesnykMarker(chosenPlayerNumber);
                     pointsService.countPointsInOrderToNightAction(
                             SelectionController.currentGameId,
                             currentRole,
@@ -428,16 +487,18 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
                         chosenPlayerNumber
                 );
                 doOtamanMove(chosenPlayerNumber);
+                setOtamanMakrer(chosenPlayerNumber);
                 setNextRole();
                 break;
             case LEDY:
                 if (playerIdRoleMap.get(chosenPlayerNumber).getRoleNameConstant().equals(ERoleOrder.LEDY.name())) {
                     Alert ladyCantChooseHerselfAlert =
-                            new Alert(Alert.AlertType.INFORMATION, "Леді не може голосувати за себе");
+                            new Alert(Alert.AlertType.INFORMATION, ERoleOrder.LEDY.getTitle() + " не може голосувати за себе");
                     ladyCantChooseHerselfAlert.initOwner(stage);
                     ladyCantChooseHerselfAlert.showAndWait();
                 } else {
                     doLedyMove(chosenPlayerNumber);
+                    setLedyMarker(chosenPlayerNumber);
                     pointsService.countPointsInOrderToNightAction(
                             SelectionController.currentGameId,
                             currentRole,
@@ -453,11 +514,12 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
                         chosenPlayerNumber
                 );
                 doZatychkaMove(chosenPlayerNumber);
-                Action zatychkaMoveLogger = new Action();
-                zatychkaMoveLogger.setActionText(ERoleOrder.ZATYCHKA.getTitle() + " голосує в гравця " + chosenPlayerNumber);
-                zatychkaMoveLogger.setLocalDateTime(LocalDateTime.now());
-                // тут додавати logger в чергу?
-                actionsQueue.add(zatychkaMoveLogger);
+                setPastorMarker(chosenPlayerNumber);
+//                Action zatychkaMoveLogger = new Action();
+//                zatychkaMoveLogger.setActionText(ERoleOrder.ZATYCHKA.getTitle() + " голосує в гравця " + chosenPlayerNumber);
+//                zatychkaMoveLogger.setLocalDateTime(LocalDateTime.now());
+//                // тут додавати logger в чергу?
+//                actionsQueue.add(zatychkaMoveLogger);
                 setNextRole();
                 break;
             case ZATYCHKA_SUDDYA:
@@ -467,12 +529,13 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
                         chosenPlayerNumber
                 );
                 doZatychkaMove(chosenPlayerNumber);
-                setNextRole();
+                setSuddyaMarker(chosenPlayerNumber);
                 Action zatychkaSuddyaMoveLogger = new Action();
                 zatychkaSuddyaMoveLogger.setActionText(ERoleOrder.ZATYCHKA_SUDDYA.getTitle() + " голосує в гравця " + chosenPlayerNumber);
                 zatychkaSuddyaMoveLogger.setLocalDateTime(LocalDateTime.now());
                 // тут додавати logger в чергу?
                 actionsQueue.add(zatychkaSuddyaMoveLogger);
+                setNextRole();
                 break;
             case BOMBA:
                 if (currentNightIndicator == 1 || currentNightIndicator == 2) {
@@ -488,14 +551,14 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
                         button.setStyle(IDLE_BUTTON_STYLE_RED);
                         button.setOnMouseEntered(e -> button.setStyle(HOVERED_BUTTON_STYLE_RED));
                         button.setOnMouseExited(e -> button.setStyle(IDLE_BUTTON_STYLE_RED));
-                        button.setOnAction(actionEvent -> {
+                        button.setOnMouseClicked(actionEvent -> {
                             if (currentRole.getTitle().equals(ERoleOrder.BOMBA.getTitle())) {
                                 selectedByBombPlayerButtonsMap.remove(chosenPlayerNumber);
                                 button.setStyle(IDLE_BUTTON_STYLE);
                                 button.setOnMouseEntered(e -> button.setStyle(HOVERED_BUTTON_STYLE));
                                 button.setOnMouseExited(e -> button.setStyle(IDLE_BUTTON_STYLE));
                                 chosenByBombPlayerAmount--;
-                                button.setOnAction(actionEvent1 -> handlePlayerAction(chosenPlayerNumber));
+                                button.setOnMouseClicked(actionEvent1 -> handlePlayerAction(chosenPlayerNumber));
                             }
                         });
                         chosenByBombPlayerAmount++;
@@ -516,10 +579,84 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
                         chosenPlayerNumber
                 );
                 doKradiyMove(chosenPlayerNumber);
+                setKradiyMarker(chosenPlayerNumber);
                 setNextRole();
                 break;
         }
     }
+
+    private void setPastorMarker(int chosenPlayerNumber) {
+        Image deathImage = new Image(getClass().getResource("/images/pastor.png").toExternalForm());
+        ImageView deathImageView = new ImageView(deathImage);
+        deathImageView.setFitWidth(15); // Adjust width as needed
+        deathImageView.setFitHeight(15); // Adjust height as needed
+        playerNumberNicknameHbox.get(chosenPlayerNumber).getChildren().add(deathImageView);
+    }
+
+    private void setKradiyMarker(int chosenPlayerNumber) {
+        Image deathImage = new Image(getClass().getResource("/images/kradiy.png").toExternalForm());
+        ImageView deathImageView = new ImageView(deathImage);
+        deathImageView.setFitWidth(15); // Adjust width as needed
+        deathImageView.setFitHeight(15); // Adjust height as needed
+        playerNumberNicknameHbox.get(chosenPlayerNumber).getChildren().add(deathImageView);
+    }
+
+    private void setSuddyaMarker(int chosenPlayerNumber) {
+        Image deathImage = new Image(getClass().getResource("/images/suddya.png").toExternalForm());
+        ImageView deathImageView = new ImageView(deathImage);
+        deathImageView.setFitWidth(15); // Adjust width as needed
+        deathImageView.setFitHeight(15); // Adjust height as needed
+        playerNumberNicknameHbox.get(chosenPlayerNumber).getChildren().add(deathImageView);
+    }
+
+    private void setLedyMarker(int chosenPlayerNumber) {
+        Image deathImage = new Image(getClass().getResource("/images/poison_green.png").toExternalForm());
+        ImageView deathImageView = new ImageView(deathImage);
+        deathImageView.setFitWidth(15); // Adjust width as needed
+        deathImageView.setFitHeight(15); // Adjust height as needed
+        playerNumberNicknameHbox.get(chosenPlayerNumber).getChildren().add(deathImageView);
+    }
+
+    private void setOtamanMakrer(int chosenPlayerNumber) {
+        Image deathImage = new Image(getClass().getResource("/images/otaman.png").toExternalForm());
+        ImageView deathImageView = new ImageView(deathImage);
+        deathImageView.setFitWidth(15); // Adjust width as needed
+        deathImageView.setFitHeight(15); // Adjust height as needed
+        playerNumberNicknameHbox.get(chosenPlayerNumber).getChildren().add(deathImageView);
+    }
+
+    private void setBulletMarker(int chosenPlayerNumber) {
+        Image deathImage = new Image(getClass().getResource("/images/patron.png").toExternalForm());
+        ImageView deathImageView = new ImageView(deathImage);
+        deathImageView.setFitWidth(15); // Adjust width as needed
+        deathImageView.setFitHeight(15); // Adjust height as needed
+        playerNumberNicknameHbox.get(chosenPlayerNumber).getChildren().add(deathImageView);
+    }
+
+    private void setMesnykMarker(int chosenPlayerNumber) {
+        Image deathImage = new Image(getClass().getResource("/images/mesnyk_patron.png").toExternalForm());
+        ImageView deathImageView = new ImageView(deathImage);
+        deathImageView.setFitWidth(15); // Adjust width as needed
+        deathImageView.setFitHeight(15); // Adjust height as needed
+        playerNumberNicknameHbox.get(chosenPlayerNumber).getChildren().add(deathImageView);
+    }
+
+    private void setDoctorMarker(int chosenPlayerNumber) {
+        Image deathImage = new Image(getClass().getResource("/images/doctor.png").toExternalForm());
+        ImageView deathImageView = new ImageView(deathImage);
+        deathImageView.setFitWidth(15); // Adjust width as needed
+        deathImageView.setFitHeight(15); // Adjust height as needed
+        playerNumberNicknameHbox.get(chosenPlayerNumber).getChildren().add(deathImageView);
+    }
+
+    private void setManiakMarker(int chosenPlayerNumber) {
+        Image deathImage = new Image(getClass().getResource("/images/maniak_patron.png").toExternalForm());
+        ImageView deathImageView = new ImageView(deathImage);
+        deathImageView.setFitWidth(15); // Adjust width as needed
+        deathImageView.setFitHeight(15); // Adjust height as needed
+        playerNumberNicknameHbox.get(chosenPlayerNumber).getChildren().add(deathImageView);
+    }
+
 
     private void doKradiyMove(int chosenPlayerNumber) {
         Action action = gameStatisticsService.markPlayerByKradiy(chosenPlayerNumber, SelectionController.currentGameId);
@@ -528,7 +665,6 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
 
     private void endBombMove() {
         Action action = gameStatisticsService.markPlayersByBomb(selectedByBombPlayerButtonsMap.keySet(), SelectionController.currentGameId);
-        System.out.println(selectedByBombPlayerButtonsMap);
         for (Integer number : selectedByBombPlayerButtonsMap.keySet()) {
             pointsService.countPointsInOrderToNightAction(
                     SelectionController.currentGameId,
@@ -542,7 +678,7 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
     }
 
     private void doZatychkaMove(int chosenPlayerNumber) {
-         gameService.doZatychkaMove(SelectionController.currentGameId, chosenPlayerNumber);
+        gameService.doZatychkaMove(SelectionController.currentGameId, chosenPlayerNumber);
 
     }
 
@@ -570,14 +706,14 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
 
     private void doSheryfMove(int chosenPlayerNumber) {
         Action sheryfMoveLogger = new Action();
-        sheryfMoveLogger.setActionText(ERoleOrder.SHERYF.getTitle() + " обирає гравця "
-                                       + chosenPlayerNumber
+        GameStatistics gameStatistics = gameStatisticsService.findByInGameNumberAndGameId(chosenPlayerNumber, SelectionController.currentGameId);
+        sheryfMoveLogger.setActionText(ERoleOrder.SHERYF.getTitle() + " перевіряє гравця "
+                                       + gameStatistics.getInGameNickname()
                                        + " з роллю '" + playerIdRoleMap.get(chosenPlayerNumber).getTitle() + "'");
         sheryfMoveLogger.setLocalDateTime(LocalDateTime.now());
-//        Alert alert = new Alert(Alert.AlertType.INFORMATION, sheryfMoveLogger.getActionText());
-        // тут додавати logger в чергу?
-//        alert.initOwner(stage);
-//        alert.showAndWait();
+        Alert alert = new Alert(Alert.AlertType.INFORMATION, sheryfMoveLogger.getActionText());
+        alert.initOwner(stage);
+        alert.showAndWait();
         actionsQueue.add(sheryfMoveLogger);
     }
 
@@ -637,6 +773,7 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
                 avatar.setFill(imagePattern);
             }
 
+
             VBox playerPanel = createPlayerPanel(x, y);
             // Create an HBox to hold the avatar and other elements
             HBox avatarContainer = new HBox();
@@ -676,7 +813,17 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
                 // Set a transparent background for the HBox
                 hbox.setStyle("-fx-background-color: rgba(31,31,31,0.5); -fx-border-radius: 5px; ");
                 hbox.setPadding(new Insets(0, 0, 0, 10));
-                hbox.getChildren().addAll(viewController.createNicknameLabel(i, gameStatisticsListSortedByInGameNumber));
+
+                Label nicknameLabel = viewController.createNicknameLabel(i, gameStatisticsListSortedByInGameNumber);
+                hbox.getChildren().addAll(nicknameLabel);
+                playerNumberNicknameHbox.put(i, hbox);
+                if (gameStatistics.isPoisonedByLady() && gameStatistics.getNightsTillDeath() == 0) {
+                    Image deathImage = new Image(getClass().getResource("/images/poison_red.png").toExternalForm());
+                    ImageView deathImageView = new ImageView(deathImage);
+                    deathImageView.setFitWidth(15); // Adjust width as needed
+                    deathImageView.setFitHeight(15); // Adjust height as needed
+                    hbox.getChildren().add(deathImageView);
+                }
                 playerPanel.getChildren().add(hbox);
                 playerRoleLabelsMap.put(i, roleLabel);
             }
@@ -691,16 +838,19 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
                 avatar.setFill(Color.DARKGREY);
                 button.setDisable(true);
             }
+
             nightStagePlayersPane.getChildren().add(playerPanel);
             int finalI = i;
-            button.setOnAction(e -> handlePlayerAction(finalI)); // Set the click handler
+            button.setOnMouseClicked(e -> handlePlayerAction(finalI)); // Set the click handler
             if (i == 0 || i == totalPlayers + 1) {
                 playerPanel.setVisible(false);
                 button.setVisible(false);
             }
 
+
             playerButtonsMap.put(i, button);
             nightStagePlayersPane.getChildren().add(button);
+
         }
     }
 
