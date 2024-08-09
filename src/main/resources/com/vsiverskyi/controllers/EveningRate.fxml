@@ -1,25 +1,59 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.DatePicker?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.shape.Rectangle?>
 <?import javafx.scene.text.Font?>
 
-<AnchorPane fx:id="eveningRateAp" prefHeight="400.0" prefWidth="600.0" style="-fx-background-color: #161616;" xmlns="http://javafx.com/javafx/19" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vsiverskyi.controllers.EveningRateController">
+<AnchorPane fx:id="eveningRateAp" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="800.0" prefWidth="1280.0" style="-fx-background-color: #161616;" xmlns="http://javafx.com/javafx/19" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vsiverskyi.controllers.EveningRateController">
    <children>
-       <TableView fx:id="playerScoreTable" layoutX="65.0" layoutY="91.0" prefHeight="237.0" prefWidth="469.0">
+       <TextField fx:id="gameLimitTextField" layoutX="870.0" layoutY="151.0" prefHeight="25.0" prefWidth="29.0" />
+       <Button fx:id="loadButton" layoutX="910.0" layoutY="151.0" prefHeight="25.0" prefWidth="75.0" text="Показати" />
+       <DatePicker fx:id="startDatePicker" layoutX="618.0" layoutY="82.0" prefHeight="25.0" prefWidth="122.0" />
+       <DatePicker fx:id="endDatePicker" layoutX="773.0" layoutY="83.0" prefHeight="25.0" prefWidth="111.0" />
+       <Button fx:id="loadByDateButton" layoutX="908.0" layoutY="81.0" prefHeight="25.0" prefWidth="75.0" text="Показати" />
+       <ListView fx:id="gamesListView" layoutX="601.0" layoutY="519.0" prefHeight="200.0" prefWidth="336.0" />
+       <!-- Other UI components -->
+       <TableView fx:id="playerScoreTable" layoutX="525.0" layoutY="198.0" prefHeight="237.0" prefWidth="469.0">
            <columns>
-               <TableColumn fx:id="nickname" prefWidth="217.71432495117188" text="Гравець" />
-               <TableColumn fx:id="totalPointsColumn" prefWidth="61.14288330078125" text="Очки" />
-               <TableColumn fx:id="avatarColumn" prefWidth="189.142822265625" text="Аватар" />
+               <TableColumn fx:id="nickname" prefWidth="277.71429443359375" text="Гравець" />
+               <TableColumn fx:id="totalPointsColumn" minWidth="0.0" prefWidth="98.8570556640625" text="Очки" />
+               <TableColumn fx:id="avatarColumn" prefWidth="93.14288330078125" text="Аватар" />
            </columns>
        </TableView>
-      <Button fx:id="backToHome" layoutX="252.0" layoutY="344.0" mnemonicParsing="false" text="Головне меню" />
-      <Label layoutX="176.0" layoutY="27.0" prefHeight="34.0" prefWidth="245.0" text="Результати вечора" textFill="WHITE">
+      <Button fx:id="backToHome" layoutX="703.0" layoutY="736.0" mnemonicParsing="false" text="Головне меню" />
+      <Label layoutX="623.0" layoutY="17.0" prefHeight="34.0" prefWidth="271.0" text="Загальні результати" textFill="WHITE">
          <font>
             <Font name="Bell MT Bold" size="27.0" />
+         </font>
+      </Label>
+      <Label layoutX="525.0" layoutY="155.0" text="За останні ігри (Вкажіть кількість ігор у текстовому полі)" textFill="WHITE">
+         <font>
+            <Font name="System Bold" size="12.0" />
+         </font>
+      </Label>
+      <Label layoutX="526.0" layoutY="88.0" prefHeight="17.0" prefWidth="63.0" text="За період:" textFill="WHITE">
+         <font>
+            <Font name="System Bold" size="12.0" />
+         </font>
+      </Label>
+      <Label layoutX="638.0" layoutY="109.0" prefHeight="17.0" prefWidth="84.0" text="дата початку" textFill="WHITE" />
+      <Label layoutX="795.0" layoutY="108.0" prefHeight="17.0" prefWidth="84.0" text="дата кінця" textFill="WHITE" />
+      <Rectangle arcHeight="5.0" arcWidth="5.0" fill="#161616" height="3.0" layoutX="533.0" layoutY="135.0" stroke="BLACK" strokeType="INSIDE" width="471.0" />
+      <Label layoutX="633.0" layoutY="478.0" prefHeight="34.0" prefWidth="271.0" text="Статистика по іграх" textFill="WHITE">
+         <font>
+            <Font name="Bell MT Bold" size="27.0" />
+         </font>
+      </Label>
+      <Label layoutX="457.0" layoutY="107.0" prefHeight="55.0" prefWidth="84.0" text="Або" textFill="WHITE">
+         <font>
+            <Font name="System Bold" size="27.0" />
          </font>
       </Label>
    </children>

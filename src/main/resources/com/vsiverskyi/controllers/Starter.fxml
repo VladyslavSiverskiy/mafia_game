@@ -8,6 +8,6 @@
       <Button fx:id="start_btn" layoutX="235.0" layoutY="101.0" mnemonicParsing="false" onAction="#openGameSettingsPage" prefHeight="39.0" prefWidth="131.0" style="-fx-background-color: #161616; -fx-text-fill: #ffffff;  -fx-border-color: #ffffff; -fx-border-radius: 5px;" text="Почати гру" textAlignment="CENTER" />
 
       <Button fx:id="general_btn" layoutX="235.0" layoutY="169.0" mnemonicParsing="false" onAction="#openGeneralSettingsPage" prefHeight="39.0" prefWidth="131.0" style="-fx-background-color: #161616; -fx-text-fill: #ffffff;  -fx-border-color: #ffffff; -fx-border-radius: 5px;" text="Налаштування" textAlignment="CENTER" />
-      <Button fx:id="eveningRate" layoutX="234.0" layoutY="239.0" mnemonicParsing="false" onAction="#openEveningRate" prefHeight="39.0" prefWidth="131.0" style="-fx-background-color: #161616; -fx-text-fill: #ffffff;  -fx-border-color: #ffffff; -fx-border-radius: 5px;" text="Рейтинг вечора" textAlignment="CENTER" />
+      <Button fx:id="eveningRate" layoutX="234.0" layoutY="239.0" mnemonicParsing="false" onAction="#openEveningRate" prefHeight="39.0" prefWidth="131.0" style="-fx-background-color: #161616; -fx-text-fill: #ffffff;  -fx-border-color: #ffffff; -fx-border-radius: 5px;" text="Рейтинги" textAlignment="CENTER" />
    </children>
 </AnchorPane>

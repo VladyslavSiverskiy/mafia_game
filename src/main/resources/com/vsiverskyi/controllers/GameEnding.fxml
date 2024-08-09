@@ -14,17 +14,18 @@
          <font>
             <Font name="System Bold" size="20.0" />
          </font></Label>
-      <Button fx:id="toStarterPage" layoutX="564.0" layoutY="622.0" text="Повернутися до стартової сторінки" />
-      <TableView fx:id="gameStatisticsTable" layoutX="429.0" layoutY="421.0" prefHeight="171.0" prefWidth="458.0">
+      <Button fx:id="toStarterPage" layoutX="559.0" layoutY="678.0" text="Повернутися до стартової сторінки" />
+      <TableView fx:id="gameStatisticsTable" layoutX="427.0" layoutY="491.0" prefHeight="171.0" prefWidth="458.0">
          <columns>
             <TableColumn fx:id="playerNameColumn" prefWidth="127.42858123779297" text="Гравець" />
             <TableColumn fx:id="pointsColumn" prefWidth="179.4285888671875" text="Очки" />
             <TableColumn fx:id="avatarColumn" prefWidth="149.14286150251115" text="Аватар" />
          </columns>
       </TableView>
-      <HBox fx:id="podiumBox" layoutX="358.0" layoutY="116.0" prefHeight="275.0" prefWidth="582.0" spacing="20.0" style="-fx-alignment: center;">
+      <HBox fx:id="podiumBox" layoutX="369.0" layoutY="157.0" prefHeight="275.0" prefWidth="582.0" spacing="20.0" style="-fx-alignment: center;">
          <!-- The podium VBox where the top 3 players will be displayed -->
       </HBox>
-      <Label layoutX="625.0" layoutY="389.0" text="Інші гравці:" textFill="WHITE" />
+      <Label layoutX="629.0" layoutY="458.0" text="Інші гравці:" textFill="WHITE" />
+      <AnchorPane fx:id="playersLeft" layoutX="552.0" layoutY="69.0" prefHeight="69.0" prefWidth="200.0" />
    </children>
 </AnchorPane>

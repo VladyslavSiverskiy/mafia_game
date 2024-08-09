@@ -72,7 +72,7 @@ public class PenaltyController {
         ObservableList<HBox> playerCards = FXCollections.observableArrayList();
 
         for (GameStatistics gs : gameStatisticsList) {
-            HBox playerCardRow = new HBox(5);
+            HBox playerCardRow = new HBox(2);
 
             String nickname = gs.getInGameNickname() != null ? gs.getInGameNickname() : "Незнайомець";
             String displayNickname = nickname;
@@ -81,6 +81,7 @@ public class PenaltyController {
             }
 
             Label playerLabel = new Label(gs.getInGameNumber() + "." + displayNickname.toUpperCase());
+            playerLabel.setStyle("-fx-font-size: 11px");
 
             Tooltip fullNicknameTooltip = new Tooltip(nickname);
             playerLabel.setTooltip(fullNicknameTooltip);
@@ -89,10 +90,10 @@ public class PenaltyController {
 
 //            playerCardRow.getChildren().add(playerLabel);
             Button yellowCardButton = new Button();
-            yellowCardButton.setStyle("-fx-background-color: yellow; -fx-width: 15px; -fx-height: 20px;");
+            yellowCardButton.setStyle("-fx-background-color: yellow; -fx-width: 3px; -fx-height: 8px;");
 
             Button redCardButton = new Button();
-            redCardButton.setStyle("-fx-background-color: red; -fx-width: 15px; -fx-min-height: 20px;");
+            redCardButton.setStyle("-fx-background-color: red; -fx-width: 3px; -fx-min-height: 8px;");
 
             int playerNumber = gs.getInGameNumber();
             yellowCardButton.setOnMouseClicked(e -> {

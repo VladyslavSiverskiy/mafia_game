@@ -38,11 +38,11 @@ public class Game {
     @Override
     public String toString() {
         return "Game{" +
-               "id=" + id +
-               ", lastUpdate=" + lastUpdate +
-               ", gameStatus=" + gameStatus +
-               ", playersAmount=" + playersAmount +
-               ", gameStatistics=" + gameStatistics +
-               '}';
+               "id=" + id + "}";
+//               ", lastUpdate=" + lastUpdate +
+//               ", gameStatus=" + gameStatus +
+//               ", playersAmount=" + playersAmount +
+//               ", gameStatistics=" + gameStatistics +
+//               '}';
     }
 }

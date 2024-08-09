@@ -104,9 +104,9 @@ public class GameSettingsController implements Initializable {
         settingsBox.setPadding(new Insets(10));
         settingsBox.setSpacing(10);
 
-        settingsBox.getChildren().add(createSettingRow(ERoleOrder.DOCTOR.getTitle()));
-        settingsBox.getChildren().add(createSettingRow(ERoleOrder.OTAMAN.getTitle()));
         settingsBox.getChildren().add(createSettingRow(ERoleOrder.SHERYF.getTitle()));
+        settingsBox.getChildren().add(createSettingRow(ERoleOrder.OTAMAN.getTitle()));
+        settingsBox.getChildren().add(createSettingRow(ERoleOrder.DOCTOR.getTitle()));
         settingsBox.getChildren().add(createSettingRow(ERoleOrder.LEDY.getTitle()));
         settingsBox.getChildren().add(createSettingRow(ERoleOrder.MANIAK.getTitle()));
         settingsBox.getChildren().add(createSettingRow(ERoleOrder.STRILOCHNYK.getTitle()));

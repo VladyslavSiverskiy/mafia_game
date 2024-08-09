@@ -108,6 +108,14 @@ public class GameStatistics {
                ", yellowCards=" + yellowCards +
                ", redCards=" + redCards +
                ", timesWasHealed=" + timesWasHealed +
+               ", timesWasKilled=" + timesWasKilled +
+               ", excusesAttempts=" + excusesAttempts +
+               ", defendedPerNextVoting=" + defendedPerNextVoting +
+               ", poisonedByLady=" + poisonedByLady +
+               ", nightsTillDeath=" + nightsTillDeath +
+               ", wasMarkedByBomb=" + wasMarkedByBomb +
+               ", wasMarkedByKradiy=" + wasMarkedByKradiy +
+               ", headledOnThePreviousStage=" + headledOnThePreviousStage +
                '}';
     }
 }

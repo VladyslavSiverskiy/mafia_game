@@ -33,6 +33,10 @@ public class GameService {
     private final GameStatisticsRepository gameStatisticsRepository;
     private int playerNumber = 1;
 
+    public Game findById(Long id) {
+        return gameRepository.findById(id).orElseThrow(() -> new NoGameWithSuchIdException(ExceptionConstants.NO_GAME_WITH_SUCH_ID + id));
+    }
+
     // Method to get games from today
     public List<Game> findLastGames() {
         LocalDateTime todayStart = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0).withNano(0);
@@ -40,10 +44,15 @@ public class GameService {
         return gameRepository.findGamesByDateRange(todayStart, todayEnd);
     }
 
+    public List<Game> findGamesByDateRange(LocalDateTime startDateTime, LocalDateTime endDateTime) {
+        return gameRepository.findGamesByDateRange(startDateTime, endDateTime);
+    }
+
     // Method to get the latest games with a limit (if needed)
     public List<Game> findRecentGames(int limit) {
         LocalDateTime todayStart = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0).withNano(0);
-        return gameRepository.findRecentGames(todayStart, limit);
+//        return gameRepository.findRecentGames(todayStart, limit);
+        return gameRepository.findRecentGamesNoDate(limit);
     }
 
     public Game getGameInfo(Long id) {
@@ -210,16 +219,16 @@ public class GameService {
             //TODO: нарахувати бали
             return true;
         } else if (!checkIfAtLeastOneMafiaIsAlive(gameId)) {
-            Optional<GameStatistics> perevertenGamer = findAlivePereverten(gameId);
-            if (perevertenGamer.isPresent()) {
-                GameStatistics gameStatistics = perevertenGamer.get();
-                gameStatistics.setRole(roleRepository.findByTitle(ERoleOrder.PEREVERTEN_MAFIA.getTitle()).get());
-                gameStatistics = gameStatisticsRepository.save(gameStatistics);
-
+            List<GameStatistics> perevertens = findAlivePerevertens(gameId);
+            if (perevertens.size() > 0) {
+                for (GameStatistics gameStatistics: perevertens) {
+                    gameStatistics.setRole(roleRepository.findByTitle(ERoleOrder.PEREVERTEN_MAFIA.getTitle()).get());
+                    gameStatisticsRepository.save(gameStatistics);
+                }
                 game.setLastUpdate(LocalDateTime.now());
-                game.setGameStatus(EGameStatus.WAS_COMPLETED);
-                game.setWinnerSide(ETeam.MAFIA);
-                gameRepository.save(game);
+//                game.setGameStatus(EGameStatus.WAS_COMPLETED);
+//                game.setWinnerSide(ETeam.MAFIA);
+//                gameRepository.save(game);
                 return checkIfGameIsOver(gameId);
             } else {
                 game.setLastUpdate(LocalDateTime.now());
@@ -233,14 +242,13 @@ public class GameService {
         }
     }
 
-    private Optional<GameStatistics> findAlivePereverten(Long gameId) {
+    private List<GameStatistics> findAlivePerevertens(Long gameId) {
         List<GameStatistics> gameStatisticsList = gameRepository
                 .findById(gameId)
                 .orElseThrow(() -> new NoGameWithSuchIdException(ExceptionConstants.NO_GAME_WITH_SUCH_ID + gameId))
                 .getGameStatistics();
-        Optional<GameStatistics> perevertenGamer = gameStatisticsList.stream().filter(gameStatistics ->
-                gameStatistics.getRole().getTitle().equals(ERoleOrder.PEREVERTEN_PEACE.getTitle())).findFirst();
-        return perevertenGamer;
+        return gameStatisticsList.stream().filter(gameStatistics ->
+                gameStatistics.getRole().getTitle().equals(ERoleOrder.PEREVERTEN_PEACE.getTitle())).collect(Collectors.toList());
     }
 
     private boolean checkIfRolesWereSet(List<GameStatistics> gameStatisticsList) {
@@ -289,7 +297,7 @@ public class GameService {
                 .findByGame_IdAndAndInGameNumber(gameId, playerToKillInGameNumber);
         Action logger = new Action();
         if (gameStatistics.getRole().getTitle().equals(ERoleOrder.PEREVERTEN_PEACE.getTitle())) {
-            logger.setActionText("Мафія вистрілила у Яничара, вона не може його вбити. ");
+            logger.setActionText("Мафія стріляла у Яничара, вона не може його вбити. ");
             logger.setLocalDateTime(LocalDateTime.now());
         } else {
             gameStatisticsService.killPlayer(gameId, playerToKillInGameNumber);
@@ -302,7 +310,7 @@ public class GameService {
     public Action doDoctorMove(long gameId, int playerToHealInGameNumber) {
         GameStatistics gameStatistics = gameStatisticsService.healPlayer(gameId, playerToHealInGameNumber);
         Action logger = new Action();
-        logger.setActionText("Лікар лікує гравця № " + playerToHealInGameNumber + "." + gameStatistics.getInGameNickname());
+        logger.setActionText(ERoleOrder.DOCTOR.getTitle() + " лікує гравця " + gameStatistics.getInGameNickname());
         logger.setLocalDateTime(LocalDateTime.now());
         return logger;
     }
@@ -318,7 +326,7 @@ public class GameService {
     public Action doManiakMove(Long currentGameId, int chosenPlayerNumber) {
         GameStatistics gameStatistics = gameStatisticsService.killPlayer(currentGameId, chosenPlayerNumber);
         Action logger = new Action();
-        logger.setActionText(ERoleOrder.MANIAK.getTitle() + " вистрілив у гравця № " + chosenPlayerNumber + "." + gameStatistics.getInGameNickname());
+        logger.setActionText(ERoleOrder.MANIAK.getTitle() + " вистрілив у гравця " + gameStatistics.getInGameNickname());
         logger.setLocalDateTime(LocalDateTime.now());
         return logger;
     }
@@ -326,7 +334,7 @@ public class GameService {
     public Action doStrilochnykMove(Long currentGameId, int chosenPlayerNumber) {
         GameStatistics gameStatistics = gameStatisticsService.killPlayer(currentGameId, chosenPlayerNumber);
         Action logger = new Action();
-        logger.setActionText(ERoleOrder.STRILOCHNYK.getTitle() + " вистрілив у гравця № " + chosenPlayerNumber + gameStatistics.getInGameNickname());
+        logger.setActionText(ERoleOrder.STRILOCHNYK.getTitle() + " вистрілив у гравця " + gameStatistics.getInGameNickname());
         logger.setLocalDateTime(LocalDateTime.now());
         return logger;
     }
@@ -342,6 +350,10 @@ public class GameService {
     public void resetKillingAttempts(Long currentGameId) {
         for (GameStatistics gameStatistics : gameStatisticsService.getGameStatisticsByGameId(currentGameId)) {
             gameStatistics.setTimesWasKilled((short) 0);
+            if (gameStatistics.isPoisonedByLady() && gameStatistics.getNightsTillDeath() == 0
+                && !gameStatistics.getRole().getRoleNameConstant().equals(ERoleOrder.STRILOCHNYK.name())) {
+                gameStatistics.setTimesWasKilled((short) (gameStatistics.getTimesWasKilled() + 1));
+            }
             gameStatisticsRepository.save(gameStatistics);
         }
     }
@@ -354,6 +366,11 @@ public class GameService {
         Action logger = new Action();
         logger.setActionText(ERoleOrder.LEDY.getTitle() + " отруює гравця №" + chosenPlayerNumber + "." + gameStatistics.getInGameNickname());
         logger.setLocalDateTime(LocalDateTime.now());
+        System.out.println(gameStatistics);
         return logger;
+    }
+
+    public List<Game> findAllGames() {
+        return gameRepository.findAll();
     }
 }

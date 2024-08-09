@@ -2,11 +2,15 @@ package com.vsiverskyi.controllers;
 
 import com.vsiverskyi.model.GameStatistics;
 import com.vsiverskyi.model.Player;
+import com.vsiverskyi.model.enums.ERoleOrder;
+import com.vsiverskyi.model.enums.ETeam;
+import com.vsiverskyi.service.GameService;
 import com.vsiverskyi.service.GameStatisticsService;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
@@ -14,10 +18,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Component
 public class ViewController {
 
+    @Autowired
+    private GameService gameService;
     @Autowired
     private GameStatisticsService gameStatisticsService;
     @Autowired
@@ -74,5 +82,47 @@ public class ViewController {
             nicknameLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #cc2323");
         }
         return nicknameLabel;
+    }
+
+    public VBox createPlayerStatisticsPanel() {
+        // Group by role and count the number of players in each role
+        List<GameStatistics> gameStatisticsAlive =
+                gameService.findById(SelectionController.currentGameId).getGameStatistics()
+                        .stream()
+                        .filter(gameStatistics -> gameStatistics.isInGame() && gameStatistics.getRedCards() == 0).collect(Collectors.toList());
+
+        int mafiaAmount = (int) gameStatisticsAlive.stream()
+                .filter(gameStatistics -> gameStatistics.getRole().getRoleNameConstant().equals(ERoleOrder.DON.name())
+                    || gameStatistics.getRole().getRoleNameConstant().equals(ERoleOrder.MAFIA.name())
+                ).count();
+        int peaceAmount = (int) gameStatisticsAlive.stream()
+                .filter(gameStatistics -> gameStatistics.getRole().getTeam().name().equals(ETeam.PEACE.name())).count();
+
+        //Шукаємо яничара, але так як він у нас ще в мирних числиться, то мінусуємо одного від мирних
+        int yanycharAmount = (int) gameStatisticsAlive.stream()
+                .filter(gameStatistics ->
+                        gameStatistics.getRole().getRoleNameConstant().equals(ERoleOrder.PEREVERTEN_PEACE.name()) ||
+                        gameStatistics.getRole().getRoleNameConstant().equals(ERoleOrder.PEREVERTEN_MAFIA.name()))
+                .count();
+
+        if(mafiaAmount > 0 && yanycharAmount > 0) {
+            peaceAmount = peaceAmount - yanycharAmount;
+        }
+
+        // Create labels for each role
+        Label mafiaLabel = new Label("Корупціонерів: " + mafiaAmount);
+        Label peaceLabel = new Label("Жителі Скіфії: " + peaceAmount);
+        Label perevertenLabel = new Label("Яничар: " + yanycharAmount);
+
+        // Set styles for labels
+        mafiaLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #ffffff;");
+        peaceLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #ffffff;");
+        perevertenLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #ffffff;");
+
+        // Create a VBox and add labels
+        VBox statisticsPanel = new VBox(10); // 10 is the spacing between elements
+        statisticsPanel.getChildren().addAll(mafiaLabel, peaceLabel, perevertenLabel);
+
+        return statisticsPanel;
     }
 }

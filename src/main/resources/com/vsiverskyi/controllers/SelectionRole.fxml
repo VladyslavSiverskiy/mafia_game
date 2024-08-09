@@ -28,12 +28,12 @@
         </AnchorPane>
 
         <!-- Admin Menu for assigning cards -->
-        <AnchorPane layoutX="1081.0" layoutY="66.0"  prefHeight="624.0" prefWidth="194.0" style="-fx-border-color: #ffffff; -fx-border-radius: 5px; -fx-background-color: #161616;">
+        <AnchorPane layoutX="1081.0" layoutY="66.0" prefHeight="624.0" prefWidth="194.0" style="-fx-border-color: #ffffff; -fx-border-radius: 5px; -fx-background-color: #161616;">
             <children>
                 <Label layoutX="25.0" layoutY="17.0" text="Технічна поразка" textFill="WHITE" />
                 <Button fx:id="technicalDefeatPeaceful" layoutX="26.0" layoutY="46.0" mnemonicParsing="false" prefHeight="27.0" prefWidth="144.0" style="-fx-background-color: #161616; -fx-border-color: #ffffff; -fx-border-radius: 5px;" text="Мирним" textFill="WHITE" />
                 <Button fx:id="technicalDefeatMafia" layoutX="26.0" layoutY="81.0" mnemonicParsing="false" prefHeight="27.0" prefWidth="144.0" style="-fx-background-color: #161616; -fx-border-color: #ffffff; -fx-border-radius: 5px;" text="Мафії" textFill="WHITE" />
-                <ListView fx:id="playerCardListView" layoutX="1.0" layoutY="128.0" prefHeight="526.0" prefWidth="191.0" />
+                <ListView fx:id="playerCardListView" fixedCellSize="-3.0" layoutX="1.0" layoutY="128.0" prefHeight="526.0" prefWidth="191.0" />
             <Line endX="100.7618408203125" layoutX="89.0" layoutY="128.0" startX="-89.0" stroke="WHITE" />
             </children>
         </AnchorPane>

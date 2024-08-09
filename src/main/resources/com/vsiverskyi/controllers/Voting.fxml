@@ -11,7 +11,7 @@
 
 <AnchorPane fx:id="votingAp" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="800.0" prefWidth="1280.0" style="-fx-background-color: #161616;" xmlns="http://javafx.com/javafx/19" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vsiverskyi.controllers.VotingController">
     <children>
-        <ScrollPane layoutX="20.0" layoutY="48.0" prefHeight="191.0" prefWidth="211.0" style="-fx-background: #161616; -fx-border-color: #ffffff; -fx-border-radius: 5px">
+        <ScrollPane layoutX="20.0" layoutY="52.0" prefHeight="533.0" prefWidth="211.0" style="-fx-background: #161616; -fx-border-color: #ffffff; -fx-border-radius: 5px">
             <VBox fx:id="votesDisplay" spacing="5" style="-fx-background-color: #161616; -fx-border-radius: 5px" />
         </ScrollPane>
         <!-- Admin Menu for assigning cards -->
@@ -25,9 +25,9 @@
             </children>
         </AnchorPane>
         <Button fx:id="fullScreen" layoutX="1115.0" layoutY="23.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="124.0" text="Повний екран" />
-        <AnchorPane fx:id="votingPlayersPane" layoutX="172.0" layoutY="55.0" prefHeight="674.0" prefWidth="878.0">
+        <AnchorPane fx:id="votingPlayersPane" layoutX="169.0" layoutY="73.0" prefHeight="674.0" prefWidth="878.0">
          <children>
-            <Button fx:id="goAheadButton" layoutX="409.0" layoutY="354.0" mnemonicParsing="false" style="-fx-background-color: #244224;" text="Вперед!" textFill="WHITE" wrapText="true" />
+            <Button fx:id="goAheadButton" layoutX="411.0" layoutY="354.0" mnemonicParsing="false" style="-fx-background-color: #244224;" text="Вперед!" textFill="WHITE" wrapText="true" />
             <Button fx:id="discussionButton" layoutX="391.0" layoutY="391.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="103.0" text="Обговорення" />
               <Button fx:id="startButton" layoutX="391.0" layoutY="426.0" mnemonicParsing="false" prefHeight="27.0" prefWidth="103.0" text="Голосування" />
               <Label fx:id="secondsLeft" layoutX="386.0" layoutY="140.0" prefHeight="122.0" prefWidth="90.0" textAlignment="CENTER" textFill="WHITE">
@@ -35,19 +35,22 @@
                       <Font size="83.0" />
                   </font>
               </Label>
-              <Label fx:id="startLabel" layoutX="386.0" layoutY="223.0" prefHeight="143.0" prefWidth="144.0" textFill="WHITE" wrapText="true" />
+              <Label fx:id="startLabel" layoutX="386.0" layoutY="223.0" prefHeight="122.0" prefWidth="144.0" textFill="WHITE" wrapText="true" />
             <Label fx:id="dayLbl" layoutX="411.0" layoutY="47.0" text="ДЕНЬ" textFill="WHITE">
                <font>
                   <Font size="25.0" />
                </font>
             </Label>
-            <Label fx:id="startLabel1" layoutX="396.0" layoutY="233.0" prefHeight="143.0" prefWidth="144.0" textFill="WHITE" wrapText="true" />
+            <Label fx:id="startLabel1" layoutX="396.0" layoutY="233.0" prefHeight="106.0" prefWidth="144.0" textFill="WHITE" wrapText="true" />
+            <Button fx:id="finishButton" layoutX="411.0" layoutY="464.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="59.0" style="-fx-background-color: red;" text="Фініш!" textFill="WHITE" />
+            <Label fx:id="votesTillEnd" layoutX="364.0" layoutY="83.0" prefHeight="17.0" prefWidth="144.0" textAlignment="CENTER" textFill="WHITE" />
          </children></AnchorPane>
-      <Button fx:id="resetVote" layoutX="74.0" layoutY="246.0" mnemonicParsing="false" text="Відмінити голос" />
+      <Button fx:id="resetVote" layoutX="75.0" layoutY="598.0" mnemonicParsing="false" text="Відмінити голос" />
       <Label fx:id="votingStateLabel" layoutX="602.0" layoutY="765.0" textFill="WHITE">
          <font>
             <Font size="21.0" />
          </font>
       </Label>
+      <AnchorPane fx:id="playersLeft" layoutX="25.0" layoutY="639.0" prefHeight="86.0" prefWidth="200.0" />
     </children>
 </AnchorPane>

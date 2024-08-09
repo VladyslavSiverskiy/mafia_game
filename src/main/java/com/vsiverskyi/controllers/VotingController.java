@@ -87,6 +87,8 @@ public class VotingController implements Initializable, DisplayedPlayersControll
     @FXML
     private Label secondsLeft;
     @FXML
+    private AnchorPane playersLeft;
+    @FXML
     private Button technicalDefeatPeaceful;
     @FXML
     private Button technicalDefeatMafia;
@@ -101,27 +103,34 @@ public class VotingController implements Initializable, DisplayedPlayersControll
     @FXML
     private Label dayLbl;
     @FXML
+    private Label votesTillEnd;
+    @FXML
     private Button resetVote;
     @FXML
     private Button discussionButton;
     @FXML
     private Button goAheadButton;
+    @FXML
+    private Button finishButton;
     private Timeline countDownTimeLine;
     private Map<Integer, Integer> playerIdVotesMap;
     private Map<Integer, GameStatistics> playerInGameNumberGameStatistics;
     private Map<Integer, Button> playerIdButton;
     private List<GameStatistics> gameStatisticsList;
+    private Timeline excuseTimeLineTextChanger;
     private Deque<Integer> gamersOrder;
     private Integer currentVoterIndex;
     private Integer reverseCurrentVoterIndex;
     private boolean reverse;
     private boolean kradiyHasStolenVoice;
+
+    private boolean continueTimer = true;
     private Timeline excuseTimeLine;
     int secondsTillEnd = 10;
-
     int lastVoterNumber;
     int lastVotedNumber;
     int lastVoiceAmount;
+    int votesTillEndAmount;
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
@@ -177,6 +186,19 @@ public class VotingController implements Initializable, DisplayedPlayersControll
         startButton.setOnMouseExited(ev -> startButton.setStyle(IDLE_BUTTON_STYLE));
         startButton.toFront();
 
+        finishButton.setDisable(true);
+        playersLeft.getChildren().add(viewController.createPlayerStatisticsPanel());
+
+        votesTillEndAmount = (int) gameStatisticsList.stream()
+                .filter(gameStatistics -> gameStatistics.isInGame()
+                                          && !gameStatistics.isSkipNextVoting()
+                        && gameStatistics.getRedCards() == 0
+                ).count();
+        setVotesLeftLabelText(votesTillEndAmount);
+    }
+
+    private void setVotesLeftLabelText(int votesTillEndAmount) {
+        votesTillEnd.setText("Залишилось " + votesTillEndAmount + " голосів");
     }
 
     private void initPlayerInGameNumberGameStatistics() {
@@ -187,6 +209,8 @@ public class VotingController implements Initializable, DisplayedPlayersControll
 
     private void resetVote() {
         playerIdVotesMap.put(lastVotedNumber, playerIdVotesMap.get(lastVotedNumber) - lastVoiceAmount);
+        votesTillEndAmount = votesTillEndAmount + lastVoiceAmount;
+        setVotesLeftLabelText(votesTillEndAmount);
         gamersOrder.addFirst(lastVoterNumber);
 
         if (excuseTimeLine != null) {
@@ -238,10 +262,12 @@ public class VotingController implements Initializable, DisplayedPlayersControll
         votingPlayersPane.getChildren().clear();
         votingPlayersPane.getChildren().add(startButton);
         votingPlayersPane.getChildren().add(discussionButton);
-        votingPlayersPane.getChildren().add(goAheadButton);
         votingPlayersPane.getChildren().add(secondsLeft);
         votingPlayersPane.getChildren().add(dayLbl);
         votingPlayersPane.getChildren().add(startLabel);
+        votingPlayersPane.getChildren().add(goAheadButton);
+        votingPlayersPane.getChildren().add(finishButton);
+        votingPlayersPane.getChildren().add(votesTillEnd);
         double centerX = votingPlayersPane.getWidth() / 2;
         double centerY = votingPlayersPane.getHeight() / 2;
         double radius = Math.min(centerX, centerY) - 5;
@@ -547,8 +573,8 @@ public class VotingController implements Initializable, DisplayedPlayersControll
         startLabel.setText("");
         startLabel.setText("Голосує: " + playerInGameNumberGameStatistics.get(reverseCurrentVoterIndex + 1).getInGameNickname());
         if (!checkIfAlive(reverseCurrentVoterIndex + 1, gameStatisticsList.size()) ||
-            checkIfSkipVoting(currentVoterIndex + 1, gameStatisticsList.size()) ||
-            checkIfMarkedByKradiy(currentVoterIndex + 1, gameStatisticsList.size()
+            checkIfSkipVoting(reverseCurrentVoterIndex + 1, gameStatisticsList.size()) ||
+            checkIfMarkedByKradiy(reverseCurrentVoterIndex + 1, gameStatisticsList.size()
             )) {
             gamersOrder.remove();// видаляємо його
             //take next. If next is null and game
@@ -568,18 +594,7 @@ public class VotingController implements Initializable, DisplayedPlayersControll
                     if (!goAheadButton.isDisabled()) {
                         // Disable the "Start Timer" button
                         goAheadButton.setDisable(true);
-                        startTimerForPlayer(reverseCurrentVoterIndex); // Start the timer for the player
-                    }
-                }
-            });
-
-            goAheadButton.setOnKeyPressed(event -> {
-                if (event.getCode() == KeyCode.SPACE) {
-                    // Check if the button is not disabled to avoid re-triggering
-                    if (!goAheadButton.isDisabled()) {
-                        // Disable the "Start Timer" button
-                        goAheadButton.setDisable(true);
-                        startTimerForPlayer(reverseCurrentVoterIndex); // Start the timer for the player
+                        startTimerForReversePlayer(reverseCurrentVoterIndex); // Start the timer for the player
                     }
                 }
             });
@@ -589,8 +604,6 @@ public class VotingController implements Initializable, DisplayedPlayersControll
                 unblockAllButtons();
                 startTimerForReversePlayer(reverseCurrentVoterIndex); // Start the timer for the player
             });
-
-
 
             updateButtonStates(reverseCurrentVoterIndex);
             blockAllButtons();
@@ -681,6 +694,7 @@ public class VotingController implements Initializable, DisplayedPlayersControll
         for (Map.Entry<Integer, Integer> entry : sortedVotesList) {
             int playerId = entry.getKey();
             int votes = entry.getValue();
+
             Label voteLabel = new Label();
             String nickname = playerInGameNumberGameStatistics.get(playerId).getInGameNickname();
             if (nickname == null) {
@@ -688,7 +702,7 @@ public class VotingController implements Initializable, DisplayedPlayersControll
             }
             if (votes == 1) {
                 voteLabel.setText(nickname + ": " + votes + " голос");
-            } else if (votes > 1) {
+            } else {
                 voteLabel.setText(nickname + ": " + votes + " голосів");
             }
             voteLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #ffffff");
@@ -702,13 +716,23 @@ public class VotingController implements Initializable, DisplayedPlayersControll
                 .getGameStatisticsByGameIdSortedByInGameNumber(SelectionController.currentGameId).get(voterIndex);
         boolean isKradiy = kradiyHasStolenVoice && gameStatisticsVoter.getRole().getRoleNameConstant().equals(ERoleOrder.KRADIY.name());
 
-        int votesToAdd = isKradiy ? 2 : 1;
+        int votesToAdd;
+        if (isKradiy) {
+            votesToAdd = 2;
+            GameStatistics gameStatistics = gameStatisticsService.findMarkedByKradiy(SelectionController.currentGameId);
+            System.out.println(gameStatistics);
+            if (gameStatistics.isSkipNextVoting()) {
+                votesToAdd = 1;
+            }
+        } else {
+            votesToAdd = 1;
+        }
 
         if (playerVotes == null) {
 //            playerIdVotesMap.put(playerNumber, votesToAdd);
             doVote(playerNumber, 0, votesToAdd, voterIndex);
             addPointsAndChangeVoterIndex(playerNumber, voterIndex);
-        } else if (playerVotes == 2) {
+        } else if (playerVotes + votesToAdd == 3) {
             //Отримати гравця в якого голосують, щоб взяти його excusesAttempts
             GameStatistics gameStatistics = gameStatisticsService
                     .getGameStatisticsByGameIdSortedByInGameNumber(SelectionController.currentGameId).get(playerNumber - 1);
@@ -746,6 +770,8 @@ public class VotingController implements Initializable, DisplayedPlayersControll
 
     private void doVote(int playerNumber, int playerVotes, int votesToAdd, int lastVoterIndex) {
         playerIdVotesMap.put(playerNumber, playerVotes + votesToAdd);
+        votesTillEndAmount = votesTillEndAmount - votesToAdd;
+        setVotesLeftLabelText(votesTillEndAmount);
         lastVoiceAmount = votesToAdd;
         lastVotedNumber = playerNumber;
         lastVoterNumber = lastVoterIndex + 1;
@@ -753,26 +779,51 @@ public class VotingController implements Initializable, DisplayedPlayersControll
     }
 
     private void startExcuseTimer(int playerNumber, int voterIndex, GameStatistics gameStatistics, int votesToAdd) {
-        secondsTillEnd = 10;
-        Timeline excuseTimeLineTextChanger = new Timeline(new KeyFrame(Duration.seconds(1), (ActionEvent event) -> {
+        secondsTillEnd = SettingsUtil.getSecondsPerDefence();
+        excuseTimeLineTextChanger = new Timeline(new KeyFrame(Duration.seconds(1), (ActionEvent event) -> {
             secondsLeft.setText(String.valueOf(secondsTillEnd--));
         }));
         // Set number of cycles (remaining duration in seconds):
         excuseTimeLineTextChanger.setCycleCount((int) secondsTillEnd);
-        excuseTimeLineTextChanger.play();
+//        excuseTimeLineTextChanger.play();
+        continueTimer = true;
 
-        excuseTimeLine = new Timeline(new KeyFrame(Duration.seconds(secondsTillEnd), ae -> {
-            Platform.runLater(() -> {
-                excuseTimeLine.stop(); // Stop the timer when it ends
-                showExcuseChoiceDialog(playerNumber, voterIndex, gameStatistics, votesToAdd);
+        excuseTimeLine = new Timeline(new KeyFrame(Duration.seconds(1), ae -> {
+            if (secondsTillEnd > 0) {
                 secondsLeft.setText(String.valueOf(secondsTillEnd--));
-            });
+            }else {
+                Platform.runLater(() -> {
+                    excuseTimeLine.stop(); // Stop the timer when it ends
+                    excuseTimeLine = null;
+                    if (continueTimer == true) {
+                        showExcuseChoiceDialog(playerNumber, voterIndex, gameStatistics, votesToAdd);
+                    }
+//                secondsLeft.setText(String.valueOf(secondsTillEnd--));
+                });
+            }
+
         }));
-        excuseTimeLine.setCycleCount(1);
+        excuseTimeLine.setCycleCount(Timeline.INDEFINITE);
         excuseTimeLine.play();
+        finishButton.setDisable(false);
+        finishButton.setOnAction(event -> stopTimer(playerNumber, voterIndex, gameStatistics, votesToAdd));
+    }
+
+    private void stopTimer(int playerNumber, int voterIndex, GameStatistics gameStatistics, int votesToAdd) {
+        if (excuseTimeLine != null) {
+            continueTimer = false;
+//            secondsTillEnd = 0;
+            excuseTimeLine.stop();
+            excuseTimeLine = null;
+//            excuseTimeLineTextChanger.stop();
+            secondsLeft.setText("0");
+            showExcuseChoiceDialog(playerNumber, voterIndex, gameStatistics, votesToAdd);
+
+        }
     }
 
     private void showExcuseChoiceDialog(int playerNumber, int voterIndex, GameStatistics gameStatistics, int votesToAdd) {
+        finishButton.setDisable(true);
         ButtonType foo = new ButtonType("Зберегти голос", ButtonBar.ButtonData.YES);
         ButtonType bar = new ButtonType("Інший гравець", ButtonBar.ButtonData.CANCEL_CLOSE);
         Alert excuseAlert = new Alert(Alert.AlertType.CONFIRMATION, "Зберегти голос?", foo, bar);
@@ -783,6 +834,8 @@ public class VotingController implements Initializable, DisplayedPlayersControll
         Optional<ButtonType> excuseResult = excuseAlert.showAndWait();
         if (excuseResult.isPresent() && excuseResult.get().getText().equals("Зберегти голос")) {
             playerIdVotesMap.put(playerNumber, playerIdVotesMap.get(playerNumber) + votesToAdd);
+            votesTillEndAmount = votesTillEndAmount - votesToAdd;
+            setVotesLeftLabelText(votesTillEndAmount);
             addPointsAndChangeVoterIndex(playerNumber, voterIndex);
         } else {
             if (reverse) {
@@ -858,17 +911,28 @@ public class VotingController implements Initializable, DisplayedPlayersControll
         if (playersIdWithMaxVotes.size() > 1) {
             showRouletteWindow(playersIdWithMaxVotes, eliminatedPlayer -> {
                 // Handle the elimination of the player here
+                List<String> markedByBombNicknames = gameStatisticsService
+                        .getMarkedByBombAlivePlayersInGameNumbers(SelectionController.currentGameId)
+                        .stream().map(gameStatistics1 -> gameStatistics1.getInGameNickname()).collect(Collectors.toList());
                 GameStatistics gameStatistics = gameStatisticsService.deletePlayerAfterVoting(SelectionController.currentGameId, eliminatedPlayer);
-                showResultWindow(gameStatistics);
+                showResultWindow(gameStatistics, markedByBombNicknames);
                 pointsService.countOnePointAfterDayAndNight(SelectionController.currentGameId);
-                fxWeaver.loadController(NightStageController.class).show();
+                if (gameService.checkIfGameIsOver(SelectionController.currentGameId)) {
+                    fxWeaver.loadController(GameEndingController.class);
+                } else {
+                    fxWeaver.loadController(NightStageController.class).show();
+                }
             });
         } else {
             playerInGameNumberToDelete = playersIdWithMaxVotes.get(0);
+            List<String> markedByBombNicknames = gameStatisticsService
+                        .getMarkedByBombAlivePlayersInGameNumbers(SelectionController.currentGameId)
+                        .stream().map(gameStatistics1 -> gameStatistics1.getInGameNickname()).collect(Collectors.toList());
+
             GameStatistics gameStatistics =  gameStatisticsService.deletePlayerAfterVoting(SelectionController.currentGameId, playerInGameNumberToDelete);
             pointsService.countOnePointAfterDayAndNight(SelectionController.currentGameId);
             //тут можливо ще зробити сервіс, який буде перевіряти чи гру закінчено, і дьоргати його методи
-            showResultWindow(gameStatistics);
+            showResultWindow(gameStatistics, markedByBombNicknames);
             if (gameService.checkIfGameIsOver(SelectionController.currentGameId)) {
                 fxWeaver.loadController(GameEndingController.class);
             } else {
@@ -877,12 +941,13 @@ public class VotingController implements Initializable, DisplayedPlayersControll
         }
     }
 
-    private void showResultWindow(GameStatistics gameStatistics) {
+    private void showResultWindow(GameStatistics gameStatistics, List<String> markedByBombNicknames) {
 
         Image image = new Image(getClass().getResource("/images/stop.png").toExternalForm());
         ImageView imageView = new ImageView(image);
         imageView.setFitWidth(50);  // Set the desired width
         imageView.setFitHeight(50); // Set the desired height
+
 
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setGraphic(imageView);
@@ -894,6 +959,14 @@ public class VotingController implements Initializable, DisplayedPlayersControll
         alert.setHeaderText("Результат голосування");
         String res = gameStatistics.isDefendedPerNextVoting() ? " не вибуває, бо отримав захист на день."
                 : " вибуває. Його роль " + gameStatistics.getRole().getTitle();
+        if (!gameStatistics.isDefendedPerNextVoting() && gameStatistics.getRole().getRoleNameConstant().equals(ERoleOrder.BOMBA.name())) {
+            if (markedByBombNicknames.size() > 0) {
+                res += "\nТакож вибувають: ";
+                for (String nickname : markedByBombNicknames) {
+                    res += nickname + "; ";
+                }
+            }
+        }
         alert.setContentText(gameStatistics.getInGameNickname() + res);
 
         alert.initOwner(stage);

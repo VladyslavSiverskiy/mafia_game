@@ -33,7 +33,6 @@ public class RoleService {
         List<ERoleOrder> roles = Arrays.asList(ERoleOrder.values());
         for (ERoleOrder roleFromEnum : roles) {
             if (roleRepository.findByRoleNameConstant(roleFromEnum.name()) == null) {
-                System.out.println(roleFromEnum);
                 Role role = Role.builder()
                         .title(roleFromEnum.getTitle())
                         .team(roleFromEnum.getTeam())
@@ -45,7 +44,7 @@ public class RoleService {
     }
 
     public void applyRoles(Long gameId, Map<Integer, Role> gamerIdRoles) throws RuntimeException {
-        if(gameId == null) {
+        if (gameId == null) {
             throw new NoGameWithSuchIdException(ExceptionConstants.NO_GAME_WITH_SUCH_ID + gameId);
         }
         gamerIdRoles.forEach((gamerId, role) -> {
@@ -53,11 +52,9 @@ public class RoleService {
                 throw new CantStartGameException("Не всі ролі було розподілено, перезавантажте гру!");
             } else {
                 Role role1 = roleRepository.findById(role.getId()).get();
-                System.out.println(role1);
-               GameStatistics gameStatistics = gameStatisticsRepository.findByGame_IdAndAndInGameNumber(gameId, gamerId);
-               gameStatistics.setRole(role);
-               GameStatistics gm = gameStatisticsRepository.save(gameStatistics);
-                System.out.println(gm);
+                GameStatistics gameStatistics = gameStatisticsRepository.findByGame_IdAndAndInGameNumber(gameId, gamerId);
+                gameStatistics.setRole(role);
+                GameStatistics gm = gameStatisticsRepository.save(gameStatistics);
             }
         });
     }

@@ -37,8 +37,8 @@ import static com.vsiverskyi.utils.StyleConstants.HOVERED_BUTTON_STYLE;
 import static com.vsiverskyi.utils.StyleConstants.IDLE_BUTTON_STYLE;
 
 @Component
-@FxmlView("GameEnding.fxml")
-public class GameEndingController implements Initializable {
+@FxmlView("ArchiveGame.fxml")
+public class ArchiveGameController implements Initializable {
 
     @Autowired
     private ViewController viewController;
@@ -84,7 +84,7 @@ public class GameEndingController implements Initializable {
         stage.getIcons().add(new Image("/images/title.jpg"));
         stage.setTitle("STOP КОРУПЦІЯ");
         scene.getStylesheets().add(getClass().getResource("/style/style.css").toExternalForm());
-        Game game = gameService.getGameInfo(SelectionController.currentGameId);
+        Game game = gameService.getGameInfo(EveningRateController.gameIdToBeFound);
         pointsService.countPointsAfterGameWasFinished(game.getId());
         List<GameStatistics> gameStatisticsList = gameStatisticsService.getGameStatisticsByGameId(game.getId());
         // Sort the list by points in descending order
@@ -139,11 +139,10 @@ public class GameEndingController implements Initializable {
         winnerTitleLabel.setText("Перемогли: " + winners);
         winnerTitleLabel.setStyle("-fx-text-fill: white;");
         toStarterPage.setOnMouseClicked(ev -> {
-            StarterController.primaryStage = (Stage) toStarterPage.getScene().getWindow();
-            fxWeaver.loadController(StarterController.class).show();
+            fxWeaver.loadController(EveningRateController.class).show();
         });
 
-        playersLeft.getChildren().add(viewController.createPlayerStatisticsPanel());
+//        playersLeft.getChildren().add(viewController.createPlayerStatisticsPanel());
 
         toStarterPage.setStyle(IDLE_BUTTON_STYLE);
         toStarterPage.setOnMouseEntered(ev -> toStarterPage.setStyle(HOVERED_BUTTON_STYLE));
@@ -205,11 +204,6 @@ public class GameEndingController implements Initializable {
             podiumBox.getChildren().add(playerBox);
         }
     }
-
-
-
-
-
 
     public void show() {
         stage.show();

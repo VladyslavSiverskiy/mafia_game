@@ -34,16 +34,15 @@ public class GameStatisticsService {
         return gameStatisticsRepository.save(gameStatistics);
     }
 
-    public GameStatistics findByInGameNumberAndGameId(int inGameNumber, long gameId){
+    public GameStatistics findByInGameNumberAndGameId(int inGameNumber, long gameId) {
         return gameStatisticsRepository.findByGame_IdAndAndInGameNumber(gameId, inGameNumber);
     }
 
-    public List<Integer> getMarkedByBombAlivePlayersInGameNumbers(Long gameId) {
+    public List<GameStatistics> getMarkedByBombAlivePlayersInGameNumbers(Long gameId) {
         return gameRepository.findById(gameId).get()
                 .getGameStatistics()
                 .stream()
-                .filter(gameStatistics -> gameStatistics.isWasMarkedByBomb())
-                .map(gameStatistics -> gameStatistics.getInGameNumber())
+                .filter(gameStatistics -> gameStatistics.isWasMarkedByBomb() && gameStatistics.isInGame())
                 .toList();
     }
 
@@ -90,8 +89,10 @@ public class GameStatisticsService {
     }
 
     public GameStatistics killPlayer(long gameId, int playerToKillInGameNumber) {
+
         GameStatistics gameStatistics = gameStatisticsRepository
                 .findByGame_IdAndAndInGameNumber(gameId, playerToKillInGameNumber);
+        System.out.println("Killing " + gameStatistics);
         if (gameStatistics.getRole().getRoleNameConstant().equals(ERoleOrder.STRILOCHNYK.name())) {
             gameStatistics.setTimesWasKilled((short) (gameStatistics.getTimesWasKilled() + 1));
         } else {
@@ -120,7 +121,11 @@ public class GameStatisticsService {
         gameStatistics.setPoisonedByLady(false);
         gameStatistics.setHeadledOnThePreviousStage(true);
         gameStatistics.setTimesWasHealed((short) (gameStatistics.getTimesWasHealed() + 1));
-        if (gameStatistics.getTimesWasKilled() > 1) {
+        if (gameStatistics.getTimesWasKilled() > 1
+            || (
+                    gameStatistics.getTimesWasKilled() == 1
+                    && gameStatistics.isPoisonedByLady() && gameStatistics.getNightsTillDeath() == 0)
+        ) {
             gameStatistics.setInGame(false);
         } else {
             gameStatistics.setInGame(true);
@@ -156,7 +161,8 @@ public class GameStatisticsService {
             gameStatistics = gameStatisticsRepository.save(gameStatistics);
         }
         if (gameStatistics.getRole().getTitle().equals(ERoleOrder.BOMBA.getTitle())) {
-            killNearestPlayers(gameStatistics.getInGameNumber(), gameId);
+//            killNearestPlayers(gameStatistics.getInGameNumber(), gameId);
+            killMarkedByBombPlayers(gameId);
         }
         return gameStatistics;
     }
@@ -301,8 +307,10 @@ public class GameStatisticsService {
                 .getGameStatistics().stream().filter(gameStatistics -> gameStatistics.isPoisonedByLady()).collect(Collectors.toList());
         List<GameStatistics> killedDueToPoisoningInGameNumbers = new ArrayList<>();
         for (GameStatistics gameStatistics : poisonedGamers) {
+            System.out.println(gameStatistics);
             if (gameStatistics.getNightsTillDeath() == 0) {
                 killPlayer(currentGameId, gameStatistics.getInGameNumber());
+//                gameStatistics.setTimesWasKilled((short) (gameStatistics.getTimesWasKilled() + 1));
                 killedDueToPoisoningInGameNumbers.add(gameStatistics);
             } else {
                 gameStatistics.setNightsTillDeath((short) (gameStatistics.getNightsTillDeath() - 1));
@@ -354,9 +362,9 @@ public class GameStatisticsService {
                 .stream()
                 .filter(gameStatistics -> gameStatistics.getRole().getRoleNameConstant().equals(ERoleOrder.BOMBA.name())).findFirst();
 
-        if (bomb.isPresent()){
+        if (bomb.isPresent()) {
             return bomb.get().isInGame();
-        }else {
+        } else {
             return false;
         }
     }
@@ -367,8 +375,23 @@ public class GameStatisticsService {
                 .getGameStatistics();
 
         return !gameStatisticsList
-                       .stream()
-                       .filter(gameStatistics -> gameStatistics.getRole().getRoleNameConstant()
-                               .equals(ERoleOrder.BOMBA.name())).toList().isEmpty();
+                .stream()
+                .filter(gameStatistics -> gameStatistics.getRole().getRoleNameConstant()
+                        .equals(ERoleOrder.BOMBA.name())).toList().isEmpty();
+    }
+
+    public void updateGameStatistics(List<GameStatistics> gameStatistics) {
+        for (GameStatistics gameStatistic : gameStatistics) {
+            gameStatisticsRepository.save(gameStatistic);
+        }
+    }
+
+    public GameStatistics findMarkedByKradiy(Long currentGameId) {
+        for (GameStatistics gameStatistic : gameRepository.findById(currentGameId).get().getGameStatistics()) {
+            if (gameStatistic.isWasMarkedByKradiy()) {
+                return gameStatistic;
+            }
+        }
+        return null;
     }
 }

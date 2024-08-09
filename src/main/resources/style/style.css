@@ -63,3 +63,7 @@
     -fx-background-color: #161616;
     -fx-text-fill: white;
 }
+
+.date-picker .text-field {
+    -fx-text-fill: #161616;
+}
