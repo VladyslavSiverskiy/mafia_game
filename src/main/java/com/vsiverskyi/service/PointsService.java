@@ -27,22 +27,43 @@ public class PointsService {
     private final RoleRepository roleRepository;
     private final GameStatisticsRepository gameStatisticsRepository;
 
+    public boolean checkIfYanucharMafiaExist(List<GameStatistics> gameStatisticsList) {
+        for (GameStatistics gameStatistics : gameStatisticsList) {
+            if (gameStatistics.getRole().getRoleNameConstant().equals(ERoleOrder.PEREVERTEN_MAFIA.name())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public void countPointsAfterGameWasFinished(Long gameId) {
         //Нарахувати переможній стороні
         Game game = gameRepository.findById(gameId)
                 .orElseThrow(() -> new NoGameWithSuchIdException(ExceptionConstants.NO_GAME_WITH_SUCH_ID + gameId));
-        List<GameStatistics> gamers = gameStatisticsService.getGameStatisticsByGameId(gameId);
+        List<GameStatistics> gamers = game.getGameStatistics();
         ETeam winnerTeam = game.getWinnerSide();
-        List<GameStatistics> winners = gamers
-                .stream()
-                .filter(gameStatistics -> gameStatistics.getRole().getTeam().equals(winnerTeam))
-                .collect(Collectors.toList());
+
+        List<GameStatistics> winners;
+        if (winnerTeam.name().equals(ETeam.MAFIA.name()) && checkIfYanucharMafiaExist(game.getGameStatistics())) {
+            // Дати очки за перемогу Яничару якщо виграв він
+            winners = gamers
+                    .stream()
+                    .filter(gameStatistics -> gameStatistics.getRole()
+                            .getRoleNameConstant().equals(ERoleOrder.PEREVERTEN_MAFIA.name()))
+                    .collect(Collectors.toList());
+
+        } else {
+            winners = gamers
+                    .stream()
+                    .filter(gameStatistics -> gameStatistics.getRole().getTeam().equals(winnerTeam))
+                    .collect(Collectors.toList());
+        }
         countPointsForWinnersTeamAfterGameWasFinished(winners);
     }
 
     public void countOnePointAfterDayAndNight(Long gameId) {
         List<GameStatistics> gamers = gameStatisticsService.getGameStatisticsByGameId(gameId);
-        for (GameStatistics gameStatistics: gamers) {
+        for (GameStatistics gameStatistics : gamers) {
             if (gameStatistics.isInGame()) {
                 gameStatistics.setPoints(gameStatistics.getPoints() + 1);
             }
@@ -50,8 +71,8 @@ public class PointsService {
     }
 
     /**
-     * @param gameId - id поточної гри
-     * @param actionPlayerRole - гравці з такою роллю здійснили хід, їм будуть нараховані очки
+     * @param gameId                   - id поточної гри
+     * @param actionPlayerRole         - гравці з такою роллю здійснили хід, їм будуть нараховані очки
      * @param targetPlayerInGameNumber - ігровий номер гравця, в якого голосують вночі
      */
     public void countPointsInOrderToNightAction(Long gameId, Role actionPlayerRole, Integer targetPlayerInGameNumber) {
@@ -61,7 +82,7 @@ public class PointsService {
             && gameStatisticsRepository
                     .findByGame_IdAndAndInGameNumber(gameId, targetPlayerInGameNumber)
                     .getRole().getTeam().equals(ETeam.MAFIA)) {
-            for (GameStatistics gameStatistics: gameStatisticsList) {
+            for (GameStatistics gameStatistics : gameStatisticsList) {
                 if (gameStatistics.getRole().equals(actionPlayerRole)) {
                     gameStatistics.setPoints(gameStatistics.getPoints() + 4);
                     gameStatisticsRepository.save(gameStatistics);
@@ -74,7 +95,7 @@ public class PointsService {
             && gameStatisticsRepository
                     .findByGame_IdAndAndInGameNumber(gameId, targetPlayerInGameNumber)
                     .getRole().getTeam().equals(ETeam.PEACE)) {
-            for (GameStatistics gameStatistics: gameStatisticsList) {
+            for (GameStatistics gameStatistics : gameStatisticsList) {
                 if (gameStatistics.getRole().getTeam().equals(ETeam.MAFIA)) {
                     gameStatistics.setPoints(gameStatistics.getPoints() + 2);
                     gameStatisticsRepository.save(gameStatistics);
@@ -87,15 +108,15 @@ public class PointsService {
     private void countPointsForWinnersTeamAfterGameWasFinished(List<GameStatistics> winnersList) {
         List<GameStatistics> aliveWinnersList = winnersList.stream().filter(GameStatistics::isInGame).toList();
         if (aliveWinnersList.size() == winnersList.size()) {
-            for (GameStatistics winner: winnersList) {
+            for (GameStatistics winner : winnersList) {
                 winner.setPoints(winner.getPoints() + 10);
                 gameStatisticsRepository.save(winner);
             }
         } else {
-            for (GameStatistics winner: winnersList) {
-                if(winner.isInGame() && winner.getRole().equals(ERoleOrder.PEACE)) {
+            for (GameStatistics winner : winnersList) {
+                if (winner.isInGame() && winner.getRole().equals(ERoleOrder.PEACE)) {
                     winner.setPoints(winner.getPoints() + 10);
-                }else if (winner.isInGame()){
+                } else if (winner.isInGame()) {
                     winner.setPoints(winner.getPoints() + 5);
                 } else {
                     winner.setPoints(winner.getPoints() + 3);
@@ -106,7 +127,6 @@ public class PointsService {
     }
 
     public void countPointsInOrderToDayAction(Long gameId, int targetPlayerNumber, int voterPlayerNumber) {
-        System.out.println("COUNTING FOR GAME WIHT ID " + gameId);
         GameStatistics voterPlayer = gameStatisticsRepository
                 .findByGame_IdAndAndInGameNumber(gameId, voterPlayerNumber);
         GameStatistics targetPlayer = gameStatisticsRepository
@@ -117,8 +137,8 @@ public class PointsService {
             && targetPlayer.getRole().getTeam().equals(ETeam.MAFIA)) {
             voterPlayer.setPoints(voterPlayer.getPoints() + 3); // TODO: можливо змінити кількість балів
             gameStatisticsRepository.save(voterPlayer);
-        } else if(voterPlayer.getRole().getTeam().equals(ETeam.MAFIA)
-                  && targetPlayer.getRole().getTeam().equals(ETeam.PEACE)) {
+        } else if (voterPlayer.getRole().getTeam().equals(ETeam.MAFIA)
+                   && targetPlayer.getRole().getTeam().equals(ETeam.PEACE)) {
             voterPlayer.setPoints(voterPlayer.getPoints() + 2); // TODO: можливо змінити кількість балів
             gameStatisticsRepository.save(voterPlayer);
         }

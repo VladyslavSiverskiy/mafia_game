@@ -6,6 +6,7 @@ import com.vsiverskyi.model.enums.ERoleOrder;
 import com.vsiverskyi.model.enums.ETeam;
 import com.vsiverskyi.service.GameService;
 import com.vsiverskyi.service.GameStatisticsService;
+import javafx.geometry.Insets;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
@@ -54,6 +55,8 @@ public class ViewController {
         for (int j = 0; j < redCardsIterator; j++) { // Adjust the number of yellow cards as needed
             Rectangle redCard = new Rectangle(8, 12, Color.RED);
             redCard.setOnMouseClicked(mouseEvent -> {
+//                votesTillEndAmount--;
+//                setVotesLeftLabelText(votesTillEndAmount);
                 gameStatisticsService.removeRedCard(SelectionController.currentGameId, playerInGameNumber);
                 controller.displayRolePlayers(amountOfPlayers);
                 penaltyController.initializePlayerCardList(
@@ -84,7 +87,7 @@ public class ViewController {
         return nicknameLabel;
     }
 
-    public VBox createPlayerStatisticsPanel() {
+    public VBox createPlayerStatisticsPanel(boolean isTheEnd) {
         // Group by role and count the number of players in each role
         List<GameStatistics> gameStatisticsAlive =
                 gameService.findById(SelectionController.currentGameId).getGameStatistics()
@@ -93,35 +96,43 @@ public class ViewController {
 
         int mafiaAmount = (int) gameStatisticsAlive.stream()
                 .filter(gameStatistics -> gameStatistics.getRole().getRoleNameConstant().equals(ERoleOrder.DON.name())
-                    || gameStatistics.getRole().getRoleNameConstant().equals(ERoleOrder.MAFIA.name())
+                                          || gameStatistics.getRole().getRoleNameConstant().equals(ERoleOrder.MAFIA.name())
                 ).count();
         int peaceAmount = (int) gameStatisticsAlive.stream()
                 .filter(gameStatistics -> gameStatistics.getRole().getTeam().name().equals(ETeam.PEACE.name())).count();
 
-        //Шукаємо яничара, але так як він у нас ще в мирних числиться, то мінусуємо одного від мирних
         int yanycharAmount = (int) gameStatisticsAlive.stream()
                 .filter(gameStatistics ->
                         gameStatistics.getRole().getRoleNameConstant().equals(ERoleOrder.PEREVERTEN_PEACE.name()) ||
                         gameStatistics.getRole().getRoleNameConstant().equals(ERoleOrder.PEREVERTEN_MAFIA.name()))
                 .count();
 
-        if(mafiaAmount > 0 && yanycharAmount > 0) {
-            peaceAmount = peaceAmount - yanycharAmount;
+        if (mafiaAmount > 0 && yanycharAmount > 0) {
+            peaceAmount -= yanycharAmount;
         }
 
-        // Create labels for each role
+        Label general = new Label("К-сть гравців на початку фази:");
+        // Create labels for each role with smaller font size
         Label mafiaLabel = new Label("Корупціонерів: " + mafiaAmount);
         Label peaceLabel = new Label("Жителі Скіфії: " + peaceAmount);
         Label perevertenLabel = new Label("Яничар: " + yanycharAmount);
 
-        // Set styles for labels
-        mafiaLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #ffffff;");
-        peaceLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #ffffff;");
-        perevertenLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #ffffff;");
+        // Set styles for labels with smaller font size
+        String labelStyle;
+        if (isTheEnd) {
+             labelStyle = "-fx-font-size: 12px; -fx-text-fill: black; -fx-font-weight: bold; -fx-text-alignment: center";
+        } else {
+            labelStyle = "-fx-font-size: 12px; -fx-text-fill: white; -fx-font-weight: bold; -fx-text-alignment: center";
+        }
+        general.setStyle(labelStyle);
+        mafiaLabel.setStyle(labelStyle);
+        peaceLabel.setStyle(labelStyle);
+        perevertenLabel.setStyle(labelStyle);
 
-        // Create a VBox and add labels
-        VBox statisticsPanel = new VBox(10); // 10 is the spacing between elements
-        statisticsPanel.getChildren().addAll(mafiaLabel, peaceLabel, perevertenLabel);
+        // Create a VBox and add labels with reduced spacing
+        VBox statisticsPanel = new VBox(5); // Reduced spacing between elements
+        statisticsPanel.setPadding(new Insets(5)); // Added padding for compactness
+        statisticsPanel.getChildren().addAll(general, mafiaLabel, peaceLabel, perevertenLabel);
 
         return statisticsPanel;
     }

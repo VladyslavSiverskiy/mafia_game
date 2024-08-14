@@ -89,11 +89,10 @@ public class GameStatisticsService {
     }
 
     public GameStatistics killPlayer(long gameId, int playerToKillInGameNumber) {
-
         GameStatistics gameStatistics = gameStatisticsRepository
                 .findByGame_IdAndAndInGameNumber(gameId, playerToKillInGameNumber);
-        System.out.println("Killing " + gameStatistics);
-        if (gameStatistics.getRole().getRoleNameConstant().equals(ERoleOrder.STRILOCHNYK.name())) {
+        if (gameStatistics.getRole().getRoleNameConstant().equals(ERoleOrder.STRILOCHNYK.name())
+            && !(gameStatistics.isPoisonedByLady() && gameStatistics.getNightsTillDeath() == 0)) {
             gameStatistics.setTimesWasKilled((short) (gameStatistics.getTimesWasKilled() + 1));
         } else {
             gameStatistics.setInGame(false);
@@ -160,11 +159,26 @@ public class GameStatisticsService {
             gameStatistics.setInGame(false);
             gameStatistics = gameStatisticsRepository.save(gameStatistics);
         }
+
+        if(gameStatistics.getRole().getTitle().equals(ERoleOrder.ZATYCHKA_SUDDYA.getTitle())) {
+            killMarkedBySuddyaPlayer(gameId);
+        }
+
         if (gameStatistics.getRole().getTitle().equals(ERoleOrder.BOMBA.getTitle())) {
 //            killNearestPlayers(gameStatistics.getInGameNumber(), gameId);
             killMarkedByBombPlayers(gameId);
         }
         return gameStatistics;
+    }
+
+    private void killMarkedBySuddyaPlayer(Long gameId) {
+        List<GameStatistics> gameStatisticsList = gameRepository.findById(gameId).get().getGameStatistics();
+        for (GameStatistics gameStatistics: gameStatisticsList) {
+            if (gameStatistics.isSkipNextVotingBecauseOfSuddya()) {
+                gameStatistics.setInGame(false);
+                gameStatisticsRepository.save(gameStatistics);
+            }
+        }
     }
 
     private void killNearestPlayers(Integer bombInGameNumber, Long gameId) {
@@ -230,6 +244,7 @@ public class GameStatisticsService {
         List<GameStatistics> gameStatisticsList = getGameStatisticsByGameId(currentGameId);
         for (GameStatistics gs : gameStatisticsList) {
             gs.setSkipNextVoting(false);
+            gs.setSkipNextVotingBecauseOfSuddya(false);
             gameStatisticsRepository.save(gs);
         }
     }
@@ -245,6 +260,13 @@ public class GameStatisticsService {
     public void blockVotingPerDay(Long currentGameId, int chosenPlayerNumber) {
         GameStatistics gameStatistics = gameStatisticsRepository
                 .findByGame_IdAndAndInGameNumber(currentGameId, chosenPlayerNumber);
+        gameStatistics.setSkipNextVoting(true);
+        gameStatisticsRepository.save(gameStatistics);
+    }
+    public void suddyaBlockVotingPerDay(Long currentGameId, int chosenPlayerNumber) {
+        GameStatistics gameStatistics = gameStatisticsRepository
+                .findByGame_IdAndAndInGameNumber(currentGameId, chosenPlayerNumber);
+        gameStatistics.setSkipNextVotingBecauseOfSuddya(true);
         gameStatistics.setSkipNextVoting(true);
         gameStatisticsRepository.save(gameStatistics);
     }
@@ -393,5 +415,24 @@ public class GameStatisticsService {
             }
         }
         return null;
+    }
+
+    public GameStatistics findMarkedBySuddyaByGameId(Long currentGameId) {
+        for (GameStatistics gameStatistic : gameRepository.findById(currentGameId).get().getGameStatistics()) {
+            if (gameStatistic.isSkipNextVotingBecauseOfSuddya()) {
+                return gameStatistic;
+            }
+        }
+        return null;
+    }
+
+    public void setSkipNextVoting(GameStatistics gs) {
+        gs.setSkipNextVoting(true);
+        gameStatisticsRepository.save(gs);
+    }
+
+    public void undoSkipNextVoting(GameStatistics gs) {
+        gs.setSkipNextVoting(true);
+        gameStatisticsRepository.save(gs);
     }
 }

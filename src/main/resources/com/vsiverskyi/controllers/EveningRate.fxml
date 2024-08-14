@@ -18,7 +18,7 @@
        <DatePicker fx:id="startDatePicker" layoutX="618.0" layoutY="82.0" prefHeight="25.0" prefWidth="122.0" />
        <DatePicker fx:id="endDatePicker" layoutX="773.0" layoutY="83.0" prefHeight="25.0" prefWidth="111.0" />
        <Button fx:id="loadByDateButton" layoutX="908.0" layoutY="81.0" prefHeight="25.0" prefWidth="75.0" text="Показати" />
-       <ListView fx:id="gamesListView" layoutX="601.0" layoutY="519.0" prefHeight="200.0" prefWidth="336.0" />
+       <ListView fx:id="gamesListView" layoutX="601.0" layoutY="528.0" prefHeight="200.0" prefWidth="336.0" />
        <!-- Other UI components -->
        <TableView fx:id="playerScoreTable" layoutX="525.0" layoutY="198.0" prefHeight="237.0" prefWidth="469.0">
            <columns>
@@ -46,7 +46,7 @@
       <Label layoutX="638.0" layoutY="109.0" prefHeight="17.0" prefWidth="84.0" text="дата початку" textFill="WHITE" />
       <Label layoutX="795.0" layoutY="108.0" prefHeight="17.0" prefWidth="84.0" text="дата кінця" textFill="WHITE" />
       <Rectangle arcHeight="5.0" arcWidth="5.0" fill="#161616" height="3.0" layoutX="533.0" layoutY="135.0" stroke="BLACK" strokeType="INSIDE" width="471.0" />
-      <Label layoutX="633.0" layoutY="478.0" prefHeight="34.0" prefWidth="271.0" text="Статистика по іграх" textFill="WHITE">
+      <Label layoutX="640.0" layoutY="493.0" prefHeight="34.0" prefWidth="271.0" text="Статистика по іграх" textFill="WHITE">
          <font>
             <Font name="Bell MT Bold" size="27.0" />
          </font>
@@ -56,5 +56,6 @@
             <Font name="System Bold" size="27.0" />
          </font>
       </Label>
+       <Button fx:id="copyButton" layoutX="714.0" layoutY="442.0" onAction="#handleCopyButtonAction" text="Копіювати" />
    </children>
 </AnchorPane>

@@ -27,7 +27,8 @@
          </font>
       </Label>
       <AnchorPane fx:id="anchorPaneScrollPlace" layoutX="426.0" layoutY="161.0" prefHeight="514.0" prefWidth="515.0" style="-fx-border-color: #FFFFFF; -fx-border-radius: 5px;" />
-      <Button fx:id="fullScreen" layoutX="1115.0" layoutY="23.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="124.0" text="Повний екран" />
+      <Button fx:id="fullScreen" layoutX="1089.0" layoutY="20.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="115.0" text="Повний екран" />
+      <Button fx:id="backToMenu" layoutX="1210.0" layoutY="20.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="55.0" text="Меню" />
 
    </children>
 </AnchorPane>

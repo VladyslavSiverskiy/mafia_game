@@ -13,6 +13,8 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
@@ -271,5 +273,25 @@ public class EveningRateController implements Initializable {
         dialogPane1.getStyleClass().add("myDialog");
 
         alert.showAndWait();
+    }
+
+    @FXML
+    private void handleCopyButtonAction() {
+        StringBuilder sb = new StringBuilder();
+
+        // Get all items from the TableView
+        for (PlayerScore item : playerScoreTable.getItems()) {
+            String nickname = item.getNickname();
+            int totalPoints = item.getTotalPoints();
+            sb.append(nickname).append(": +").append(totalPoints).append("\n");
+        }
+
+        // Copy the text to the clipboard
+        Clipboard clipboard = Clipboard.getSystemClipboard();
+        ClipboardContent content = new ClipboardContent();
+        content.putString(sb.toString());
+        clipboard.setContent(content);
+
+        showAlert("Дані було скопійовано","Скопійовано в буфер обміну!");
     }
 }

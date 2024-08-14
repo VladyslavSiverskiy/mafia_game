@@ -16,10 +16,13 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.scene.paint.ImagePattern;
 import javafx.scene.shape.Circle;
 import javafx.stage.Stage;
 import net.rgielen.fxweaver.core.FxWeaver;
@@ -70,8 +73,7 @@ public class GameEndingController implements Initializable {
     @FXML
     private TableColumn<GameStatistics, Circle> avatarColumn;
     @FXML
-    private HBox  podiumBox; // New VBox for the podium
-
+    private HBox podiumBox; // New VBox for the podium
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
@@ -81,9 +83,13 @@ public class GameEndingController implements Initializable {
         stage.setMaximized(true);
         stage.setFullScreen(true);
 
+        // Apply general styles
+        endingGameAp.getStyleClass().add("anchor-pane");
+        podiumBox.getStyleClass().add("podium-box");
+
         stage.getIcons().add(new Image("/images/title.jpg"));
         stage.setTitle("STOP КОРУПЦІЯ");
-        scene.getStylesheets().add(getClass().getResource("/style/style.css").toExternalForm());
+        scene.getStylesheets().add(getClass().getResource("/style/end-page.css").toExternalForm());
         Game game = gameService.getGameInfo(SelectionController.currentGameId);
         pointsService.countPointsAfterGameWasFinished(game.getId());
         List<GameStatistics> gameStatisticsList = gameStatisticsService.getGameStatisticsByGameId(game.getId());
@@ -110,9 +116,11 @@ public class GameEndingController implements Initializable {
                     HBox hbox = new HBox(item);
                     hbox.setStyle("-fx-alignment: CENTER;");
                     setText("+" + item);
+                    setTextFill(Color.BLACK); // Set text color to black
                 }
             }
         });
+        gameStatisticsTable.getStyleClass().add("table-view");
         gameStatisticsTable.setItems(FXCollections.observableArrayList(restOfPlayers));
         avatarColumn.setCellFactory(column -> new TableCell<GameStatistics, Circle>() {
             @Override
@@ -123,27 +131,28 @@ public class GameEndingController implements Initializable {
                 } else {
                     HBox hbox = new HBox(item);
                     hbox.setStyle("-fx-alignment: CENTER;");
-                    setGraphic(hbox);     }
+                    setGraphic(hbox);
+                }
             }
         });
         String winners = game.getWinnerSide().getTitle();
         if (winners.equals(ETeam.MAFIA.getTitle())) {
             if (checkIfYanucharMafiaExisted(game)) {
                 winners = "Яничар";
-            }else {
+            } else {
                 winners = "Корупціонери";
             }
         } else {
             winners = "Мирні";
         }
         winnerTitleLabel.setText("Перемогли: " + winners);
-        winnerTitleLabel.setStyle("-fx-text-fill: white;");
+        winnerTitleLabel.setStyle("-fx-text-fill: black; -fx-font-size: 24px; -fx-font-weight: bold; -fx-alignment: center;"); // Set text color to black
         toStarterPage.setOnMouseClicked(ev -> {
             StarterController.primaryStage = (Stage) toStarterPage.getScene().getWindow();
             fxWeaver.loadController(StarterController.class).show();
         });
 
-        playersLeft.getChildren().add(viewController.createPlayerStatisticsPanel());
+        playersLeft.getChildren().add(viewController.createPlayerStatisticsPanel(true));
 
         toStarterPage.setStyle(IDLE_BUTTON_STYLE);
         toStarterPage.setOnMouseEntered(ev -> toStarterPage.setStyle(HOVERED_BUTTON_STYLE));
@@ -164,6 +173,8 @@ public class GameEndingController implements Initializable {
 
     private void createPodium(List<GameStatistics> top3Players) {
         podiumBox.getChildren().clear();
+        podiumBox.getStyleClass().add("podium-box");
+
         String[] medals = {"/images/gold.png", "/images/silver.png", "/images/bronze.png"};
 
         // Define fixed width for each card
@@ -173,45 +184,85 @@ public class GameEndingController implements Initializable {
             GameStatistics player = top3Players.get(i);
 
             ImageView medalView = new ImageView(new Image(getClass().getResourceAsStream(medals[i])));
-            medalView.setFitHeight(50);
+            medalView.setFitHeight(100);
             medalView.setFitWidth(50);
+            medalView.getStyleClass().add("medal-image");
 
             // Create a grey circle to represent the avatar
             Circle avatarCircle = new Circle(30, Color.GREY);
+            if (player != null) {
+                Image avatarImage = null;
+                try {
+                    avatarImage = new Image("images/" + player.getRole().getRoleNameConstant() + ".jpg");
+                } catch (Exception e) {
+                    avatarImage = new Image("images/icon.ico");
+                }
+                ImagePattern imagePattern = new ImagePattern(avatarImage);
+                avatarCircle.setFill(imagePattern);
+            }
             avatarCircle.setStroke(Color.WHITE);
             avatarCircle.setStrokeWidth(2);
 
             Label nameLabel = new Label(player.getInGameNickname());
-            nameLabel.setStyle("-fx-text-fill: white; -fx-font-size: 16px; -fx-font-family: 'Arial'; -fx-text-alignment: center");
+            nameLabel.setStyle("-fx-text-fill: black; -fx-font-size: 16px; -fx-font-family: 'Arial'; -fx-text-alignment: center"); // Set text color to black
             nameLabel.setWrapText(true);  // Wrap text if it exceeds width
             nameLabel.setMaxWidth(cardWidth - 20);  // Subtract padding
             nameLabel.setAlignment(javafx.geometry.Pos.CENTER);
 
             Label roleLabel = new Label(player.getRole().getTitle());
-            roleLabel.setStyle("-fx-text-fill: white; -fx-font-size: 14px; -fx-font-family: 'Arial'; -fx-text-alignment: center");
+            roleLabel.setStyle("-fx-text-fill: black; -fx-font-size: 14px; -fx-font-family: 'Arial'; -fx-text-alignment: center"); // Set text color to black
             roleLabel.setWrapText(true);  // Wrap text if it exceeds width
             roleLabel.setMaxWidth(cardWidth - 20);  // Subtract padding
             roleLabel.setAlignment(javafx.geometry.Pos.CENTER);
 
             Label pointsLabel = new Label("+" + player.getPoints());
-            pointsLabel.setStyle("-fx-text-fill: white; -fx-font-size: 14px; -fx-font-family: 'Arial'; -fx-text-alignment: center");
+            pointsLabel.setStyle("-fx-text-fill: black; -fx-font-size: 14px; -fx-font-family: 'Arial'; -fx-text-alignment: center"); // Set text color to black
             pointsLabel.setWrapText(true);  // Wrap text if it exceeds width
             pointsLabel.setMaxWidth(cardWidth - 20);  // Subtract padding
             pointsLabel.setAlignment(javafx.geometry.Pos.CENTER);
 
             VBox playerBox = new VBox(medalView, avatarCircle, nameLabel, roleLabel, pointsLabel);
-            playerBox.setStyle("-fx-alignment: center; -fx-spacing: 10; -fx-padding: 10; -fx-pref-width: " + cardWidth + "px;");
+            playerBox.getStyleClass().add("player-box"); // Apply player-box style
+
+            nameLabel.getStyleClass().add("player-label"); // Apply player-label style
+            roleLabel.getStyleClass().add("player-label"); // Apply player-label style
+            pointsLabel.getStyleClass().add("player-label"); // Apply player-label style
+
 
             podiumBox.getChildren().add(playerBox);
         }
     }
 
-
-
-
-
-
     public void show() {
         stage.show();
+    }
+
+    @FXML
+    private void handleCopyButtonAction() {
+        StringBuilder sb = new StringBuilder();
+
+        // Get all items from the TableView
+        for (GameStatistics item : gameStatisticsTable.getItems()) {
+            String nickname = item.getInGameNickname();
+            int totalPoints = item.getPoints();
+            sb.append(nickname).append(": +").append(totalPoints).append("\n");
+        }
+
+        // Copy the text to the clipboard
+        Clipboard clipboard = Clipboard.getSystemClipboard();
+        ClipboardContent content = new ClipboardContent();
+        content.putString(sb.toString());
+        clipboard.setContent(content);
+
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Дані було скопійовано");
+        alert.setHeaderText(null);
+        alert.setContentText("Скопійовано в буфер обміну!");
+        DialogPane dialogPane1 = alert.getDialogPane();
+        dialogPane1.getStylesheets().add(
+                getClass().getResource("/style/myDialogs.css").toExternalForm());
+        dialogPane1.getStyleClass().add("myDialog");
+
+        alert.showAndWait();
     }
 }

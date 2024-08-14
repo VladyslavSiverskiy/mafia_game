@@ -45,6 +45,8 @@ public class GameSettingsController implements Initializable {
     @FXML
     private AnchorPane anchorPane;
     @FXML
+    private Button backToMenu;
+    @FXML
     private AnchorPane anchorPaneScrollPlace;
     @FXML
     private Button fullScreen;
@@ -89,7 +91,10 @@ public class GameSettingsController implements Initializable {
 
         settingsState = new HashMap<>();
         roleAmounts = new HashMap<>();
-
+        backToMenu.setOnMouseClicked(actionEv -> {
+            StarterController.primaryStage = (Stage) backToMenu.getScene().getWindow();
+            fxWeaver.loadController(StarterController.class).show();
+        });
         playersAmountSpinnerValueFactory.setValue(10);
         playersAmountSpinner.setValueFactory(playersAmountSpinnerValueFactory);
         currentPlayersAmount = playersAmountSpinner.getValue();
@@ -142,12 +147,14 @@ public class GameSettingsController implements Initializable {
             roleIdPerGameList = gameService.initRolesPerGame(
                     playersAmountSpinner.getValue(), mafiaAmountSpinner.getValue(), roleAmounts, currentGame
             );
+
             fxWeaver.loadController(SelectionController.class).show();
         } catch (CantStartGameException e) {
             Alert alert = new Alert(Alert.AlertType.WARNING, e.getMessage());
             alert.initOwner(stage);
             alert.show();
         }
+
     }
 
     private HBox createSettingRow(String text) {

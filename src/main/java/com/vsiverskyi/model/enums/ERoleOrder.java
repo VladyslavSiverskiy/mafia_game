@@ -2,8 +2,8 @@ package com.vsiverskyi.model.enums;
 
 public enum ERoleOrder {
     UNDEFINED("Undefined", ETeam.PEACE),
-    MAFIA("Хабарник", ETeam.MAFIA),
     DON("Корупціонер", ETeam.MAFIA),
+    MAFIA("Хабарник", ETeam.MAFIA),
     PEREVERTEN_MAFIA("Яничар-корупціонер", ETeam.MAFIA),
     SHERYF("Гетьман", ETeam.PEACE),
     OTAMAN("Отаман", ETeam.PEACE),
@@ -12,8 +12,8 @@ public enum ERoleOrder {
     ZATYCHKA("Пастор", ETeam.PEACE),
     ZATYCHKA_SUDDYA("Суддя", ETeam.PEACE),
     KRADIY("Крадій", ETeam.PEACE),
-    DOCTOR("Знахар", ETeam.PEACE),
     STRILOCHNYK("Месник", ETeam.PEACE),
+    DOCTOR("Знахар", ETeam.PEACE),
     BOMBA("Писар", ETeam.PEACE),
     PEREVERTEN_PEACE("Яничар-мирний", ETeam.PEACE),
     PEACE("Козак", ETeam.PEACE);

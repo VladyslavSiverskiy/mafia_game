@@ -8,14 +8,14 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.text.Font?>
 
-<AnchorPane fx:id="endingGameAp" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="800.0" prefWidth="1280.0" style="-fx-background-color: #161616;" xmlns="http://javafx.com/javafx/19" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vsiverskyi.controllers.GameEndingController">
+<AnchorPane fx:id="endingGameAp" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="800.0" prefWidth="1280.0" xmlns="http://javafx.com/javafx/19" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vsiverskyi.controllers.GameEndingController">
    <children>
       <Label fx:id="winnerTitleLabel" layoutX="556.0" layoutY="32.0" text="Переможець" textFill="WHITE">
          <font>
             <Font name="System Bold" size="20.0" />
          </font></Label>
-      <Button fx:id="toStarterPage" layoutX="559.0" layoutY="678.0" text="Повернутися до стартової сторінки" />
-      <TableView fx:id="gameStatisticsTable" layoutX="427.0" layoutY="491.0" prefHeight="171.0" prefWidth="458.0">
+      <Button fx:id="toStarterPage" layoutX="555.0" layoutY="737.0" text="Повернутися до стартової сторінки" />
+      <TableView fx:id="gameStatisticsTable" layoutX="423.0" layoutY="528.0" prefHeight="171.0" prefWidth="458.0">
          <columns>
             <TableColumn fx:id="playerNameColumn" prefWidth="127.42858123779297" text="Гравець" />
             <TableColumn fx:id="pointsColumn" prefWidth="179.4285888671875" text="Очки" />
@@ -25,7 +25,11 @@
       <HBox fx:id="podiumBox" layoutX="369.0" layoutY="157.0" prefHeight="275.0" prefWidth="582.0" spacing="20.0" style="-fx-alignment: center;">
          <!-- The podium VBox where the top 3 players will be displayed -->
       </HBox>
-      <Label layoutX="629.0" layoutY="458.0" text="Інші гравці:" textFill="WHITE" />
+      <Label layoutX="629.0" layoutY="503.0" text="Інші гравці:">
+         <font>
+            <Font name="System Bold" size="12.0" />
+         </font></Label>
       <AnchorPane fx:id="playersLeft" layoutX="552.0" layoutY="69.0" prefHeight="69.0" prefWidth="200.0" />
+      <Button fx:id="copyButton" layoutX="623.0" layoutY="707.0" onAction="#handleCopyButtonAction" text="Копіювати" />
    </children>
 </AnchorPane>

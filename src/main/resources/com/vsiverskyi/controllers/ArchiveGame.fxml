@@ -8,24 +8,26 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.text.Font?>
 
-<AnchorPane fx:id="endingGameAp" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="800.0" prefWidth="1280.0" style="-fx-background-color: #161616;" xmlns="http://javafx.com/javafx/19" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vsiverskyi.controllers.ArchiveGameController">
+<AnchorPane fx:id="endingGameAp" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="800.0" prefWidth="1280.0" styleClass="root" xmlns="http://javafx.com/javafx/19" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vsiverskyi.controllers.ArchiveGameController">
     <children>
-        <Label fx:id="winnerTitleLabel" layoutX="556.0" layoutY="32.0" text="Переможець" textFill="WHITE">
+        <Label fx:id="winnerTitleLabel" layoutX="504.0" layoutY="33.0" styleClass="label-winner" text="Переможець">
             <font>
-                <Font name="System Bold" size="20.0" />
-            </font></Label>
-        <Button fx:id="toStarterPage" layoutX="559.0" layoutY="678.0" text="Повернутися назад" />
-        <TableView fx:id="gameStatisticsTable" layoutX="427.0" layoutY="491.0" prefHeight="171.0" prefWidth="458.0">
+                <Font name="Arial Bold" size="24.0" />
+            </font>
+        </Label>
+        <Button fx:id="toStarterPage" layoutX="577.0" layoutY="720.0" styleClass="button-idle" text="Повернутися назад" />
+        <TableView fx:id="gameStatisticsTable" layoutX="427.0" layoutY="491.0" prefHeight="171.0" prefWidth="458.0" styleClass="table-view">
             <columns>
                 <TableColumn fx:id="playerNameColumn" prefWidth="127.42858123779297" text="Гравець" />
                 <TableColumn fx:id="pointsColumn" prefWidth="179.4285888671875" text="Очки" />
                 <TableColumn fx:id="avatarColumn" prefWidth="149.14286150251115" text="Аватар" />
             </columns>
         </TableView>
-        <HBox fx:id="podiumBox" layoutX="369.0" layoutY="157.0" prefHeight="275.0" prefWidth="582.0" spacing="20.0" style="-fx-alignment: center;">
+        <HBox fx:id="podiumBox" layoutX="369.0" layoutY="71.0" prefHeight="361.0" prefWidth="582.0" spacing="20.0" styleClass="podium-box">
             <!-- The podium VBox where the top 3 players will be displayed -->
         </HBox>
-        <Label layoutX="629.0" layoutY="458.0" text="Інші гравці:" textFill="WHITE" />
-        <AnchorPane fx:id="playersLeft" layoutX="552.0" layoutY="69.0" prefHeight="69.0" prefWidth="200.0" />
+        <Label layoutX="629.0" layoutY="458.0" styleClass="label" text="Інші гравці:" />
+
+        <Button fx:id="copyButton" layoutX="623.0" layoutY="665.0" onAction="#handleCopyButtonAction" text="Копіювати" />
     </children>
 </AnchorPane>

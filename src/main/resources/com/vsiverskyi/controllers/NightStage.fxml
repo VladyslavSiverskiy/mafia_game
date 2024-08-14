@@ -10,32 +10,32 @@
 <AnchorPane fx:id="nightStageAp" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="800.0" prefWidth="1280.0" style="-fx-background-color: #161616;" xmlns="http://javafx.com/javafx/19" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vsiverskyi.controllers.NightStageController">
     <AnchorPane fx:id="nightStagePlayersPane" layoutX="175.0" layoutY="36.0" prefHeight="700.0" prefWidth="878.0">
       <children>
-         <Button fx:id="confirmButton" layoutX="439.0" layoutY="337.0" mnemonicParsing="false" text="Підтвердити" />
-         <Button fx:id="confirmButtonMafia" layoutX="439.0" layoutY="362.0" mnemonicParsing="false" text="Підтвердити" />
+         <Button fx:id="confirmButton" layoutX="425.0" layoutY="337.0" mnemonicParsing="false" text="Підтвердити" />
+         <Button fx:id="confirmButtonMafia" layoutX="425.0" layoutY="362.0" mnemonicParsing="false" text="Підтвердити" />
       </children></AnchorPane>
-   <AnchorPane layoutX="13.0" layoutY="82.0" prefHeight="200.0" prefWidth="110.0" style="-fx-border-color: #ffffff; -fx-border-radius: 5px;">
+   <AnchorPane layoutX="13.0" layoutY="82.0" prefHeight="72.0" prefWidth="166.0" style="-fx-border-color: #ffffff; -fx-border-radius: 5px;">
       <children>
-         <Label fx:id="currentRoleTitle" alignment="CENTER" layoutX="-2.0" prefHeight="200.0" prefWidth="162.0" textAlignment="CENTER" textFill="WHITE">
+         <Label fx:id="currentRoleTitle" alignment="CENTER" layoutX="1.0" prefHeight="81.0" prefWidth="162.0" textAlignment="CENTER" textFill="WHITE">
             <font>
-               <Font size="30.0" />
+               <Font size="24.0" />
             </font>
          </Label>
       </children>
    </AnchorPane>
    <!-- Admin Menu for assigning cards -->
-   <AnchorPane layoutX="1070.0" layoutY="60.0" prefHeight="624.0" prefWidth="194.0" style="-fx-border-color: #ffffff; -fx-border-radius: 5px; -fx-background-color: #161616;">
+   <AnchorPane layoutX="1081.0" layoutY="66.0" prefHeight="624.0" prefWidth="194.0" style="-fx-border-color: #ffffff; -fx-border-radius: 5px; -fx-background-color: #161616;">
       <children>
-         <Label layoutX="25.0" layoutY="17.0" text="Технічна поразка" textFill="WHITE" />
-         <Button fx:id="technicalDefeatPeaceful" layoutX="26.0" layoutY="46.0" mnemonicParsing="false" prefHeight="27.0" prefWidth="144.0" style="-fx-background-color: #161616; -fx-border-color: #ffffff; -fx-border-radius: 5px;" text="Мирним" textFill="WHITE" />
-         <Button fx:id="technicalDefeatMafia" layoutX="26.0" layoutY="81.0" mnemonicParsing="false" prefHeight="27.0" prefWidth="144.0" style="-fx-background-color: #161616; -fx-border-color: #ffffff; -fx-border-radius: 5px;" text="Мафії" textFill="WHITE" />
-         <ListView fx:id="playerCardListView" layoutY="128.0" prefHeight="498.0" prefWidth="191.0" />
-         <Line endX="100.7618408203125" layoutX="89.0" layoutY="128.0" startX="-89.0" stroke="WHITE" />
+         <Label layoutX="26.0" layoutY="5.0" text="Технічна поразка" textFill="WHITE" />
+         <Button fx:id="technicalDefeatPeaceful" layoutX="26.0" layoutY="22.0" mnemonicParsing="false" prefHeight="27.0" prefWidth="144.0" style="-fx-background-color: #161616; -fx-border-color: #ffffff; -fx-border-radius: 5px;" text="Мирним" textFill="WHITE" />
+         <Button fx:id="technicalDefeatMafia" layoutX="26.0" layoutY="58.0" mnemonicParsing="false" prefHeight="27.0" prefWidth="144.0" style="-fx-background-color: #161616; -fx-border-color: #ffffff; -fx-border-radius: 5px;" text="Корупціонерам" textFill="WHITE" />
+         <ListView fx:id="playerCardListView" fixedCellSize="-3.0" layoutX="1.0" layoutY="93.0" prefHeight="561.0" prefWidth="191.0" />
+         <Line endX="96.8570556640625" endY="-35.0" layoutX="89.0" layoutY="128.0" startX="-81.4285888671875" startY="-35.0" stroke="WHITE" />
       </children>
    </AnchorPane>
-   <Button fx:id="fullScreen" layoutX="1115.0" layoutY="23.0" mnemonicParsing="false" text="Повний екран" />
-   <AnchorPane layoutX="10.0" layoutY="324.0" prefHeight="210.0" prefWidth="117.0" style="-fx-border-color: #ffffff; -fx-border-radius: 5px;">
+   <Button fx:id="fullScreen" layoutX="1081.0" layoutY="24.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="106.0" text="Повний екран" />
+   <AnchorPane layoutX="10.0" layoutY="222.0" prefHeight="395.0" prefWidth="167.0" style="-fx-border-color: #ffffff; -fx-border-radius: 5px;">
       <children>
-         <ListView fx:id="allRolesPerGameList" layoutX="2.0" layoutY="8.0" prefHeight="278.0" prefWidth="163.0" />
+         <ListView fx:id="allRolesPerGameList" layoutX="2.0" layoutY="4.0" prefHeight="403.0" prefWidth="163.0" />
       </children>
    </AnchorPane>
    <Label layoutX="68.0" layoutY="25.0" text="НІЧ" textFill="WHITE">
@@ -43,7 +43,22 @@
          <Font size="31.0" />
       </font>
    </Label>
-   <AnchorPane fx:id="playersLeft" layoutX="11.0" layoutY="621.0" prefHeight="139.0" prefWidth="167.0" />
-   <Button fx:id="cancelButton" layoutX="49.0" layoutY="290.0" mnemonicParsing="false" text="Відмінити дію" />
+   <AnchorPane fx:id="playersLeft" layoutX="11.0" layoutY="642.0" prefHeight="118.0" prefWidth="167.0" />
+   <Button fx:id="cancelButton" layoutX="49.0" layoutY="182.0" mnemonicParsing="false" text="Відмінити дію" />
+   <Button fx:id="previousButton" layoutX="1197.0" layoutY="24.0" mnemonicParsing="false" text="&lt;">
+      <font>
+         <Font name="System Bold" size="12.0" />
+      </font>
+   </Button>
+   <Button fx:id="nextButton" layoutX="1251.0" layoutY="24.0" mnemonicParsing="false" text="&gt;">
+      <font>
+         <Font name="System Bold" size="12.0" />
+      </font>
+   </Button>
+   <Button fx:id="pauseButton" layoutX="1224.0" layoutY="24.0" mnemonicParsing="false" text="||">
+      <font>
+         <Font name="System Bold" size="12.0" />
+      </font>
+   </Button>
 
 </AnchorPane>

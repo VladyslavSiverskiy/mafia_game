@@ -16,10 +16,13 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.scene.paint.ImagePattern;
 import javafx.scene.shape.Circle;
 import javafx.stage.Stage;
 import net.rgielen.fxweaver.core.FxWeaver;
@@ -56,8 +59,6 @@ public class ArchiveGameController implements Initializable {
     @FXML
     private AnchorPane endingGameAp;
     @FXML
-    private AnchorPane playersLeft;
-    @FXML
     private Button toStarterPage;
     @FXML
     private Label winnerTitleLabel;
@@ -70,8 +71,7 @@ public class ArchiveGameController implements Initializable {
     @FXML
     private TableColumn<GameStatistics, Circle> avatarColumn;
     @FXML
-    private HBox  podiumBox; // New VBox for the podium
-
+    private HBox podiumBox;
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
@@ -83,22 +83,32 @@ public class ArchiveGameController implements Initializable {
 
         stage.getIcons().add(new Image("/images/title.jpg"));
         stage.setTitle("STOP КОРУПЦІЯ");
-        scene.getStylesheets().add(getClass().getResource("/style/style.css").toExternalForm());
+//        scene.getStylesheets().add(getClass().getResource("/style/style.css").toExternalForm());
+        scene.getStylesheets().add(getClass().getResource("/style/end-page.css").toExternalForm());
+
+        // Apply general styles
+        endingGameAp.getStyleClass().add("anchor-pane");
+        podiumBox.getStyleClass().add("podium-box");
+
         Game game = gameService.getGameInfo(EveningRateController.gameIdToBeFound);
         pointsService.countPointsAfterGameWasFinished(game.getId());
         List<GameStatistics> gameStatisticsList = gameStatisticsService.getGameStatisticsByGameId(game.getId());
+
         // Sort the list by points in descending order
         List<GameStatistics> sortedList = gameStatisticsList.stream()
                 .sorted(Comparator.comparingInt(GameStatistics::getPoints).reversed())
                 .collect(Collectors.toList());
+
         // Get the top 3 players by points
         List<GameStatistics> top3Players = sortedList.stream().limit(3).collect(Collectors.toList());
+
         // Get the rest of the players
         List<GameStatistics> restOfPlayers = sortedList.stream().skip(3).collect(Collectors.toList());
 
         playerNameColumn.setCellValueFactory(new PropertyValueFactory<>("inGameNickname"));
         pointsColumn.setCellValueFactory(new PropertyValueFactory<>("points"));
-        avatarColumn.setCellValueFactory(new PropertyValueFactory<>("avatarCircle")); // Assuming you have a method in your model to get Circle
+        avatarColumn.setCellValueFactory(new PropertyValueFactory<>("avatarCircle"));
+
         // Custom cell factory to add "+" sign to points
         pointsColumn.setCellFactory(column -> new TableCell<GameStatistics, Integer>() {
             @Override
@@ -113,7 +123,10 @@ public class ArchiveGameController implements Initializable {
                 }
             }
         });
+
+        gameStatisticsTable.getStyleClass().add("table-view");
         gameStatisticsTable.setItems(FXCollections.observableArrayList(restOfPlayers));
+
         avatarColumn.setCellFactory(column -> new TableCell<GameStatistics, Circle>() {
             @Override
             protected void updateItem(Circle item, boolean empty) {
@@ -123,37 +136,39 @@ public class ArchiveGameController implements Initializable {
                 } else {
                     HBox hbox = new HBox(item);
                     hbox.setStyle("-fx-alignment: CENTER;");
-                    setGraphic(hbox);     }
+                    setGraphic(hbox);
+                }
             }
         });
+
         String winners = game.getWinnerSide().getTitle();
         if (winners.equals(ETeam.MAFIA.getTitle())) {
             if (checkIfYanucharMafiaExisted(game)) {
                 winners = "Яничар";
-            }else {
+            } else {
                 winners = "Корупціонери";
             }
         } else {
             winners = "Мирні";
         }
+
         winnerTitleLabel.setText("Перемогли: " + winners);
-        winnerTitleLabel.setStyle("-fx-text-fill: white;");
+        winnerTitleLabel.getStyleClass().add("label-winner");
+
+        toStarterPage.getStyleClass().add("button-idle");
+        toStarterPage.setOnMouseEntered(ev -> toStarterPage.setStyle(HOVERED_BUTTON_STYLE));
+        toStarterPage.setOnMouseExited(ev -> toStarterPage.setStyle(IDLE_BUTTON_STYLE));
         toStarterPage.setOnMouseClicked(ev -> {
             fxWeaver.loadController(EveningRateController.class).show();
         });
 
-//        playersLeft.getChildren().add(viewController.createPlayerStatisticsPanel());
-
-        toStarterPage.setStyle(IDLE_BUTTON_STYLE);
-        toStarterPage.setOnMouseEntered(ev -> toStarterPage.setStyle(HOVERED_BUTTON_STYLE));
-        toStarterPage.setOnMouseExited(ev -> toStarterPage.setStyle(IDLE_BUTTON_STYLE));
         // Create the podium
         createPodium(top3Players);
     }
 
     private boolean checkIfYanucharMafiaExisted(Game game) {
         List<GameStatistics> gameStatisticsList = game.getGameStatistics();
-        for (GameStatistics gameStatistics: gameStatisticsList) {
+        for (GameStatistics gameStatistics : gameStatisticsList) {
             if (gameStatistics.getRole().getRoleNameConstant().equals(ERoleOrder.PEREVERTEN_MAFIA.name())) {
                 return true;
             }
@@ -163,6 +178,8 @@ public class ArchiveGameController implements Initializable {
 
     private void createPodium(List<GameStatistics> top3Players) {
         podiumBox.getChildren().clear();
+        podiumBox.getStyleClass().add("podium-box");
+
         String[] medals = {"/images/gold.png", "/images/silver.png", "/images/bronze.png"};
 
         // Define fixed width for each card
@@ -172,34 +189,49 @@ public class ArchiveGameController implements Initializable {
             GameStatistics player = top3Players.get(i);
 
             ImageView medalView = new ImageView(new Image(getClass().getResourceAsStream(medals[i])));
-            medalView.setFitHeight(50);
+            medalView.setFitHeight(100);
             medalView.setFitWidth(50);
+            medalView.getStyleClass().add("medal-image");
 
             // Create a grey circle to represent the avatar
             Circle avatarCircle = new Circle(30, Color.GREY);
+            if (player != null) {
+                Image avatarImage = null;
+                try {
+                    avatarImage = new Image("images/" + player.getRole().getRoleNameConstant() + ".jpg");
+                } catch (Exception e) {
+                    avatarImage = new Image("images/icon.ico");
+                }
+                ImagePattern imagePattern = new ImagePattern(avatarImage);
+                avatarCircle.setFill(imagePattern);
+            }
             avatarCircle.setStroke(Color.WHITE);
             avatarCircle.setStrokeWidth(2);
 
             Label nameLabel = new Label(player.getInGameNickname());
-            nameLabel.setStyle("-fx-text-fill: white; -fx-font-size: 16px; -fx-font-family: 'Arial'; -fx-text-alignment: center");
+            nameLabel.setStyle("-fx-text-fill: black; -fx-font-size: 16px; -fx-font-family: 'Arial'; -fx-text-alignment: center");
             nameLabel.setWrapText(true);  // Wrap text if it exceeds width
             nameLabel.setMaxWidth(cardWidth - 20);  // Subtract padding
             nameLabel.setAlignment(javafx.geometry.Pos.CENTER);
 
             Label roleLabel = new Label(player.getRole().getTitle());
-            roleLabel.setStyle("-fx-text-fill: white; -fx-font-size: 14px; -fx-font-family: 'Arial'; -fx-text-alignment: center");
+            roleLabel.setStyle("-fx-text-fill: black; -fx-font-size: 14px; -fx-font-family: 'Arial'; -fx-text-alignment: center");
             roleLabel.setWrapText(true);  // Wrap text if it exceeds width
             roleLabel.setMaxWidth(cardWidth - 20);  // Subtract padding
             roleLabel.setAlignment(javafx.geometry.Pos.CENTER);
 
             Label pointsLabel = new Label("+" + player.getPoints());
-            pointsLabel.setStyle("-fx-text-fill: white; -fx-font-size: 14px; -fx-font-family: 'Arial'; -fx-text-alignment: center");
+            pointsLabel.setStyle("-fx-text-fill: black; -fx-font-size: 14px; -fx-font-family: 'Arial'; -fx-text-alignment: center");
             pointsLabel.setWrapText(true);  // Wrap text if it exceeds width
             pointsLabel.setMaxWidth(cardWidth - 20);  // Subtract padding
             pointsLabel.setAlignment(javafx.geometry.Pos.CENTER);
 
             VBox playerBox = new VBox(medalView, avatarCircle, nameLabel, roleLabel, pointsLabel);
-            playerBox.setStyle("-fx-alignment: center; -fx-spacing: 10; -fx-padding: 10; -fx-pref-width: " + cardWidth + "px;");
+            playerBox.getStyleClass().add("player-box"); // Apply player-box style
+
+            nameLabel.getStyleClass().add("player-label"); // Apply player-label style
+            roleLabel.getStyleClass().add("player-label"); // Apply player-label style
+            pointsLabel.getStyleClass().add("player-label"); // Apply player-label style
 
             podiumBox.getChildren().add(playerBox);
         }
@@ -207,5 +239,34 @@ public class ArchiveGameController implements Initializable {
 
     public void show() {
         stage.show();
+    }
+
+    @FXML
+    private void handleCopyButtonAction() {
+        StringBuilder sb = new StringBuilder();
+
+        // Get all items from the TableView
+        for (GameStatistics item : gameStatisticsTable.getItems()) {
+            String nickname = item.getInGameNickname();
+            int totalPoints = item.getPoints();
+            sb.append(nickname).append(": +").append(totalPoints).append("\n");
+        }
+
+        // Copy the text to the clipboard
+        Clipboard clipboard = Clipboard.getSystemClipboard();
+        ClipboardContent content = new ClipboardContent();
+        content.putString(sb.toString());
+        clipboard.setContent(content);
+
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Дані було скопійовано");
+        alert.setHeaderText(null);
+        alert.setContentText("Скопійовано в буфер обміну!");
+        DialogPane dialogPane1 = alert.getDialogPane();
+        dialogPane1.getStylesheets().add(
+                getClass().getResource("/style/myDialogs.css").toExternalForm());
+        dialogPane1.getStyleClass().add("myDialog");
+
+        alert.showAndWait();
     }
 }

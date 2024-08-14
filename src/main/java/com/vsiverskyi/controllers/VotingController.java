@@ -8,6 +8,7 @@ import com.vsiverskyi.service.GameService;
 import com.vsiverskyi.service.GameStatisticsService;
 import com.vsiverskyi.service.PointsService;
 import com.vsiverskyi.utils.SettingsUtil;
+import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
@@ -26,10 +27,7 @@ import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
-import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.ImagePattern;
 import javafx.scene.shape.Circle;
@@ -119,8 +117,7 @@ public class VotingController implements Initializable, DisplayedPlayersControll
     private List<GameStatistics> gameStatisticsList;
     private Timeline excuseTimeLineTextChanger;
     private Deque<Integer> gamersOrder;
-    private Integer currentVoterIndex;
-    private Integer reverseCurrentVoterIndex;
+
     private boolean reverse;
     private boolean kradiyHasStolenVoice;
 
@@ -131,6 +128,7 @@ public class VotingController implements Initializable, DisplayedPlayersControll
     int lastVotedNumber;
     int lastVoiceAmount;
     int votesTillEndAmount;
+    boolean mainTimerIsGoing;
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
@@ -151,14 +149,12 @@ public class VotingController implements Initializable, DisplayedPlayersControll
 
         gameStatisticsList = gameStatisticsService.getGameStatisticsByGameIdSortedByInGameNumber(SelectionController.currentGameId);
         initPlayerInGameNumberGameStatistics();
-        reverseCurrentVoterIndex = gameStatisticsList.size() - 1;
-        currentVoterIndex = 0;
-// Initialize player card list view
+  // Initialize player card list view
         // Initialize technical defeat buttons
         technicalDefeatPeaceful.setOnMouseClicked(e -> penaltyController.assignTechnicalDefeat("PEACE"));
         technicalDefeatMafia.setOnMouseClicked(e -> penaltyController.assignTechnicalDefeat("MAFIA"));
 
-        penaltyController.initializePlayerCardList(gameStatisticsList, stage, this, playerCardListView);
+        initializePlayerCardList(gameStatisticsList, stage, this, playerCardListView);
 
         displayRolePlayers(gameStatisticsList.size());
 
@@ -187,17 +183,17 @@ public class VotingController implements Initializable, DisplayedPlayersControll
         startButton.toFront();
 
         finishButton.setDisable(true);
-        playersLeft.getChildren().add(viewController.createPlayerStatisticsPanel());
+        playersLeft.getChildren().add(viewController.createPlayerStatisticsPanel(false));
 
         votesTillEndAmount = (int) gameStatisticsList.stream()
                 .filter(gameStatistics -> gameStatistics.isInGame()
                                           && !gameStatistics.isSkipNextVoting()
-                        && gameStatistics.getRedCards() == 0
+                                          && gameStatistics.getRedCards() == 0
                 ).count();
         setVotesLeftLabelText(votesTillEndAmount);
     }
 
-    private void setVotesLeftLabelText(int votesTillEndAmount) {
+    public void setVotesLeftLabelText(int votesTillEndAmount) {
         votesTillEnd.setText("Залишилось " + votesTillEndAmount + " голосів");
     }
 
@@ -355,8 +351,25 @@ public class VotingController implements Initializable, DisplayedPlayersControll
                 button.setStyle(IDLE_BUTTON_STYLE);
             }
 
+            if (checkIfPoisoned(i, totalPlayers)) {
+                Image deathImage = new Image(getClass().getResource("/images/poison_green.png").toExternalForm());
+                ImageView deathImageView = new ImageView(deathImage);
+                deathImageView.setFitWidth(15); // Adjust width as needed
+                deathImageView.setFitHeight(15); // Adjust height as needed
+                playerPanel.getChildren().add(deathImageView);
+                kradiyHasStolenVoice = true;
+            }
+
             if (checkIfSkipVoting(i, totalPlayers)) {
                 Image deathImage = new Image(getClass().getResource("/images/pause.png").toExternalForm());
+                ImageView deathImageView = new ImageView(deathImage);
+                deathImageView.setFitWidth(15); // Adjust width as needed
+                deathImageView.setFitHeight(15); // Adjust height as needed
+                playerPanel.getChildren().add(deathImageView);
+            }
+
+            if (checkIfDefended(i, totalPlayers)) {
+                Image deathImage = new Image(getClass().getResource("/images/otaman.png").toExternalForm());
                 ImageView deathImageView = new ImageView(deathImage);
                 deathImageView.setFitWidth(15); // Adjust width as needed
                 deathImageView.setFitHeight(15); // Adjust height as needed
@@ -371,15 +384,33 @@ public class VotingController implements Initializable, DisplayedPlayersControll
                 playerPanel.getChildren().add(deathImageView);
                 kradiyHasStolenVoice = true;
             }
-
             if (i == 0 || i == totalPlayers + 1) {
                 playerPanel.setVisible(false);
                 button.setVisible(false);
             } else {
                 playerIdButton.put(i, button);
             }
+
+            if (gamersOrder != null) {
+                Integer currentVoter = gamersOrder.peek();
+                if (currentVoter != null && currentVoter != 0 && currentVoter != totalPlayers - 1) {
+                    updateButtonStates(currentVoter - 1);
+                    handleButtonsAndWithoutBlock(currentVoter - 1);
+//                    unblockAllButtons();
+                }
+            }
+
             votingPlayersPane.getChildren().add(button);
         }
+    }
+
+    private boolean checkIfPoisoned(int playerNumber, int totalPlayers) {
+        return playerNumber != 0 && playerNumber != totalPlayers + 1
+               && gameStatisticsService
+                       .getGameStatisticsByGameIdSortedByInGameNumber(SelectionController.currentGameId)
+                       .get(playerNumber - 1).isInGame() && gameStatisticsService
+                       .getGameStatisticsByGameIdSortedByInGameNumber(SelectionController.currentGameId)
+                       .get(playerNumber - 1).isPoisonedByLady();
     }
 
     /**
@@ -400,11 +431,25 @@ public class VotingController implements Initializable, DisplayedPlayersControll
                        .get(playerNumber - 1).isSkipNextVoting();
     }
 
-    private Boolean checkIfMarkedByKradiy(int playerNumber, int totalPlayers) {
+    private Boolean checkIfDefended(int playerNumber, int totalPlayers) {
         return playerNumber != 0 && playerNumber != totalPlayers + 1
                && gameStatisticsService
                        .getGameStatisticsByGameIdSortedByInGameNumber(SelectionController.currentGameId)
-                       .get(playerNumber - 1).isWasMarkedByKradiy();
+                       .get(playerNumber - 1).isDefendedPerNextVoting();
+    }
+
+    private Boolean checkIfMarkedByKradiy(int playerNumber, int totalPlayers) {
+        //Тут ще перевіряємо чи крадій живий
+        List<GameStatistics> gameStatistics = gameStatisticsService
+                .getGameStatisticsByGameIdSortedByInGameNumber(SelectionController.currentGameId);
+        boolean selectedPlayerIsMarkedByKradiy = playerNumber != 0 && playerNumber != totalPlayers + 1
+                                                 && gameStatistics.get(playerNumber - 1).isWasMarkedByKradiy();
+        boolean kradiyDead = gameStatistics.stream()
+                .filter(gameStatisticsKrCheck ->
+                        gameStatisticsKrCheck.getRole().getRoleNameConstant()
+                                .equals(ERoleOrder.KRADIY.name())
+                        && gameStatisticsKrCheck.isInGame()).toList().isEmpty();
+        return !kradiyDead && selectedPlayerIsMarkedByKradiy;
     }
 
     private void beginVoting(int beginFromIndex) {
@@ -485,10 +530,8 @@ public class VotingController implements Initializable, DisplayedPlayersControll
             }
         } else {
             goAheadButton.setDisable(false);
-
             Scene scene = goAheadButton.getScene();
             scene.setOnKeyTyped(event -> {
-
                 if (event.getCharacter().equals(" ")) {
                     // Check if the button is not disabled to avoid re-triggering
                     if (!goAheadButton.isDisabled()) {
@@ -498,14 +541,11 @@ public class VotingController implements Initializable, DisplayedPlayersControll
                     }
                 }
             });
-
             goAheadButton.setOnMouseClicked(actionEvent -> {
                 // Disable the "Start Timer" button
                 goAheadButton.setDisable(true);
                 startTimerForPlayer(currentVoterIndex); // Start the timer for the player
             });
-
-
             updateButtonStates(currentVoterIndex);
             blockAllButtons();
             Button button = playerIdButton.get(currentVoterIndex + 1);
@@ -513,7 +553,7 @@ public class VotingController implements Initializable, DisplayedPlayersControll
         }
     }
 
-    private void startTimerForPlayer(Integer currentVoterIndex) {
+    private void handleButtons(Integer currentVoterIndex) {
         for (Map.Entry<Integer, Button> entry : playerIdButton.entrySet()) {
             Button button = entry.getValue();
             Integer finalCurrentVoterIndex = currentVoterIndex;
@@ -525,16 +565,35 @@ public class VotingController implements Initializable, DisplayedPlayersControll
             });
             button.setDisable(true);
         }
+    }
 
+    private void handleButtonsAndWithoutBlock(Integer currentVoterIndex) {
+        for (Map.Entry<Integer, Button> entry : playerIdButton.entrySet()) {
+            Button button = entry.getValue();
+            Integer finalCurrentVoterIndex = currentVoterIndex;
+            button.setOnMouseClicked(actionEvent -> {
+                if (countDownTimeLine != null) {
+                    countDownTimeLine.stop();
+                }
+                setVote(Integer.parseInt(button.getText()), finalCurrentVoterIndex);
+            });
+            if (countDownTimeLine == null || countDownTimeLine.getStatus().equals(Animation.Status.STOPPED)) {
+                button.setDisable(true);
+            }
+        }
+    }
+
+    private void startTimerForPlayer(Integer currentVoterIndex) {
+        handleButtons(currentVoterIndex);
         secondsTillEnd = SettingsUtil.getSecondsPerMove();
         Integer finalCurrentVoterIndex = currentVoterIndex;
-
         countDownTimeLine = new Timeline(new KeyFrame(Duration.seconds(1), (ActionEvent event) -> {
             if (secondsTillEnd > 0) {
                 secondsLeft.setText(String.valueOf(secondsTillEnd--));
             } else {
                 Platform.runLater(() -> {
                     int setVoteTo = 0;
+                    mainTimerIsGoing = false;
                     if (finalCurrentVoterIndex == findLastAliveIndex()) {
                         for (int i = gameStatisticsList.size() - 1; i >= 0; i--) {
                             if (checkIfAlive(i + 1, gameStatisticsList.size())) {
@@ -588,7 +647,6 @@ public class VotingController implements Initializable, DisplayedPlayersControll
             goAheadButton.setDisable(false);
             Scene scene = goAheadButton.getScene();
             scene.setOnKeyTyped(event -> {
-
                 if (event.getCharacter().equals(" ")) {
                     // Check if the button is not disabled to avoid re-triggering
                     if (!goAheadButton.isDisabled()) {
@@ -604,7 +662,6 @@ public class VotingController implements Initializable, DisplayedPlayersControll
                 unblockAllButtons();
                 startTimerForReversePlayer(reverseCurrentVoterIndex); // Start the timer for the player
             });
-
             updateButtonStates(reverseCurrentVoterIndex);
             blockAllButtons();
             Button button = playerIdButton.get(reverseCurrentVoterIndex + 1);
@@ -613,22 +670,9 @@ public class VotingController implements Initializable, DisplayedPlayersControll
     }
 
     private void startTimerForReversePlayer(Integer reverseCurrentVoterIndex) {
-        for (Map.Entry<Integer, Button> entry : playerIdButton.entrySet()) {
-            Button button = entry.getValue();
-            Integer finalReverseCurrentVoterIndex = reverseCurrentVoterIndex;
-            button.setOnMouseClicked(actionEvent -> {
-                if (countDownTimeLine != null) {
-                    countDownTimeLine.stop();
-                }
-                setVote(Integer.parseInt(button.getText()), finalReverseCurrentVoterIndex);
-            });
-            button.setDisable(true);
-
-        }
-
+        handleButtons(reverseCurrentVoterIndex);
         secondsTillEnd = SettingsUtil.getSecondsPerMove(); // Set your countdown duration here
         Integer finalReverseCurrentVoterIndex = reverseCurrentVoterIndex;
-
         countDownTimeLine = new Timeline(new KeyFrame(Duration.seconds(1), (ActionEvent event) -> {
             if (secondsTillEnd > 0) {
                 secondsLeft.setText(String.valueOf(secondsTillEnd--));
@@ -649,12 +693,10 @@ public class VotingController implements Initializable, DisplayedPlayersControll
                         }
                     }
                     setVote(setVoteTo, finalReverseCurrentVoterIndex);
-
                 });
                 countDownTimeLine.stop();
             }
         }));
-
         countDownTimeLine.setCycleCount(Timeline.INDEFINITE);
         countDownTimeLine.play();
         unblockAllButtons();
@@ -664,11 +706,11 @@ public class VotingController implements Initializable, DisplayedPlayersControll
     }
 
 
-    private void updateButtonStates(int reverseCurrentVoterIndex) {
+    private void updateButtonStates(int voterIndex) {
         for (Map.Entry<Integer, Button> entry : playerIdButton.entrySet()) {
             int playerId = entry.getKey();
             Button anotherPlayerButton = entry.getValue();
-            if (playerId != reverseCurrentVoterIndex + 1) {
+            if (playerId != voterIndex + 1) {
                 if (!checkIfAlive(playerId, gameStatisticsList.size())) {
                     anotherPlayerButton.setDisable(true);
                 } else {
@@ -694,7 +736,6 @@ public class VotingController implements Initializable, DisplayedPlayersControll
         for (Map.Entry<Integer, Integer> entry : sortedVotesList) {
             int playerId = entry.getKey();
             int votes = entry.getValue();
-
             Label voteLabel = new Label();
             String nickname = playerInGameNumberGameStatistics.get(playerId).getInGameNickname();
             if (nickname == null) {
@@ -715,13 +756,11 @@ public class VotingController implements Initializable, DisplayedPlayersControll
         GameStatistics gameStatisticsVoter = gameStatisticsService
                 .getGameStatisticsByGameIdSortedByInGameNumber(SelectionController.currentGameId).get(voterIndex);
         boolean isKradiy = kradiyHasStolenVoice && gameStatisticsVoter.getRole().getRoleNameConstant().equals(ERoleOrder.KRADIY.name());
-
         int votesToAdd;
         if (isKradiy) {
             votesToAdd = 2;
             GameStatistics gameStatistics = gameStatisticsService.findMarkedByKradiy(SelectionController.currentGameId);
-            System.out.println(gameStatistics);
-            if (gameStatistics.isSkipNextVoting()) {
+            if (gameStatistics.isSkipNextVoting() || !gameStatistics.isInGame()) {
                 votesToAdd = 1;
             }
         } else {
@@ -787,11 +826,10 @@ public class VotingController implements Initializable, DisplayedPlayersControll
         excuseTimeLineTextChanger.setCycleCount((int) secondsTillEnd);
 //        excuseTimeLineTextChanger.play();
         continueTimer = true;
-
         excuseTimeLine = new Timeline(new KeyFrame(Duration.seconds(1), ae -> {
             if (secondsTillEnd > 0) {
                 secondsLeft.setText(String.valueOf(secondsTillEnd--));
-            }else {
+            } else {
                 Platform.runLater(() -> {
                     excuseTimeLine.stop(); // Stop the timer when it ends
                     excuseTimeLine = null;
@@ -853,12 +891,9 @@ public class VotingController implements Initializable, DisplayedPlayersControll
         alert.setTitle("Кінець голосування");
         alert.setHeaderText(null);
         alert.setContentText("Це ОСТАННІЙ голос перед етапом НОЧІ, бажаєте його залишити?");
-
         ButtonType buttonYes = new ButtonType("Так");
         ButtonType buttonNo = new ButtonType("Ні");
-
         alert.getButtonTypes().setAll(buttonYes, buttonNo);
-
         alert.showAndWait().ifPresent(response -> {
             if (response == buttonYes) {
                 if (countDownTimeLine != null) {
@@ -874,10 +909,8 @@ public class VotingController implements Initializable, DisplayedPlayersControll
     }
 
     private void addPointsAndChangeVoterIndex(int playerNumber, int voterIndex) {
-
         //оновити вікно із результатом
         updateVotesDisplay();
-
         // Якщо мирний голосує в мирного, то не отримує очок, якщо в мафію, то йому дають + 3
         // мафія вкидає в мирного отримує +2
         pointsService.countPointsInOrderToDayAction(
@@ -888,7 +921,6 @@ public class VotingController implements Initializable, DisplayedPlayersControll
         //перевірити на кінець голосування
         if (checkTheEndOfVoting(voterIndex)) {
             lastVoiceReverse();
-
         } else {
             gamersOrder.remove();//видаляємо з черги того хто голосував
             Integer nextPlayerNumber = gamersOrder.peek();
@@ -926,10 +958,10 @@ public class VotingController implements Initializable, DisplayedPlayersControll
         } else {
             playerInGameNumberToDelete = playersIdWithMaxVotes.get(0);
             List<String> markedByBombNicknames = gameStatisticsService
-                        .getMarkedByBombAlivePlayersInGameNumbers(SelectionController.currentGameId)
-                        .stream().map(gameStatistics1 -> gameStatistics1.getInGameNickname()).collect(Collectors.toList());
+                    .getMarkedByBombAlivePlayersInGameNumbers(SelectionController.currentGameId)
+                    .stream().map(gameStatistics1 -> gameStatistics1.getInGameNickname()).collect(Collectors.toList());
 
-            GameStatistics gameStatistics =  gameStatisticsService.deletePlayerAfterVoting(SelectionController.currentGameId, playerInGameNumberToDelete);
+            GameStatistics gameStatistics = gameStatisticsService.deletePlayerAfterVoting(SelectionController.currentGameId, playerInGameNumberToDelete);
             pointsService.countOnePointAfterDayAndNight(SelectionController.currentGameId);
             //тут можливо ще зробити сервіс, який буде перевіряти чи гру закінчено, і дьоргати його методи
             showResultWindow(gameStatistics, markedByBombNicknames);
@@ -942,13 +974,10 @@ public class VotingController implements Initializable, DisplayedPlayersControll
     }
 
     private void showResultWindow(GameStatistics gameStatistics, List<String> markedByBombNicknames) {
-
         Image image = new Image(getClass().getResource("/images/stop.png").toExternalForm());
         ImageView imageView = new ImageView(image);
         imageView.setFitWidth(50);  // Set the desired width
         imageView.setFitHeight(50); // Set the desired height
-
-
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setGraphic(imageView);
         DialogPane dialogPane = alert.getDialogPane();
@@ -967,8 +996,18 @@ public class VotingController implements Initializable, DisplayedPlayersControll
                 }
             }
         }
+        if (!gameStatistics.isDefendedPerNextVoting() && gameStatistics.getRole().getRoleNameConstant().equals(ERoleOrder.ZATYCHKA_SUDDYA.name())) {
+            GameStatistics gameStatistics1 = gameStatisticsService.findMarkedBySuddyaByGameId(SelectionController.currentGameId);
+            for (GameStatistics gameStatisticsAtTheBeggining : gameStatisticsList) {
+                if (gameStatisticsAtTheBeggining.getId().equals(gameStatistics1.getId())) {
+                    if (gameStatisticsAtTheBeggining.isInGame()) {
+                        res += "\nТакож із суддею вибуває: " + gameStatistics1.getInGameNickname();
+                    }
+                }
+            }
+        }
         alert.setContentText(gameStatistics.getInGameNickname() + res);
-
+        alert.setResizable(true);
         alert.initOwner(stage);
         alert.showAndWait();
     }
@@ -989,7 +1028,8 @@ public class VotingController implements Initializable, DisplayedPlayersControll
 
         Random random = new Random();
         int deathButtonIndex = random.nextInt(totalButtons);
-        int[] currentPlayerIndex = {0};
+        int startIndex = random.nextInt(playersIdWithMaxVotes.size());
+        int[] currentPlayerIndex = {startIndex};
 
         Label currentPlayerLabel = new Label();
         currentPlayerLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #ffffff;");
@@ -1143,5 +1183,162 @@ public class VotingController implements Initializable, DisplayedPlayersControll
 
     public void show() {
         stage.show();
+    }
+
+    public void initializePlayerCardList(
+            List<GameStatistics> gameStatisticsList,
+            Stage stage,
+            DisplayedPlayersController controller,
+            ListView<HBox> playerCardListView
+    ) {
+        ObservableList<HBox> playerCards = FXCollections.observableArrayList();
+
+        for (GameStatistics gs : gameStatisticsList) {
+            HBox playerCardRow = new HBox(5); // Reduced spacing between elements
+            playerCardRow.setAlignment(Pos.CENTER_LEFT); // Align items to center-left
+            playerCardRow.setPadding(new Insets(2, 5, 2, 5)); // Minimal padding for compactness
+
+            String nickname = gs.getInGameNickname() != null ? gs.getInGameNickname() : "Незнайомець";
+            String displayNickname = nickname;
+            if (nickname.length() > 15) {
+                displayNickname = nickname.substring(0, 12) + "...";
+            }
+
+            Label playerLabel = new Label(gs.getInGameNumber() + ". " + displayNickname.toUpperCase());
+            playerLabel.setStyle("-fx-font-size: 10px; -fx-text-fill: #ffffff;"); // Reduced font size and set text color
+            // Tooltip with full nickname
+            Tooltip fullNicknameTooltip = new Tooltip(nickname);
+            Tooltip.install(playerLabel, fullNicknameTooltip);
+            // Create smaller yellow card button
+            Button yellowCardButton = new Button();
+            yellowCardButton.setStyle("-fx-background-color: yellow; -fx-min-width: 10px; -fx-min-height: 10px; -fx-max-width: 10px; -fx-max-height: 10px; -fx-cursor: hand;");
+            yellowCardButton.setTooltip(new Tooltip("Додати жовту картку")); // Tooltip for clarity
+            // Create smaller red card button
+            Button redCardButton = new Button();
+            redCardButton.setStyle("-fx-background-color: red; -fx-min-width: 10px; -fx-min-height: 10px; -fx-max-width: 10px; -fx-max-height: 10px; -fx-cursor: hand;");
+            redCardButton.setTooltip(new Tooltip("Додати червону картку")); // Tooltip for clarity
+            // Create a larger pause button with an image
+            int playerNumber = gs.getInGameNumber();
+
+            yellowCardButton.setOnMouseClicked(e -> {
+                giveYellowCard(playerNumber, yellowCardButton, redCardButton, stage);
+                controller.displayRolePlayers(gameStatisticsList.size());
+            });
+            redCardButton.setOnMouseClicked(e -> {
+                if (gamersOrder != null) {
+                    Integer currentVoterNumber = gamersOrder.peek();
+                    if (currentVoterNumber != null && currentVoterNumber == playerNumber) {
+                        Alert alert = new Alert(Alert.AlertType.WARNING);
+                        DialogPane dialogPane = alert.getDialogPane();
+                        dialogPane.getStylesheets().add(
+                                getClass().getResource("/style/myDialogs.css").toExternalForm());
+                        dialogPane.getStyleClass().add("myDialog");
+                        alert.setHeaderText("Увага!");
+                        alert.setContentText(nickname +
+                                             " зараз голосує. Ви можете вилучити цього гравця після його голосу");
+                        alert.setResizable(true);
+                        alert.getDialogPane().setPrefSize(480, 320);
+                        alert.initOwner(stage);
+                        alert.showAndWait();
+                    } else {
+                        giveRedCard(playerNumber, yellowCardButton, redCardButton, stage);
+                        controller.displayRolePlayers(gameStatisticsList.size());
+                    }
+                }
+            });
+
+            Button pauseButton = new Button();
+
+            Image pauseImage = new Image(getClass().getResourceAsStream("/images/pause.png")); // Ensure the path is correct
+            ImageView pauseImageView = new ImageView(pauseImage);
+            pauseImageView.setFitWidth(10); // Set image width
+            pauseImageView.setFitHeight(10); // Set image height
+            pauseButton.setGraphic(pauseImageView);
+            pauseButton.setStyle("-fx-background-color: transparent; -fx-cursor: hand; -fx-min-width: 10px; -fx-min-height: 10px; -fx-max-width: 10px; -fx-max-height: 10px; -fx-cursor: hand;");
+            pauseButton.setTooltip(new Tooltip("Пропустити наступне голосування")); // Tooltip for clarity
+            pauseButton.setOnMouseClicked(e -> {
+                if (!checkIfSkipVoting(gs.getInGameNumber(), gameStatisticsList.size())) {
+                    votesTillEndAmount--;
+                    setVotesLeftLabelText(votesTillEndAmount);
+                    gameStatisticsService.setSkipNextVoting(gs);
+                    controller.displayRolePlayers(gameStatisticsList.size());
+                }
+            });
+
+            // Disable buttons if the player is not in the game
+            if (!gs.isInGame()) {
+                yellowCardButton.setDisable(true);
+                redCardButton.setDisable(true);
+                pauseButton.setDisable(true);
+                playerLabel.setStyle(playerLabel.getStyle() + "-fx-opacity: 0.5;"); // Dim label to indicate inactivity
+            } else {
+                yellowCardButton.setDisable(false);
+                pauseButton.setDisable(false);
+                redCardButton.setDisable(false);
+            }
+
+            // Create a Region to act as a spacer
+            Region spacer = new Region();
+            HBox.setHgrow(spacer, Priority.ALWAYS);
+
+            if (controller instanceof VotingController) {
+                playerCardRow.getChildren().addAll(playerLabel, spacer, yellowCardButton, redCardButton, pauseButton);
+            } else {
+                playerCardRow.getChildren().addAll(playerLabel, spacer, yellowCardButton, redCardButton);
+            }
+            playerCardRow.setStyle("-fx-background-color: #2b2b2b; -fx-background-radius: 5;"); // Optional: Set background color and rounded corners for better aesthetics
+
+            playerCards.add(playerCardRow);
+        }
+
+        // Optional: Set a minimal height for the ListView rows
+        playerCardListView.setFixedCellSize(30);
+        playerCardListView.setItems(playerCards);
+    }
+
+
+    public void giveYellowCard(int playerNumber, Button yellowButton, Button redButton, Stage stage) {
+        // Get the current number of yellow cards from the database
+        GameStatistics gs = gameStatisticsService.getGameStatisticsByGameIdSortedByInGameNumber(SelectionController.currentGameId)
+                .stream()
+                .filter(stat -> stat.getInGameNumber() == playerNumber)
+                .findFirst()
+                .orElse(null);
+
+        if (gs != null) {
+            int yellowCards = gs.getYellowCards();
+            yellowCards++;
+            gs.setYellowCards(yellowCards);
+
+            // Save the updated yellow card count back to the database
+            gameStatisticsService.updateYellowCards(gs.getGame().getId(), gs.getInGameNumber(), yellowCards);
+
+            if (yellowCards >= 4) {
+                giveRedCard(playerNumber, yellowButton, redButton, stage);
+            } else if (yellowCards >= 3) {
+                votesTillEndAmount--;
+                setVotesLeftLabelText(votesTillEndAmount);
+                gameStatisticsService.setSkipNextVoting(gs);
+            } else {
+                Alert alert = new Alert(Alert.AlertType.INFORMATION, "Гравець " + playerNumber + " отримав жовту картку");
+                alert.initOwner(stage);
+                alert.show();
+            }
+        }
+    }
+
+    public void giveRedCard(int playerNumber, Button yellowButton, Button redButton, Stage stage) {
+//        votesTillEndAmount--;
+//        setVotesLeftLabelText(votesTillEndAmount);
+        yellowButton.setDisable(true);
+        redButton.setDisable(true);
+        gameStatisticsService.resetYellowCardsAmountAndGiveRedOne(SelectionController.currentGameId, playerNumber);
+        gameStatisticsService.removePlayerFromGame(SelectionController.currentGameId, playerNumber);
+        Alert alert = new Alert(Alert.AlertType.INFORMATION, "Гравець " + playerNumber + " отримав червону картку");
+        alert.initOwner(stage);
+        alert.show();
+        if (gameService.checkIfGameIsOver(SelectionController.currentGameId)) {
+            fxWeaver.loadController(GameEndingController.class);
+        }
     }
 }

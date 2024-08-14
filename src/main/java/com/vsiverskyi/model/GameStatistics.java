@@ -41,6 +41,8 @@ public class GameStatistics {
     @Column
     private boolean skipNextVoting;
     @Column
+    private boolean skipNextVotingBecauseOfSuddya;
+    @Column
     private int yellowCards;
     @Column
     private byte redCards;

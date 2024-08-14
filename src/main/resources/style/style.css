@@ -67,3 +67,62 @@
 .date-picker .text-field {
     -fx-text-fill: #161616;
 }
+
+/* style.css */
+
+/* General background style for the entire application */
+.root {
+    -fx-background-color: linear-gradient(from 0% 0% to 100% 100%, #ffffff, #ffccff);
+}
+
+/* Styling the winner title label */
+.label-winner {
+    -fx-text-fill: white;
+    -fx-font-size: 24px;
+    -fx-font-family: 'Arial';
+    -fx-alignment: center;
+}
+
+/* Styling the table view */
+.table-view {
+    -fx-background-color: transparent;
+    -fx-table-cell-border-color: transparent;
+    -fx-padding: 10;
+}
+
+.table-column-header {
+    -fx-background-color: transparent;
+    -fx-font-size: 16px;
+    -fx-text-fill: white;
+    -fx-font-family: 'Arial';
+}
+
+/* Button styles */
+.button-idle {
+    -fx-background-color: linear-gradient(to bottom, #ffccff, #ffffff);
+    -fx-text-fill: black;
+    -fx-font-size: 16px;
+    -fx-font-family: 'Arial';
+    -fx-padding: 10;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+}
+
+.button-hovered {
+    -fx-background-color: linear-gradient(to bottom, #ffffff, #ffccff);
+}
+
+/* Styling the podium box */
+.podium-box {
+    -fx-background-color: linear-gradient(from 0% 0% to 100% 100%, #ffffff, #ff99ff);
+    -fx-spacing: 20;
+    -fx-padding: 20;
+    -fx-alignment: center;
+}
+
+/* Styling for medal images with gradient background */
+.medal-image {
+    -fx-background-color: linear-gradient(to bottom, #ffccff, #ffffff);
+    -fx-background-radius: 25;
+    -fx-border-radius: 25;
+}

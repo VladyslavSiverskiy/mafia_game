@@ -318,7 +318,15 @@ public class GameService {
     public Action doZatychkaMove(Long currentGameId, int chosenPlayerNumber) {
         gameStatisticsService.blockVotingPerDay(currentGameId, chosenPlayerNumber);
         Action logger = new Action();
-        logger.setActionText("Затичка обирає гравця № " + chosenPlayerNumber);
+        logger.setActionText("Пастор обирає гравця № " + chosenPlayerNumber);
+        logger.setLocalDateTime(LocalDateTime.now());
+        return logger;
+    }
+
+    public Action doSuddyaMove(Long currentGameId, int chosenPlayerNumber) {
+        gameStatisticsService.suddyaBlockVotingPerDay(currentGameId, chosenPlayerNumber);
+        Action logger = new Action();
+        logger.setActionText("Суддя обирає гравця № " + chosenPlayerNumber);
         logger.setLocalDateTime(LocalDateTime.now());
         return logger;
     }
@@ -366,7 +374,6 @@ public class GameService {
         Action logger = new Action();
         logger.setActionText(ERoleOrder.LEDY.getTitle() + " отруює гравця №" + chosenPlayerNumber + "." + gameStatistics.getInGameNickname());
         logger.setLocalDateTime(LocalDateTime.now());
-        System.out.println(gameStatistics);
         return logger;
     }
 

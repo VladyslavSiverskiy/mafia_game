@@ -1,0 +1,120 @@
+/* General styles for the ending game page */
+.anchor-pane {
+    -fx-background-color: linear-gradient(from 0% 0% to 100% 100%, #ffffff, #e0e0e0);
+    -fx-font-family: 'Arial', sans-serif;
+}
+
+/* Styling the winner title label */
+.label-winner {
+    -fx-text-fill: black;
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-alignment: center;
+    -fx-text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Styling the table view */
+.table-view {
+    -fx-background-color: transparent;
+    -fx-table-cell-border-color: transparent;
+    -fx-padding: 10;
+    -fx-border-color: #cccccc;
+    -fx-border-width: 1px;
+    -fx-border-radius: 5px;
+}
+
+.table-column-header {
+    -fx-background-color: transparent;
+    -fx-font-size: 16px;
+    -fx-text-fill: black;
+    -fx-font-weight: bold;
+}
+
+/* Button styles */
+.button-idle {
+    -fx-background-color: linear-gradient(to bottom, #ffccff, #ffffff);
+    -fx-text-fill: black;
+    -fx-font-size: 16px;
+    -fx-padding: 10;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-font-weight: bold;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.2), 5, 0.5, 0, 0); /* Subtle shadow */
+}
+
+.button-hovered {
+    -fx-background-color: linear-gradient(to bottom, #ffffff, #ffccff);
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.3), 5, 0.5, 0, 0); /* Darker shadow on hover */
+}
+
+/* Podium box styling */
+.podium-box {
+    -fx-background-color: transparent; /* Transparent background */
+    -fx-spacing: 20;
+    -fx-padding: 20;
+    -fx-alignment: center;
+    -fx-margin-bottom: 40; /* Increased margin bottom for podium */
+}
+
+/* Styling for medal images with gradient background */
+.medal-image {
+    -fx-background-color: linear-gradient(to bottom, #ffccff, #ffffff);
+    -fx-background-radius: 25;
+    -fx-border-radius: 25;
+}
+
+/* ListView styling */
+.list-view {
+    -fx-background-color: transparent;
+    -fx-control-inner-background: transparent;
+    -fx-text-fill: black;
+    -fx-padding: 10;
+}
+
+.list-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: black;
+    -fx-padding: 5;
+    -fx-font-size: 14px;
+}
+
+/* HBox and VBox styling */
+.hbox {
+    -fx-spacing: 10;
+    -fx-padding: 10;
+    -fx-alignment: center;
+}
+
+.vbox {
+    -fx-spacing: 10;
+    -fx-padding: 10;
+    -fx-alignment: center;
+}
+
+/* Styling for player boxes in the podium */
+.player-box {
+    -fx-background-color: linear-gradient(from 0% 0% to 100% 100%, #ffccff, #ffffff); /* Gradient pink background */
+    -fx-border-color: #cccccc;
+    -fx-border-width: 2px; /* Slightly thicker border */
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-padding: 15; /* Increased padding */
+    -fx-spacing: 10; /* Increased spacing */
+    -fx-alignment: center;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.2), 10, 0.5, 0, 0); /* Shadow effect */
+    -fx-pref-width: 180px; /* Further reduced fixed width for cards */
+    -fx-min-width: 140px; /* Minimum width to handle resizing */
+    -fx-max-width: 220px; /* Maximum width to handle resizing */
+}
+
+/* Styling for labels in player boxes */
+.player-label {
+    -fx-text-fill: black;
+    -fx-font-size: 16px; /* Adjust font size */
+    -fx-font-weight: bold; /* Make font bold */
+    -fx-font-family: 'Arial', sans-serif; /* Font family */
+    -fx-text-align: center;
+    -fx-wrap-text: true; /* Enable text wrapping */
+    -fx-max-width: 140px; /* Set max width to control wrapping */
+    -fx-alignment: center; /* Center-align text */
+}

@@ -33,6 +33,7 @@ import org.springframework.stereotype.Component;
 
 import java.net.URL;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.vsiverskyi.utils.StyleConstants.HOVERED_BUTTON_STYLE;
 import static com.vsiverskyi.utils.StyleConstants.IDLE_BUTTON_STYLE;
@@ -76,6 +77,8 @@ public class SelectionRoleController implements Initializable,DisplayedPlayersCo
     private Button technicalDefeatMafia;
     @FXML
     private Button fullScreen;
+    @FXML
+    private Button backToMenu;
     @FXML
     private ListView<HBox> playerCardListView;
     private List<GameStatistics> gameStatisticsList;
@@ -122,9 +125,18 @@ public class SelectionRoleController implements Initializable,DisplayedPlayersCo
                 playerIdRoleMap.put(gameStatistics.getInGameNumber(), null);
             }
             //init roles
+//            roles = gameStatisticsService
+//                    .getGameStatisticsByGameIdSortedByInGameNumber(SelectionController.currentGameId).stream()
+//                    .map(GameStatistics::getRole)
+//                    .collect(Collectors.toList());
             roles = roleService.getRoleListFromListOfRoleId(GameSettingsController.roleIdPerGameList);
+            roles.sort(Comparator.comparing(role -> {
+                if (role == null || role.getRoleNameConstant() == null) {
+                    return ERoleOrder.UNDEFINED;
+                }
+                return ERoleOrder.fromName(role.getRoleNameConstant());
+            }));
 
-            //show buttons
             displayRolePlayers(gameStatisticsList.size());
 
             // start selection process
@@ -198,6 +210,11 @@ public class SelectionRoleController implements Initializable,DisplayedPlayersCo
             selectedRolesAp.getChildren().add(assignedRolesListView);
             //end
             startVoting.setOnMouseClicked(actionEvent -> startPresentationProcess());
+
+            backToMenu.setOnMouseClicked(actionEv -> {
+                StarterController.primaryStage = (Stage) backToMenu.getScene().getWindow();
+                fxWeaver.loadController(StarterController.class).show();
+            });
         } catch (NoGameWithSuchIdException e) {
             Alert alert = new Alert(Alert.AlertType.ERROR, e.getMessage());
             alert.initOwner(stage);

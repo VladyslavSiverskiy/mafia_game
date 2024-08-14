@@ -1,6 +1,7 @@
 package com.vsiverskyi.controllers;
 
 import com.vsiverskyi.exception.NoGameWithSuchIdException;
+import com.vsiverskyi.model.Game;
 import com.vsiverskyi.model.GameStatistics;
 import com.vsiverskyi.model.Nickname;
 import com.vsiverskyi.model.enums.ERoleOrder;
@@ -31,9 +32,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Controller;
 
 import java.net.URL;
-import java.util.Comparator;
-import java.util.List;
-import java.util.ResourceBundle;
+import java.util.*;
 
 @Component
 @FxmlView("Selection.fxml")
@@ -60,8 +59,14 @@ public class SelectionController implements Initializable {
     @FXML
     private Button startVoting;
     @FXML
+    private Button backToMenu;
+    @FXML
+    private Button importFromPrevious;
+    @FXML
     private Button fullScreen;
     private List<GameStatistics> gameStatisticsList;
+    Map<Integer, ComboBox<String>> playerNumberComboBoxes = new HashMap<>();
+
     private int currentPlayerIndex;
 
     @Override
@@ -87,7 +92,26 @@ public class SelectionController implements Initializable {
         }
         int totalPlayers = gameStatisticsList.size();
         displayPlayers(totalPlayers);
+        backToMenu.setOnMouseClicked(actionEv -> {
+            StarterController.primaryStage = (Stage) backToMenu.getScene().getWindow();
+            fxWeaver.loadController(StarterController.class).show();
+        });
         startVoting.setOnMouseClicked(actionEvent -> fxWeaver.loadController(SelectionRoleController.class).show());
+        importFromPrevious.setOnMouseClicked(actionEvent -> importDataFromPreviousGame());
+    }
+
+    private void importDataFromPreviousGame() {
+        List<Game> games = gameService.findRecentGames(2);
+        Game game = null;
+        if (games.size() > 1) {
+            game = games.get(1);
+            for (GameStatistics gameStatistics : game.getGameStatistics()) {
+                ComboBox<String> stringComboBox = playerNumberComboBoxes.get(gameStatistics.getInGameNumber());
+                if (stringComboBox != null) {
+                    stringComboBox.getSelectionModel().select(gameStatistics.getInGameNickname());
+                }
+            }
+        }
     }
 
     public void show() {
@@ -116,7 +140,6 @@ public class SelectionController implements Initializable {
             // Selection of nickname from a list (You may replace this with a ComboBox)
             ComboBox<String> nicknameComboBox = new ComboBox<>();
             // Add nicknames to the ComboBox
-
             List<Nickname> nicknames = nicknameRepository.findAll();
             nicknameComboBox.getItems().addAll(nicknames.stream().map(nickname -> nickname.getNickname().toUpperCase()).toList()); // Example nicknames
             nicknameComboBox.setTooltip(new Tooltip());
@@ -129,8 +152,10 @@ public class SelectionController implements Initializable {
             nicknameComboBox.getSelectionModel().selectedItemProperty().addListener((options, oldValue, newValue) -> {
                 if (finalI > 0 && finalI < totalPlayers + 1) {
                     gameStatisticsService.setInGameNickname(currentGameId, finalI, newValue);
+
                 }
             });
+            playerNumberComboBoxes.put(i,nicknameComboBox);
             playerPanel.getChildren().add(nicknameComboBox);
             // Add the player panel to the selectionPane
             selectionPane.getChildren().add(playerPanel);
