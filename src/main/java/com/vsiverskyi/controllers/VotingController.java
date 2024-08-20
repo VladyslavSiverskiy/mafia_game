@@ -488,6 +488,7 @@ public class VotingController implements Initializable, DisplayedPlayersControll
 
     private void endEachPlayerPresentation() {
         // TODO: поміняти не нормальні змінні, а не в коді
+        discussionButton.setDisable(true);
         votingStateLabel.setText("Обговорення");
         secondsTillEnd = SettingsUtil.getSecondsPerDiscussion();
         countDownTimeLine = new Timeline(new KeyFrame(Duration.seconds(1), (ActionEvent event) -> {
@@ -496,7 +497,7 @@ public class VotingController implements Initializable, DisplayedPlayersControll
         // Set number of cycles (remaining duration in seconds):
         countDownTimeLine.setCycleCount((int) SettingsUtil.getSecondsPerDiscussion());
         countDownTimeLine.setOnFinished(event -> {
-            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            Alert alert = new Alert(Alert.AlertType.INFORMATION, "Кінець обговорення");
             alert.initOwner(stage);
             alert.show();
             alert.setOnHidden(evt -> startVoting());
@@ -592,23 +593,45 @@ public class VotingController implements Initializable, DisplayedPlayersControll
                 secondsLeft.setText(String.valueOf(secondsTillEnd--));
             } else {
                 Platform.runLater(() -> {
-                    int setVoteTo = 0;
-                    mainTimerIsGoing = false;
-                    if (finalCurrentVoterIndex == findLastAliveIndex()) {
-                        for (int i = gameStatisticsList.size() - 1; i >= 0; i--) {
-                            if (checkIfAlive(i + 1, gameStatisticsList.size())) {
-                                setVoteTo = i + 1;
+
+                    Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+                    alert.setTitle("Час на голос закінчився");
+                    alert.setHeaderText("Час на голос закінчився!");
+                    alert.setContentText("Віддати голос у наступного гравця?");
+                    alert.initOwner(stage);
+                    ButtonType autoVoteButton = new ButtonType("Голос у наступного");
+                    ButtonType cancelButton = new ButtonType("Вибір вручну", ButtonBar.ButtonData.CANCEL_CLOSE);
+                    DialogPane dialogPane1 = alert.getDialogPane();
+                    dialogPane1.getStylesheets().add(
+                            getClass().getResource("/style/myDialogs.css").toExternalForm());
+                    dialogPane1.getStyleClass().add("myDialog");
+                    alert.getButtonTypes().setAll(autoVoteButton, cancelButton);
+
+                    Optional<ButtonType> result = alert.showAndWait();
+
+                    if (result.isPresent() && result.get() == autoVoteButton) {
+                        //do auto
+                        int setVoteTo = 0;
+                        mainTimerIsGoing = false;
+                        if (finalCurrentVoterIndex == findLastAliveIndex()) {
+                            for (int i = gameStatisticsList.size() - 1; i >= 0; i--) {
+                                if (checkIfAlive(i + 1, gameStatisticsList.size())) {
+                                    setVoteTo = i + 1;
+                                }
+                            }
+                        } else {
+                            for (int i = finalCurrentVoterIndex + 1; i < gameStatisticsList.size(); i++) {
+                                if (checkIfAlive(i + 1, gameStatisticsList.size())) {
+                                    setVoteTo = i + 1;
+                                    break; // Exit loop as soon as a valid player is found
+                                }
                             }
                         }
+                        setVote(setVoteTo, finalCurrentVoterIndex);
                     } else {
-                        for (int i = finalCurrentVoterIndex + 1; i < gameStatisticsList.size(); i++) {
-                            if (checkIfAlive(i + 1, gameStatisticsList.size())) {
-                                setVoteTo = i + 1;
-                                break; // Exit loop as soon as a valid player is found
-                            }
-                        }
+                        startTimerForPlayer(currentVoterIndex);
+                        //reset
                     }
-                    setVote(setVoteTo, finalCurrentVoterIndex);
                 });
                 countDownTimeLine.stop();
             }
@@ -678,21 +701,40 @@ public class VotingController implements Initializable, DisplayedPlayersControll
                 secondsLeft.setText(String.valueOf(secondsTillEnd--));
             } else {
                 Platform.runLater(() -> {
-                    int setVoteTo = 0;
-                    if (finalReverseCurrentVoterIndex == findFirstAliveIndex()) {
-                        for (int i = 0; i < gameStatisticsList.size(); i++) {
-                            if (checkIfAlive(i + 1, gameStatisticsList.size())) {
-                                setVoteTo = i + 1;
+                    Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+                    alert.setTitle("Час на голос закінчився");
+                    alert.setHeaderText("Час на голос закінчився!");
+                    alert.setContentText("Віддати голос у наступного гравця?");
+                    alert.initOwner(stage);
+                    ButtonType autoVoteButton = new ButtonType("Голос у наступного");
+                    ButtonType cancelButton = new ButtonType("Вибір вручну", ButtonBar.ButtonData.CANCEL_CLOSE);
+                    DialogPane dialogPane1 = alert.getDialogPane();
+                    dialogPane1.getStylesheets().add(
+                            getClass().getResource("/style/myDialogs.css").toExternalForm());
+                    dialogPane1.getStyleClass().add("myDialog");
+                    alert.getButtonTypes().setAll(autoVoteButton, cancelButton);
+
+                    Optional<ButtonType> result = alert.showAndWait();
+
+                    if (result.isPresent() && result.get() == autoVoteButton) {
+                        int setVoteTo = 0;
+                        if (finalReverseCurrentVoterIndex == findFirstAliveIndex()) {
+                            for (int i = 0; i < gameStatisticsList.size(); i++) {
+                                if (checkIfAlive(i + 1, gameStatisticsList.size())) {
+                                    setVoteTo = i + 1;
+                                }
+                            }
+                        } else {
+                            for (int i = 0; i < finalReverseCurrentVoterIndex; i++) {
+                                if (checkIfAlive(i + 1, gameStatisticsList.size())) {
+                                    setVoteTo = i + 1;
+                                }
                             }
                         }
+                        setVote(setVoteTo, finalReverseCurrentVoterIndex);
                     } else {
-                        for (int i = 0; i < finalReverseCurrentVoterIndex; i++) {
-                            if (checkIfAlive(i + 1, gameStatisticsList.size())) {
-                                setVoteTo = i + 1;
-                            }
-                        }
+                        startTimerForReversePlayer(reverseCurrentVoterIndex);
                     }
-                    setVote(setVoteTo, finalReverseCurrentVoterIndex);
                 });
                 countDownTimeLine.stop();
             }

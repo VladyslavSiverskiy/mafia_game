@@ -62,7 +62,7 @@ public class GameSettingsController implements Initializable {
     public static List<Integer> roleIdPerGameList = new ArrayList<>();
     private final static Integer MAX_PLAYERS_AMOUNT = 26;
     SpinnerValueFactory<Integer> playersAmountSpinnerValueFactory =
-            new SpinnerValueFactory.IntegerSpinnerValueFactory(10, MAX_PLAYERS_AMOUNT);
+            new SpinnerValueFactory.IntegerSpinnerValueFactory(5, MAX_PLAYERS_AMOUNT);
     int currentPlayersAmount;
     int selectedPlayersAmount;
     private Map<String, Boolean> settingsState = new HashMap<>();
@@ -100,7 +100,7 @@ public class GameSettingsController implements Initializable {
         currentPlayersAmount = playersAmountSpinner.getValue();
 
         SpinnerValueFactory<Integer> mafiaAmountSpinnerValueFactory =
-                new SpinnerValueFactory.IntegerSpinnerValueFactory(3, 12); // можливо додати розрахунок на основі к-сті гравців
+                new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 12); // можливо додати розрахунок на основі к-сті гравців
         mafiaAmountSpinnerValueFactory.setValue(3);
         mafiaAmountSpinner.setValueFactory(mafiaAmountSpinnerValueFactory);
 

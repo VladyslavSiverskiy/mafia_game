@@ -29,10 +29,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.ResourceBundle;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Component
@@ -50,7 +47,6 @@ public class EveningRateController implements Initializable {
     private Stage stage;
     private Scene scene;
     private Parent root;
-
     @FXML
     private AnchorPane eveningRateAp;
     @FXML
@@ -75,6 +71,7 @@ public class EveningRateController implements Initializable {
     private Button loadByDateButton;
     @FXML
     private ListView<Button> gamesListView; // Доданий ListView для кнопок
+    private List<PlayerScore> playerScores;
 
     public void show() {
         stage.show();
@@ -162,24 +159,27 @@ public class EveningRateController implements Initializable {
                 .flatMap(game -> gameStatisticsService.getGameStatisticsByGameId(game.getId()).stream())
                 .collect(Collectors.toList());
 
-        // Group by player nickname and sum points
-        Map<String, Integer> playerPointsMap = allGameStatistics.stream()
-                .filter(gameStatistics -> gameStatistics.getInGameNickname() != null)
-                .collect(Collectors.groupingBy(
-                        GameStatistics::getInGameNickname,
-                        Collectors.summingInt(GameStatistics::getPoints)
-                ));
+        // Initialize a map to store player scores, defaulting to 0 points
+        Map<String, Integer> playerPointsMap = new HashMap<>();
 
         // Create a map to store avatars
-        Map<String, Circle> playerAvatarsMap = allGameStatistics.stream()
-                .collect(Collectors.toMap(
-                        GameStatistics::getInGameNickname,
-                        stats -> new Circle(10, Color.DARKGREY), // Create a new Circle avatar for each player
-                        (existing, replacement) -> existing // Use existing avatar if there are duplicates
-                ));
+        Map<String, Circle> playerAvatarsMap = new HashMap<>();
+
+        // Iterate over all game statistics to ensure all players are included
+        for (GameStatistics stat : allGameStatistics) {
+            String nickname = stat.getInGameNickname();
+            if (nickname != null) {
+                // Initialize player score and avatar if not present
+                playerPointsMap.putIfAbsent(nickname, 0);
+                playerAvatarsMap.putIfAbsent(nickname, new Circle(10, Color.DARKGREY));
+
+                // Add points to the player
+                playerPointsMap.put(nickname, playerPointsMap.get(nickname) + stat.getPoints());
+            }
+        }
 
         // Convert to list of PlayerScore
-        List<PlayerScore> playerScores = playerPointsMap.entrySet().stream()
+        playerScores = playerPointsMap.entrySet().stream()
                 .map(entry -> new PlayerScore(entry.getKey(), entry.getValue(), playerAvatarsMap.get(entry.getKey())))
                 .sorted(Comparator.comparingInt(PlayerScore::getTotalPoints).reversed())
                 .collect(Collectors.toList());
@@ -200,24 +200,27 @@ public class EveningRateController implements Initializable {
                 .flatMap(game -> gameStatisticsService.getGameStatisticsByGameId(game.getId()).stream())
                 .collect(Collectors.toList());
 
-        // Group by player nickname and sum points
-        Map<String, Integer> playerPointsMap = allGameStatistics.stream()
-                .filter(gameStatistics -> gameStatistics.getInGameNickname() != null)
-                .collect(Collectors.groupingBy(
-                        GameStatistics::getInGameNickname,
-                        Collectors.summingInt(GameStatistics::getPoints)
-                ));
+        // Initialize a map to store player scores, defaulting to 0 points
+        Map<String, Integer> playerPointsMap = new HashMap<>();
 
         // Create a map to store avatars
-        Map<String, Circle> playerAvatarsMap = allGameStatistics.stream()
-                .collect(Collectors.toMap(
-                        GameStatistics::getInGameNickname,
-                        stats -> new Circle(10, Color.DARKGREY), // Create a new Circle avatar for each player
-                        (existing, replacement) -> existing // Use existing avatar if there are duplicates
-                ));
+        Map<String, Circle> playerAvatarsMap = new HashMap<>();
+
+        // Iterate over all game statistics to ensure all players are included
+        for (GameStatistics stat : allGameStatistics) {
+            String nickname = stat.getInGameNickname();
+            if (nickname != null) {
+                // Initialize player score and avatar if not present
+                playerPointsMap.putIfAbsent(nickname, 0);
+                playerAvatarsMap.putIfAbsent(nickname, new Circle(10, Color.DARKGREY));
+
+                // Add points to the player
+                playerPointsMap.put(nickname, playerPointsMap.get(nickname) + stat.getPoints());
+            }
+        }
 
         // Convert to list of PlayerScore
-        List<PlayerScore> playerScores = playerPointsMap.entrySet().stream()
+        playerScores = playerPointsMap.entrySet().stream()
                 .map(entry -> new PlayerScore(entry.getKey(), entry.getValue(), playerAvatarsMap.get(entry.getKey())))
                 .sorted(Comparator.comparingInt(PlayerScore::getTotalPoints).reversed())
                 .collect(Collectors.toList());
@@ -279,11 +282,16 @@ public class EveningRateController implements Initializable {
     private void handleCopyButtonAction() {
         StringBuilder sb = new StringBuilder();
 
+        int number = 1;
         // Get all items from the TableView
-        for (PlayerScore item : playerScoreTable.getItems()) {
+        for (PlayerScore item : playerScores) {
             String nickname = item.getNickname();
             int totalPoints = item.getTotalPoints();
-            sb.append(nickname).append(": +").append(totalPoints).append("\n");
+            sb.append(number)
+                    .append(".")
+                    .append(nickname)
+                    .append(": +").append(totalPoints).append("\n");
+            number++;
         }
 
         // Copy the text to the clipboard

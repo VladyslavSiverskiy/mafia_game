@@ -80,9 +80,9 @@ public class ViewController {
         }
 
         if (currentGamer.isInGame()) {
-            nicknameLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #f4ff67");
+            nicknameLabel.setStyle("-fx-font-size: 16px; -fx-text-fill: #f4ff67");
         }else {
-            nicknameLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #cc2323");
+            nicknameLabel.setStyle("-fx-font-size: 16px; -fx-text-fill: #cc2323");
         }
         return nicknameLabel;
     }

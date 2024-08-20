@@ -93,7 +93,7 @@ public class GeneralSettingsController {
 
             String secondsPerDiscussion = properties.getProperty("secondsPerDiscussion");
             if (secondsPerPresentation != null) {
-                secondsPerPresentationSpinner.getValueFactory().setValue(Integer.parseInt(secondsPerDiscussion));
+                secondsPerDiscussionSpinner.getValueFactory().setValue(Integer.parseInt(secondsPerDiscussion));
             }
 
             String secondsPerDefence = properties.getProperty("secondsPerDefence");

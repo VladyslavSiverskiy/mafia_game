@@ -18,7 +18,7 @@
         <AnchorPane layoutX="1081.0" layoutY="66.0" prefHeight="624.0" prefWidth="194.0" style="-fx-border-color: #ffffff; -fx-border-radius: 5px; -fx-background-color: #161616;">
             <children>
                 <Label layoutX="26.0" layoutY="5.0" text="Технічна поразка" textFill="WHITE" />
-                <Button fx:id="technicalDefeatPeaceful" layoutX="26.0" layoutY="22.0" mnemonicParsing="false" prefHeight="27.0" prefWidth="144.0" style="-fx-background-color: #161616; -fx-border-color: #ffffff; -fx-border-radius: 5px;" text="Мирним" textFill="WHITE" />
+                <Button fx:id="technicalDefeatPeaceful" layoutX="26.0" layoutY="22.0" mnemonicParsing="false" prefHeight="27.0" prefWidth="144.0" style="-fx-background-color: #161616; -fx-border-color: #ffffff; -fx-border-radius: 5px;" text="Жителям Скіфії" textFill="WHITE" />
                 <Button fx:id="technicalDefeatMafia" layoutX="26.0" layoutY="58.0" mnemonicParsing="false" prefHeight="27.0" prefWidth="144.0" style="-fx-background-color: #161616; -fx-border-color: #ffffff; -fx-border-radius: 5px;" text="Корупціонерам" textFill="WHITE" />
                 <ListView fx:id="playerCardListView" fixedCellSize="-3.0" layoutX="1.0" layoutY="93.0" prefHeight="561.0" prefWidth="191.0" />
                 <Line endX="96.8570556640625" endY="-35.0" layoutX="89.0" layoutY="128.0" startX="-81.4285888671875" startY="-35.0" stroke="WHITE" />
@@ -30,7 +30,7 @@
             <Button fx:id="goAheadButton" layoutX="411.0" layoutY="354.0" mnemonicParsing="false" style="-fx-background-color: #244224;" text="Вперед!" textFill="WHITE" wrapText="true" />
             <Button fx:id="discussionButton" layoutX="391.0" layoutY="391.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="103.0" text="Обговорення" />
               <Button fx:id="startButton" layoutX="391.0" layoutY="426.0" mnemonicParsing="false" prefHeight="27.0" prefWidth="103.0" text="Голосування" />
-              <Label fx:id="secondsLeft" layoutX="386.0" layoutY="140.0" prefHeight="122.0" prefWidth="90.0" textAlignment="CENTER" textFill="WHITE">
+              <Label fx:id="secondsLeft" layoutX="372.0" layoutY="136.0" prefHeight="122.0" prefWidth="172.0" textAlignment="CENTER" textFill="WHITE">
                   <font>
                       <Font size="83.0" />
                   </font>

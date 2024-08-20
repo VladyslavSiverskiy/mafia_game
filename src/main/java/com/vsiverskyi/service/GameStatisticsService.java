@@ -160,7 +160,7 @@ public class GameStatisticsService {
             gameStatistics = gameStatisticsRepository.save(gameStatistics);
         }
 
-        if(gameStatistics.getRole().getTitle().equals(ERoleOrder.ZATYCHKA_SUDDYA.getTitle())) {
+        if(gameStatistics.getRole().getTitle().equals(ERoleOrder.ZATYCHKA_SUDDYA.getTitle()) && !gameStatistics.isDefendedPerNextVoting()) {
             killMarkedBySuddyaPlayer(gameId);
         }
 
@@ -434,5 +434,19 @@ public class GameStatisticsService {
     public void undoSkipNextVoting(GameStatistics gs) {
         gs.setSkipNextVoting(true);
         gameStatisticsRepository.save(gs);
+    }
+
+    public boolean checkIfCurrentRoleHaveAvailableOfRedCardPlayers(Long currentGameId, Role currentRole) {
+        List<GameStatistics> gameStatisticsListWithSelectedRole = getGameStatisticsByGameId(currentGameId)
+                .stream()
+                .filter(gameStatistics -> gameStatistics.getRole()
+                        .getRoleNameConstant().equals(currentRole.getRoleNameConstant())).toList();
+
+        for (GameStatistics gameStatistics: gameStatisticsListWithSelectedRole) {
+            if (gameStatistics.getRedCards() == 0) {
+                return true;
+            }
+        }
+        return false;
     }
 }

@@ -80,6 +80,8 @@ public class PresentationController implements Initializable, DisplayedPlayersCo
     @FXML
     private Button fullScreen;
     @FXML
+    private Button startTimerButton; // Add this line
+    @FXML
     private ListView<HBox> playerCardListView;
     private List<GameStatistics> gameStatisticsList;
     private Map<Integer, Button> playerIdButton;
@@ -124,6 +126,7 @@ public class PresentationController implements Initializable, DisplayedPlayersCo
         gameStatisticsList = gameStatisticsService
                 .getGameStatisticsByGameIdSortedByInGameNumber(SelectionController.currentGameId);
         penaltyController.initializePlayerCardList(gameStatisticsList, stage, this, playerCardListView);
+//        startTimerButton.setOnMouseClicked(actionEvent -> startTimerForCurrentPlayer());
 
         displayRolePlayers(gameStatisticsList.size());
         startVoting.setOnMouseClicked(actionEvent -> startPresentation());
@@ -241,7 +244,17 @@ public class PresentationController implements Initializable, DisplayedPlayersCo
             } else {
                 playerIdButton.put(i, button);
             }
+
             presentationPlayersPane.getChildren().add(button);
+            if (gamersOrder != null) {
+                Integer currentVoter = gamersOrder.peek();
+                System.out.println(currentVoter);
+                if (currentVoter != null && currentVoter != 0 && currentVoter != totalPlayers) {
+                    updateButtonStates(currentVoter - 1);
+//                    handleButtonsAndWithoutBlock(currentVoter - 1);
+//                    unblockAllButtons();
+                }
+            }
         }
     }
 
@@ -283,7 +296,6 @@ public class PresentationController implements Initializable, DisplayedPlayersCo
 
             anotherPlayerButton.setDisable(true);
             anotherPlayerButton.setStyle(IDLE_BUTTON_STYLE);
-
         }
     }
 
@@ -315,13 +327,8 @@ public class PresentationController implements Initializable, DisplayedPlayersCo
                 // Show alert when time is up:
                 int finalIndex = index + 1;
                 countDownTimeLine.setOnFinished(event -> {
-
-                    gamersOrder.remove();
-                    Integer nextGamer = gamersOrder.peek();
-                    if (nextGamer == null) {
-                        endEachPlayerPresentation();
-                    } else {
-                        doPresentation(nextGamer - 1);
+                    if (countDownTimeLine != null) {
+                        countDownTimeLine.stop();
                     }
                 });
                 countDownTimeLine.play();
@@ -345,6 +352,17 @@ public class PresentationController implements Initializable, DisplayedPlayersCo
                 anotherPlayerButton.setDisable(true);
                 anotherPlayerButton.setStyle("-fx-background-color: #00f100");
             }
+        }
+    }
+
+    private void startTimerForCurrentPlayer() {
+        if (countDownTimeLine != null) {
+            countDownTimeLine.stop(); // Stop any existing timer
+        }
+
+        Integer currentPlayerNumber = gamersOrder.peek(); // Get the current player
+        if (currentPlayerNumber != null) {
+            doPresentation(currentPlayerNumber - 1); // Start the presentation for the current player
         }
     }
 
@@ -415,6 +433,7 @@ public class PresentationController implements Initializable, DisplayedPlayersCo
             countDownTimeLine.stop();
             gamersOrder.remove();
             Integer currentPlayerNumber = gamersOrder.peek();
+            System.out.println("Current player " + currentPlayerNumber);
             if (currentPlayerNumber == null) {
                 endEachPlayerPresentation();
             } else {

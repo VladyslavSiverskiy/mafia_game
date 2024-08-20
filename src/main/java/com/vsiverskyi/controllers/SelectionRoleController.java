@@ -54,6 +54,8 @@ public class SelectionRoleController implements Initializable,DisplayedPlayersCo
     private GameStatisticsService gameStatisticsService;
     @Autowired
     private FxWeaver fxWeaver;
+    @Autowired
+    private MusicController musicController;
     private Stage stage;
     private Scene scene;
     private Parent root;
@@ -80,6 +82,12 @@ public class SelectionRoleController implements Initializable,DisplayedPlayersCo
     @FXML
     private Button backToMenu;
     @FXML
+    private Button previousButton;
+    @FXML
+    private Button pauseButton;
+    @FXML
+    private Button nextButton;
+    @FXML
     private ListView<HBox> playerCardListView;
     private List<GameStatistics> gameStatisticsList;
     private List<Role> roles;
@@ -91,13 +99,32 @@ public class SelectionRoleController implements Initializable,DisplayedPlayersCo
 //    private Set<Integer> redCardedPlayers = new HashSet<>(); // Set to store players with red cards
     private Role currentRole;
     private int roleSelectionIndex = 0;
+    private boolean wasStartedPlayer;
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
+        try {
+            musicController.loadMusicFilesFromFolder("music/");
+            if (wasStartedPlayer) {
+                musicController.resumePlayback();
+            } else {
+                wasStartedPlayer = true;
+                musicController.playTrack(new Random().nextInt(musicController.getPlaylist().size() - 1)); // Start playing the first trac
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            Alert alert = new Alert(Alert.AlertType.ERROR, e.getMessage());
+            alert.setHeaderText("Помилка завантаження музики");
+            DialogPane dialogPane1 = alert.getDialogPane();
+            dialogPane1.getStylesheets().add(
+                    getClass().getResource("/style/myDialogs.css").toExternalForm());
+            dialogPane1.getStyleClass().add("myDialog");
+            alert.initOwner(stage);
+            alert.showAndWait();
+        }
         this.stage = StarterController.primaryStage;
         scene = new Scene(selectionRoleAP);
         scene.getStylesheets().add(getClass().getResource("/style/style.css").toExternalForm());
-
         stage.setScene(scene);
         stage.setMaximized(true);
         stage.setFullScreen(true);
@@ -108,6 +135,9 @@ public class SelectionRoleController implements Initializable,DisplayedPlayersCo
         fullScreen.setGraphic(imageView);
         imageView.fitWidthProperty().bind(fullScreen.widthProperty().divide(10));
         imageView.setPreserveRatio(true);
+        previousButton.setOnMouseClicked(ev -> musicController.playPreviousTrack());
+        nextButton.setOnMouseClicked(ev -> musicController.playNextTrack());
+        pauseButton.setOnMouseClicked(ev -> musicController.pausePlayback());
 
         roleSelectionIndex=0;
 
@@ -237,6 +267,9 @@ public class SelectionRoleController implements Initializable,DisplayedPlayersCo
                 alert.show();
             } else {
                 roleService.applyRoles(SelectionController.currentGameId, playerIdRoleMap);
+                if (musicController != null) {
+                    musicController.pausePlayback();
+                }
                 fxWeaver.loadController(PresentationController.class).show();
             }
         } catch (RuntimeException ex) {

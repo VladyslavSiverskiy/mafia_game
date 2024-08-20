@@ -6,6 +6,7 @@
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
 <AnchorPane fx:id="endingGameAp" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="800.0" prefWidth="1280.0" styleClass="root" xmlns="http://javafx.com/javafx/19" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vsiverskyi.controllers.ArchiveGameController">
@@ -15,7 +16,7 @@
                 <Font name="Arial Bold" size="24.0" />
             </font>
         </Label>
-        <Button fx:id="toStarterPage" layoutX="577.0" layoutY="720.0" styleClass="button-idle" text="Повернутися назад" />
+        <Button fx:id="toStarterPage" layoutX="50.0" layoutY="34.0" styleClass="button-idle" text="Повернутися назад" />
         <TableView fx:id="gameStatisticsTable" layoutX="427.0" layoutY="491.0" prefHeight="171.0" prefWidth="458.0" styleClass="table-view">
             <columns>
                 <TableColumn fx:id="playerNameColumn" prefWidth="127.42858123779297" text="Гравець" />
@@ -26,6 +27,9 @@
         <HBox fx:id="podiumBox" layoutX="369.0" layoutY="71.0" prefHeight="361.0" prefWidth="582.0" spacing="20.0" styleClass="podium-box">
             <!-- The podium VBox where the top 3 players will be displayed -->
         </HBox>
+        <VBox fx:id="rolesBox" layoutX="50.0" layoutY="157.0" spacing="10.0" styleClass="roles-box">
+            <!-- The roles and players will be displayed here -->
+        </VBox>
         <Label layoutX="629.0" layoutY="458.0" styleClass="label" text="Інші гравці:" />
 
         <Button fx:id="copyButton" layoutX="623.0" layoutY="665.0" onAction="#handleCopyButtonAction" text="Копіювати" />

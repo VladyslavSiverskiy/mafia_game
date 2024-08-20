@@ -139,6 +139,7 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
     private boolean wasStartedPlayer;
     private List<GameStatistics> strilochnykCopy;
     private List<GameStatistics> mafiaCopy;
+    private GameStatistics markedBySuddyaPlayer;
     Media media;
     MediaPlayer mediaPlayer;
 
@@ -150,10 +151,18 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
                 musicController.resumePlayback();
             } else {
                 wasStartedPlayer = true;
-                musicController.playTrack(new Random().nextInt(musicController.getPlaylist().size())); // Start playing the first trac
+                musicController.playTrack(new Random().nextInt(musicController.getPlaylist().size() - 1)); // Start playing the first trac
             }
         } catch (Exception e) {
-
+            e.printStackTrace();
+            Alert alert = new Alert(Alert.AlertType.ERROR, e.getMessage());
+            alert.setHeaderText("Помилка завантаження музики");
+            DialogPane dialogPane1 = alert.getDialogPane();
+            dialogPane1.getStylesheets().add(
+                    getClass().getResource("/style/myDialogs.css").toExternalForm());
+            dialogPane1.getStyleClass().add("myDialog");
+            alert.initOwner(stage);
+            alert.showAndWait();
         }
         this.stage = StarterController.primaryStage;
         scene = new Scene(nightStageAp);
@@ -321,6 +330,15 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
             result += "\n" + killedString;
         }
 
+        GameStatistics markedBySuddyaPlayer = gameStatisticsService.findMarkedBySuddyaByGameId(SelectionController.currentGameId);
+        if (markedBySuddyaPlayer != null) {
+            String nickname = markedBySuddyaPlayer.getInGameNickname();
+            if (nickname == null) {
+                nickname = "НЕЗНАЙОМЕЦЬ";
+            }
+            result += "\n" + ERoleOrder.ZATYCHKA_SUDDYA.getTitle().toUpperCase() + " дає читати закон " + nickname.toUpperCase();
+        }
+
         // Create a new Stage for the modal window
         Stage modalStage = new Stage();
         modalStage.initModality(Modality.APPLICATION_MODAL);
@@ -377,7 +395,7 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
         updateAllRolesList();
         currentRoleIndex++;
         if (currentRoleIndex == actualInGameRoles.size()) {
-           lastVoiceReverse();
+            lastVoiceReverse();
         } else if (currentRoleIndex < actualInGameRoles.size()) {
             currentRole = actualInGameRoles.get(currentRoleIndex);
             if (!checkIfAliveOrDontHaveRedCardsWithRole(currentRole, SelectionController.currentGameId)) {
@@ -471,251 +489,265 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
     }
 
     private void handlePlayerAction(int chosenPlayerNumber) {
-        switch (ERoleOrder.valueOf(currentRole.getRoleNameConstant())) {
-            case MAFIA:
-                confirmButtonMafia.setVisible(true);
-                if (playerIdRoleMap.get(chosenPlayerNumber).getRoleNameConstant().equals(ERoleOrder.MAFIA.name()) || playerIdRoleMap.get(chosenPlayerNumber).getRoleNameConstant().equals(ERoleOrder.DON.name())) {
-                    Alert mafiaCantChooseHimselfAlert =
-                            new Alert(Alert.AlertType.INFORMATION, ERoleOrder.MAFIA.getTitle() + " не може проголосувати за себе");
-                    mafiaCantChooseHimselfAlert.initOwner(stage);
-                    mafiaCantChooseHimselfAlert.show();
-                } else {
-                    Action mafiaMoveLogger = null;
-                    // якщо ні, то мафія вибирає кого вбити
-                    selectedToKillPlayerNumber = chosenPlayerNumber;
-                    setLastVote(chosenPlayerNumber);
-                    mafiaMoveLogger = gameService.doMafiaKillMove(SelectionController.currentGameId, chosenPlayerNumber);
+        if (!gameStatisticsService.checkIfCurrentRoleHaveAvailableOfRedCardPlayers(SelectionController.currentGameId, currentRole)) {
+            Alert deleteAl =
+                    new Alert(Alert.AlertType.INFORMATION, currentRole.getTitle() + " пропускає хід через перебір вилучень");
+            deleteAl.initOwner(stage);
+            deleteAl.showAndWait();
+            setNextRole();
+        } else {
+            switch (ERoleOrder.valueOf(currentRole.getRoleNameConstant())) {
+                case MAFIA:
+                    confirmButtonMafia.setVisible(true);
+                    if (playerIdRoleMap.get(chosenPlayerNumber).getRoleNameConstant().equals(ERoleOrder.MAFIA.name()) || playerIdRoleMap.get(chosenPlayerNumber).getRoleNameConstant().equals(ERoleOrder.DON.name())) {
+                        Alert mafiaCantChooseHimselfAlert =
+                                new Alert(Alert.AlertType.INFORMATION, ERoleOrder.MAFIA.getTitle() + " не може проголосувати за себе");
+                        mafiaCantChooseHimselfAlert.initOwner(stage);
+                        mafiaCantChooseHimselfAlert.show();
+                    } else {
+                        Action mafiaMoveLogger = null;
+                        // якщо ні, то мафія вибирає кого вбити
+                        selectedToKillPlayerNumber = chosenPlayerNumber;
+                        setLastVote(chosenPlayerNumber);
+                        mafiaMoveLogger = gameService.doMafiaKillMove(SelectionController.currentGameId, chosenPlayerNumber);
 //                    Alert alert = new Alert(Alert.AlertType.INFORMATION, mafiaMoveLogger.getActionText());
 //                    alert.initOwner(stage);
 //                    alert.show();
 
-                    setBulletMarker(chosenPlayerNumber);
-                    pointsService.countPointsInOrderToNightAction(
-                            SelectionController.currentGameId,
-                            currentRole,
-                            chosenPlayerNumber
-                    );
-                    actionsQueue.add(mafiaMoveLogger);
+                        setBulletMarker(chosenPlayerNumber);
+                        pointsService.countPointsInOrderToNightAction(
+                                SelectionController.currentGameId,
+                                currentRole,
+                                chosenPlayerNumber
+                        );
+                        actionsQueue.add(mafiaMoveLogger);
 
-                }
-                break;
-            // тут додавати logger в чергу?
-            case PEREVERTEN_PEACE:
-                setNextRole();
-                break;
-            case PEREVERTEN_MAFIA:
-                confirmButtonMafia.setVisible(true);
-                if (playerIdRoleMap.get(chosenPlayerNumber).getRoleNameConstant().equals(ERoleOrder.PEREVERTEN_MAFIA.name())) {
-                    Alert donCantChooseHimselfAlert =
-                            new Alert(Alert.AlertType.INFORMATION, ERoleOrder.PEREVERTEN_MAFIA.getTitle() + " не може проголосувати за себе");
-                    donCantChooseHimselfAlert.initOwner(stage);
-                    donCantChooseHimselfAlert.showAndWait();
-                } else {
-                    setLastVote(chosenPlayerNumber);
-                    Action perevertenMoveLogger = gameService.doMafiaKillMove(SelectionController.currentGameId, chosenPlayerNumber);
-                    setBulletMarker(chosenPlayerNumber);
-                    pointsService.countPointsInOrderToNightAction(
-                            SelectionController.currentGameId,
-                            currentRole,
-                            chosenPlayerNumber
-                    );
-                    actionsQueue.add(perevertenMoveLogger);
+                    }
+                    break;
+                // тут додавати logger в чергу?
+                case PEREVERTEN_PEACE:
+                    setNextRole();
+                    break;
+                case PEREVERTEN_MAFIA:
+                    confirmButtonMafia.setVisible(true);
+                    if (playerIdRoleMap.get(chosenPlayerNumber).getRoleNameConstant().equals(ERoleOrder.PEREVERTEN_MAFIA.name())) {
+                        Alert donCantChooseHimselfAlert =
+                                new Alert(Alert.AlertType.INFORMATION, ERoleOrder.PEREVERTEN_MAFIA.getTitle() + " не може проголосувати за себе");
+                        donCantChooseHimselfAlert.initOwner(stage);
+                        donCantChooseHimselfAlert.showAndWait();
+                    } else {
+                        setLastVote(chosenPlayerNumber);
+                        Action perevertenMoveLogger = gameService.doMafiaKillMove(SelectionController.currentGameId, chosenPlayerNumber);
+                        setBulletMarker(chosenPlayerNumber);
+                        pointsService.countPointsInOrderToNightAction(
+                                SelectionController.currentGameId,
+                                currentRole,
+                                chosenPlayerNumber
+                        );
+                        actionsQueue.add(perevertenMoveLogger);
 //                    Alert alert = new Alert(Alert.AlertType.INFORMATION, perevertenMoveLogger.getActionText());
 //                    alert.initOwner(stage);
 //                    alert.showAndWait();
 //                    setNextRole();
-                }
-                break;
-            case DOCTOR:
-                if (playerIdRoleMap.get(chosenPlayerNumber).getRoleNameConstant().equals(ERoleOrder.DOCTOR.name())
-                    && (findByInGameNumber(chosenPlayerNumber).getTimesWasHealed() >= 2)) {
-                    Alert doctorCantHealHimselfAlert =
-                            new Alert(Alert.AlertType.INFORMATION, ERoleOrder.DOCTOR.getTitle() + " не може лікувати себе більше двох разів");
-                    doctorCantHealHimselfAlert.initOwner(stage);
-                    doctorCantHealHimselfAlert.showAndWait();
-                } else if (gameStatisticsService.checkIfPlayerWasHealed(chosenPlayerNumber, SelectionController.currentGameId)) {
-                    Alert doctorCantHealHimselfAlert =
-                            new Alert(Alert.AlertType.INFORMATION, ERoleOrder.DOCTOR.getTitle() + " не може лікувати два рази підряд");
-                    doctorCantHealHimselfAlert.initOwner(stage);
-                    doctorCantHealHimselfAlert.showAndWait();
-                } else {
-                    // Метод - нарахувати поінти за хід вночі.
-                    // Передамо поточну роль, і всі з такою роллю отримають стільки то балів
-                    setLastVote(chosenPlayerNumber);
-                    doDoctorMove(chosenPlayerNumber);
-                    setDoctorMarker(chosenPlayerNumber);
-                    pointsService.countPointsInOrderToNightAction(
-                            SelectionController.currentGameId,
-                            currentRole,
-                            chosenPlayerNumber
-                    );
-                    setNextRole();
-                }
-                break;
-            case SHERYF:
-                if (playerIdRoleMap.get(chosenPlayerNumber).getRoleNameConstant().equals(ERoleOrder.SHERYF.name())) {
-                    Alert sheryfCantChooseHimselfAlert =
-                            new Alert(Alert.AlertType.INFORMATION, ERoleOrder.SHERYF.getTitle() + " не може перевіряти себе");
-                    sheryfCantChooseHimselfAlert.initOwner(stage);
-                    sheryfCantChooseHimselfAlert.showAndWait();
-                } else {
-                    setLastVote(chosenPlayerNumber);
-                    doSheryfMove(chosenPlayerNumber);
-                    pointsService.countPointsInOrderToNightAction(
-                            SelectionController.currentGameId,
-                            currentRole,
-                            chosenPlayerNumber
-                    );
-                    setNextRole();
-                }
-                break;
-            case MANIAK:
-                if (playerIdRoleMap.get(chosenPlayerNumber).getRoleNameConstant().equals(ERoleOrder.MANIAK.name())) {
-                    Alert maniakCantChooseHimselfAlert =
-                            new Alert(Alert.AlertType.INFORMATION, ERoleOrder.MANIAK.getTitle() + " не може голосувати за себе");
-                    maniakCantChooseHimselfAlert.initOwner(stage);
-                    maniakCantChooseHimselfAlert.showAndWait();
-                } else {
-                    setLastVote(chosenPlayerNumber);
-                    doManiakMove(chosenPlayerNumber);
-                    setManiakMarker(chosenPlayerNumber);
-                    pointsService.countPointsInOrderToNightAction(
-                            SelectionController.currentGameId,
-                            currentRole,
-                            chosenPlayerNumber
-                    );
-                    setNextRole();
-                }
-                break;
-            case STRILOCHNYK:
-                if (strilochnykIndex < archerAttemptsAmount) {
-                    setLastVote(chosenPlayerNumber);
-                    strilochnykShoots++;
-                    doStrilochnykMove(chosenPlayerNumber);
-                    setMesnykMarker(chosenPlayerNumber);
-                    pointsService.countPointsInOrderToNightAction(
-                            SelectionController.currentGameId,
-                            currentRole,
-                            chosenPlayerNumber
-                    );
-                    if (strilochnykIndex == archerAttemptsAmount - 1) {
-                        setNextRole();
-                    } else {
-                        strilochnykIndex++;
                     }
-                }
-                break;
-            case OTAMAN:
-                if (playerIdRoleMap.get(chosenPlayerNumber).getRoleNameConstant().equals(ERoleOrder.OTAMAN.name())) {
-                    Alert ladyCantChooseHerselfAlert =
-                            new Alert(Alert.AlertType.INFORMATION, ERoleOrder.OTAMAN.getTitle() + " не може ставити собі захист");
-                    ladyCantChooseHerselfAlert.initOwner(stage);
-                    ladyCantChooseHerselfAlert.showAndWait();
-                } else {
-                    setLastVote(chosenPlayerNumber);
-                    doOtamanMove(chosenPlayerNumber);
+                    break;
+                case DOCTOR:
+                    if (playerIdRoleMap.get(chosenPlayerNumber).getRoleNameConstant().equals(ERoleOrder.DOCTOR.name())
+                        && (findByInGameNumber(chosenPlayerNumber).getTimesWasHealed() >= 2)) {
+                        Alert doctorCantHealHimselfAlert =
+                                new Alert(Alert.AlertType.INFORMATION, ERoleOrder.DOCTOR.getTitle() + " не може лікувати себе більше двох разів");
+                        doctorCantHealHimselfAlert.initOwner(stage);
+                        doctorCantHealHimselfAlert.showAndWait();
+                    } else if (gameStatisticsService.checkIfPlayerWasHealed(chosenPlayerNumber, SelectionController.currentGameId)) {
+                        Alert doctorCantHealHimselfAlert =
+                                new Alert(Alert.AlertType.INFORMATION, ERoleOrder.DOCTOR.getTitle() + " не може лікувати два рази підряд");
+                        doctorCantHealHimselfAlert.initOwner(stage);
+                        doctorCantHealHimselfAlert.showAndWait();
+                    } else {
+                        // Метод - нарахувати поінти за хід вночі.
+                        // Передамо поточну роль, і всі з такою роллю отримають стільки то балів
+                        setLastVote(chosenPlayerNumber);
+                        doDoctorMove(chosenPlayerNumber);
+                        setDoctorMarker(chosenPlayerNumber);
+                        pointsService.countPointsInOrderToNightAction(
+                                SelectionController.currentGameId,
+                                currentRole,
+                                chosenPlayerNumber
+                        );
+                        setNextRole();
+                    }
+                    break;
+                case SHERYF:
+                    if (playerIdRoleMap.get(chosenPlayerNumber).getRoleNameConstant().equals(ERoleOrder.SHERYF.name())) {
+                        Alert sheryfCantChooseHimselfAlert =
+                                new Alert(Alert.AlertType.INFORMATION, ERoleOrder.SHERYF.getTitle() + " не може перевіряти себе");
+                        sheryfCantChooseHimselfAlert.initOwner(stage);
+                        sheryfCantChooseHimselfAlert.showAndWait();
+                    } else {
+                        setLastVote(chosenPlayerNumber);
+                        doSheryfMove(chosenPlayerNumber);
+                        pointsService.countPointsInOrderToNightAction(
+                                SelectionController.currentGameId,
+                                currentRole,
+                                chosenPlayerNumber
+                        );
+                        setNextRole();
+                    }
+                    break;
+                case MANIAK:
+                    if (playerIdRoleMap.get(chosenPlayerNumber).getRoleNameConstant().equals(ERoleOrder.MANIAK.name())) {
+                        Alert maniakCantChooseHimselfAlert =
+                                new Alert(Alert.AlertType.INFORMATION, ERoleOrder.MANIAK.getTitle() + " не може голосувати за себе");
+                        maniakCantChooseHimselfAlert.initOwner(stage);
+                        maniakCantChooseHimselfAlert.showAndWait();
+                    } else {
+                        setLastVote(chosenPlayerNumber);
+                        doManiakMove(chosenPlayerNumber);
+                        setManiakMarker(chosenPlayerNumber);
+                        pointsService.countPointsInOrderToNightAction(
+                                SelectionController.currentGameId,
+                                currentRole,
+                                chosenPlayerNumber
+                        );
+                        setNextRole();
+                    }
+                    break;
+                case STRILOCHNYK:
+                    if (playerIdRoleMap.get(chosenPlayerNumber).getRoleNameConstant().equals(ERoleOrder.STRILOCHNYK.name())) {
+                        Alert mafiaCantChooseHimselfAlert =
+                                new Alert(Alert.AlertType.INFORMATION, ERoleOrder.STRILOCHNYK.getTitle() + " не може проголосувати за себе");
+                        mafiaCantChooseHimselfAlert.initOwner(stage);
+                        mafiaCantChooseHimselfAlert.show();
+                    } else if (strilochnykIndex < archerAttemptsAmount) {
+                        setLastVote(chosenPlayerNumber);
+                        strilochnykShoots++;
+                        doStrilochnykMove(chosenPlayerNumber);
+                        setMesnykMarker(chosenPlayerNumber);
+                        pointsService.countPointsInOrderToNightAction(
+                                SelectionController.currentGameId,
+                                currentRole,
+                                chosenPlayerNumber
+                        );
+                        if (strilochnykIndex == archerAttemptsAmount - 1) {
+                            setNextRole();
+                        } else {
+                            strilochnykIndex++;
+                        }
+                    }
+                    break;
+                case OTAMAN:
+                    if (playerIdRoleMap.get(chosenPlayerNumber).getRoleNameConstant().equals(ERoleOrder.OTAMAN.name())) {
+                        Alert ladyCantChooseHerselfAlert =
+                                new Alert(Alert.AlertType.INFORMATION, ERoleOrder.OTAMAN.getTitle() + " не може ставити собі захист");
+                        ladyCantChooseHerselfAlert.initOwner(stage);
+                        ladyCantChooseHerselfAlert.showAndWait();
+                    } else {
+                        setLastVote(chosenPlayerNumber);
+                        doOtamanMove(chosenPlayerNumber);
+                        pointsService.countPointsInOrderToNightAction(
+                                SelectionController.currentGameId,
+                                currentRole,
+                                chosenPlayerNumber
+                        );
+                        setOtamanMakrer(chosenPlayerNumber);
+                        setNextRole();
+                    }
+                    break;
+                case LEDY:
+                    if (playerIdRoleMap.get(chosenPlayerNumber).getRoleNameConstant().equals(ERoleOrder.LEDY.name())) {
+                        Alert ladyCantChooseHerselfAlert =
+                                new Alert(Alert.AlertType.INFORMATION, ERoleOrder.LEDY.getTitle() + " не може голосувати за себе");
+                        ladyCantChooseHerselfAlert.initOwner(stage);
+                        ladyCantChooseHerselfAlert.showAndWait();
+                    } else {
+                        setLastVote(chosenPlayerNumber);
+                        doLedyMove(chosenPlayerNumber);
+                        setLedyMarker(chosenPlayerNumber);
+                        pointsService.countPointsInOrderToNightAction(
+                                SelectionController.currentGameId,
+                                currentRole,
+                                chosenPlayerNumber
+                        );
+                        setNextRole();
+                    }
+                    break;
+                case ZATYCHKA:
                     pointsService.countPointsInOrderToNightAction(
                             SelectionController.currentGameId,
                             currentRole,
                             chosenPlayerNumber
                     );
-                    setOtamanMakrer(chosenPlayerNumber);
-                    setNextRole();
-                }
-                break;
-            case LEDY:
-                if (playerIdRoleMap.get(chosenPlayerNumber).getRoleNameConstant().equals(ERoleOrder.LEDY.name())) {
-                    Alert ladyCantChooseHerselfAlert =
-                            new Alert(Alert.AlertType.INFORMATION, ERoleOrder.LEDY.getTitle() + " не може голосувати за себе");
-                    ladyCantChooseHerselfAlert.initOwner(stage);
-                    ladyCantChooseHerselfAlert.showAndWait();
-                } else {
                     setLastVote(chosenPlayerNumber);
-                    doLedyMove(chosenPlayerNumber);
-                    setLedyMarker(chosenPlayerNumber);
-                    pointsService.countPointsInOrderToNightAction(
-                            SelectionController.currentGameId,
-                            currentRole,
-                            chosenPlayerNumber
-                    );
-                    setNextRole();
-                }
-                break;
-            case ZATYCHKA:
-                pointsService.countPointsInOrderToNightAction(
-                        SelectionController.currentGameId,
-                        currentRole,
-                        chosenPlayerNumber
-                );
-                setLastVote(chosenPlayerNumber);
-                doZatychkaMove(chosenPlayerNumber);
-                setPastorMarker(chosenPlayerNumber);
+                    doZatychkaMove(chosenPlayerNumber);
+                    setPastorMarker(chosenPlayerNumber);
 //                Action zatychkaMoveLogger = new Action();
 //                zatychkaMoveLogger.setActionText(ERoleOrder.ZATYCHKA.getTitle() + " голосує в гравця " + chosenPlayerNumber);
 //                zatychkaMoveLogger.setLocalDateTime(LocalDateTime.now());
 //                // тут додавати logger в чергу?
 //                actionsQueue.add(zatychkaMoveLogger);
-                setNextRole();
-                break;
-            case ZATYCHKA_SUDDYA:
-                pointsService.countPointsInOrderToNightAction(
-                        SelectionController.currentGameId,
-                        currentRole,
-                        chosenPlayerNumber
-                );
-                setLastVote(chosenPlayerNumber);
-                doSuddyaMove(chosenPlayerNumber);
-                setSuddyaMarker(chosenPlayerNumber);
-                Action zatychkaSuddyaMoveLogger = new Action();
-                zatychkaSuddyaMoveLogger.setActionText(ERoleOrder.ZATYCHKA_SUDDYA.getTitle() + " голосує в гравця " + chosenPlayerNumber);
-                zatychkaSuddyaMoveLogger.setLocalDateTime(LocalDateTime.now());
-                // тут додавати logger в чергу?
-                actionsQueue.add(zatychkaSuddyaMoveLogger);
-                setNextRole();
-                break;
-            case BOMBA:
-                if (currentNightIndicator == 1 || currentNightIndicator == 2) {
-                    confirmButton.setVisible(true);
-
-                    if (playerIdRoleMap.get(chosenPlayerNumber).getRoleNameConstant().equals(ERoleOrder.BOMBA.name())) {
-                        Alert bombCantChooseHerselfAlert =
-                                new Alert(Alert.AlertType.INFORMATION, ERoleOrder.BOMBA.getTitle() + " не може голосувати за себе");
-                        bombCantChooseHerselfAlert.initOwner(stage);
-                        bombCantChooseHerselfAlert.showAndWait();
-                    } else {
-                        Button button = playerButtonsMap.get(chosenPlayerNumber);
-                        selectedByBombPlayerButtonsMap.put(chosenPlayerNumber, button);
-                        button.setStyle(IDLE_BUTTON_STYLE_RED);
-                        button.setOnMouseEntered(e -> button.setStyle(HOVERED_BUTTON_STYLE_RED));
-                        button.setOnMouseExited(e -> button.setStyle(IDLE_BUTTON_STYLE_RED));
-                        button.setOnMouseClicked(actionEvent -> {
-                            if (currentRole.getTitle().equals(ERoleOrder.BOMBA.getTitle())) {
-                                selectedByBombPlayerButtonsMap.remove(chosenPlayerNumber);
-                                button.setStyle(IDLE_BUTTON_STYLE);
-                                button.setOnMouseEntered(e -> button.setStyle(HOVERED_BUTTON_STYLE));
-                                button.setOnMouseExited(e -> button.setStyle(IDLE_BUTTON_STYLE));
-                                chosenByBombPlayerAmount--;
-                                button.setOnMouseClicked(actionEvent1 -> handlePlayerAction(chosenPlayerNumber));
-                            }
-                        });
-                        chosenByBombPlayerAmount++;
-
-                    }
-                } else {
                     setNextRole();
-                }
-                break;
-            case KRADIY:
-                setLastVote(chosenPlayerNumber);
-                pointsService.countPointsInOrderToNightAction(
-                        SelectionController.currentGameId,
-                        currentRole,
-                        chosenPlayerNumber
-                );
-                doKradiyMove(chosenPlayerNumber);
-                setKradiyMarker(chosenPlayerNumber);
-                setNextRole();
-                break;
+                    break;
+                case ZATYCHKA_SUDDYA:
+                    pointsService.countPointsInOrderToNightAction(
+                            SelectionController.currentGameId,
+                            currentRole,
+                            chosenPlayerNumber
+                    );
+                    setLastVote(chosenPlayerNumber);
+                    doSuddyaMove(chosenPlayerNumber);
+                    setSuddyaMarker(chosenPlayerNumber);
+                    Action zatychkaSuddyaMoveLogger = new Action();
+                    zatychkaSuddyaMoveLogger.setActionText(ERoleOrder.ZATYCHKA_SUDDYA.getTitle() + " голосує в гравця " + chosenPlayerNumber);
+                    zatychkaSuddyaMoveLogger.setLocalDateTime(LocalDateTime.now());
+                    // тут додавати logger в чергу?
+
+                    actionsQueue.add(zatychkaSuddyaMoveLogger);
+                    setNextRole();
+                    break;
+                case BOMBA:
+                    if (currentNightIndicator == 1 || currentNightIndicator == 2) {
+                        confirmButton.setVisible(true);
+
+                        if (playerIdRoleMap.get(chosenPlayerNumber).getRoleNameConstant().equals(ERoleOrder.BOMBA.name())) {
+                            Alert bombCantChooseHerselfAlert =
+                                    new Alert(Alert.AlertType.INFORMATION, ERoleOrder.BOMBA.getTitle() + " не може голосувати за себе");
+                            bombCantChooseHerselfAlert.initOwner(stage);
+                            bombCantChooseHerselfAlert.showAndWait();
+                        } else {
+                            Button button = playerButtonsMap.get(chosenPlayerNumber);
+                            selectedByBombPlayerButtonsMap.put(chosenPlayerNumber, button);
+                            button.setStyle(IDLE_BUTTON_STYLE_RED);
+                            button.setOnMouseEntered(e -> button.setStyle(HOVERED_BUTTON_STYLE_RED));
+                            button.setOnMouseExited(e -> button.setStyle(IDLE_BUTTON_STYLE_RED));
+                            button.setOnMouseClicked(actionEvent -> {
+                                if (currentRole.getTitle().equals(ERoleOrder.BOMBA.getTitle())) {
+                                    selectedByBombPlayerButtonsMap.remove(chosenPlayerNumber);
+                                    button.setStyle(IDLE_BUTTON_STYLE);
+                                    button.setOnMouseEntered(e -> button.setStyle(HOVERED_BUTTON_STYLE));
+                                    button.setOnMouseExited(e -> button.setStyle(IDLE_BUTTON_STYLE));
+                                    chosenByBombPlayerAmount--;
+                                    button.setOnMouseClicked(actionEvent1 -> handlePlayerAction(chosenPlayerNumber));
+                                }
+                            });
+                            chosenByBombPlayerAmount++;
+
+                        }
+                    } else {
+                        setNextRole();
+                    }
+                    break;
+                case KRADIY:
+                    setLastVote(chosenPlayerNumber);
+                    pointsService.countPointsInOrderToNightAction(
+                            SelectionController.currentGameId,
+                            currentRole,
+                            chosenPlayerNumber
+                    );
+                    doKradiyMove(chosenPlayerNumber);
+                    setKradiyMarker(chosenPlayerNumber);
+                    setNextRole();
+                    break;
+            }
         }
     }
 
@@ -730,7 +762,7 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
                    || currentRole.getRoleNameConstant().equals(ERoleOrder.DON.name())
                    || currentRole.getRoleNameConstant().equals(ERoleOrder.PEREVERTEN_MAFIA.name())) {
             mafiaPlayerNumbers.add(chosenPlayerNumber);
-            if(mafiaCopy.isEmpty()) {
+            if (mafiaCopy.isEmpty()) {
                 mafiaCopy = gameService.findById(SelectionController.currentGameId).getGameStatistics();
             }
         } else {
@@ -747,8 +779,8 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
         currentRole = actualInGameRoles.get(currentRoleIndex);
         if (currentRole.getTitle().equals(ERoleOrder.PEACE.getTitle()) || currentRole.getTitle().equals(ERoleOrder.PEREVERTEN_PEACE.getTitle())) {
             resetLastAction();
-        }else if (currentRole.getRoleNameConstant().equals(ERoleOrder.STRILOCHNYK.name()) && gameStatisticsService.getSumOfStrilochnykAttempts(SelectionController.currentGameId) == 0) {
-             currentRoleIndex = currentRoleIndex - 1;
+        } else if (currentRole.getRoleNameConstant().equals(ERoleOrder.STRILOCHNYK.name()) && gameStatisticsService.getSumOfStrilochnykAttempts(SelectionController.currentGameId) == 0) {
+            currentRoleIndex = currentRoleIndex - 1;
             currentRole = actualInGameRoles.get(currentRoleIndex);
             for (Integer lastPlayerNumber : lastPlayerNumbers) {
                 ObservableList<Node> children = playerNumberNicknameHbox.get(lastPlayerNumber).getChildren();
@@ -928,9 +960,9 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
         ETeam eTeam = playerIdRoleMap.get(chosenPlayerNumber).getTeam();
         String teamName;
         if (eTeam.name().equals(ETeam.MAFIA.name())) {
-            teamName = "корупціонерів";
-        }else{
-            teamName = "мирних жителів";
+            teamName = "КОРУПЦІОНЕРІВ";
+        } else {
+            teamName = "ЖИТЕЛІВ СКІФІЇ";
         }
         sheryfMoveLogger.setActionText(gameStatistics.getInGameNickname()
                                        + " - команда '" + teamName + "'");
@@ -962,7 +994,6 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
 
     @Override
     public void displayRolePlayers(int totalPlayers) {
-
         nightStagePlayersPane.getChildren().clear();
         nightStagePlayersPane.getChildren().add(confirmButton);
         nightStagePlayersPane.getChildren().add(confirmButtonMafia);
@@ -1003,7 +1034,6 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
                 // Set the ImagePattern as the fill for the Circle
                 avatar.setFill(imagePattern);
             }
-
 
             VBox playerPanel = createPlayerPanel(x, y);
             // Create an HBox to hold the avatar and other elements
@@ -1078,10 +1108,8 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
                 button.setVisible(false);
             }
 
-
             playerButtonsMap.put(i, button);
             nightStagePlayersPane.getChildren().add(button);
-
         }
     }
 

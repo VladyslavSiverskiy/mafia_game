@@ -31,9 +31,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.net.URL;
-import java.util.Comparator;
-import java.util.List;
-import java.util.ResourceBundle;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.vsiverskyi.utils.StyleConstants.HOVERED_BUTTON_STYLE;
@@ -72,6 +70,9 @@ public class ArchiveGameController implements Initializable {
     private TableColumn<GameStatistics, Circle> avatarColumn;
     @FXML
     private HBox podiumBox;
+    @FXML
+    private VBox rolesBox;
+    private List<GameStatistics> players;
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
@@ -98,6 +99,8 @@ public class ArchiveGameController implements Initializable {
         List<GameStatistics> sortedList = gameStatisticsList.stream()
                 .sorted(Comparator.comparingInt(GameStatistics::getPoints).reversed())
                 .collect(Collectors.toList());
+
+        players = sortedList;
 
         // Get the top 3 players by points
         List<GameStatistics> top3Players = sortedList.stream().limit(3).collect(Collectors.toList());
@@ -144,26 +147,24 @@ public class ArchiveGameController implements Initializable {
         String winners = game.getWinnerSide().getTitle();
         if (winners.equals(ETeam.MAFIA.getTitle())) {
             if (checkIfYanucharMafiaExisted(game)) {
-                winners = "Яничар";
+                winners = "КОМАНДА ЯНИЧАРІВ";
             } else {
-                winners = "Корупціонери";
+                winners = "КЛАН КОРУПЦІОНЕРІВ";
             }
         } else {
-            winners = "Мирні";
+            winners = "ЖИТЕЛІ СКІФІЇ";
         }
-
-        winnerTitleLabel.setText("Перемогли: " + winners);
+        winnerTitleLabel.setText("ПЕРЕМОГЛИ: " + winners);
         winnerTitleLabel.getStyleClass().add("label-winner");
 
         toStarterPage.getStyleClass().add("button-idle");
         toStarterPage.setOnMouseEntered(ev -> toStarterPage.setStyle(HOVERED_BUTTON_STYLE));
         toStarterPage.setOnMouseExited(ev -> toStarterPage.setStyle(IDLE_BUTTON_STYLE));
-        toStarterPage.setOnMouseClicked(ev -> {
-            fxWeaver.loadController(EveningRateController.class).show();
-        });
+        toStarterPage.setOnMouseClicked(ev -> fxWeaver.loadController(EveningRateController.class).show());
 
         // Create the podium
         createPodium(top3Players);
+        displayRolesAndPlayers(players);
     }
 
     private boolean checkIfYanucharMafiaExisted(Game game) {
@@ -245,11 +246,17 @@ public class ArchiveGameController implements Initializable {
     private void handleCopyButtonAction() {
         StringBuilder sb = new StringBuilder();
 
+        int number = 1;
         // Get all items from the TableView
-        for (GameStatistics item : gameStatisticsTable.getItems()) {
+        for (GameStatistics item : players) {
             String nickname = item.getInGameNickname();
             int totalPoints = item.getPoints();
-            sb.append(nickname).append(": +").append(totalPoints).append("\n");
+            sb.append(number)
+                    .append(".")
+                    .append(nickname)
+                    .append("(" + item.getRole().getTitle() + ")")
+                    .append(": +").append(totalPoints).append("\n");
+            number++;
         }
 
         // Copy the text to the clipboard
@@ -269,4 +276,40 @@ public class ArchiveGameController implements Initializable {
 
         alert.showAndWait();
     }
+
+    private void displayRolesAndPlayers(List<GameStatistics> players) {
+        rolesBox.getChildren().clear();
+        // Create a list of roles in the desired order
+        List<String> orderedRoles = Arrays.stream(ERoleOrder.values())
+                .map(ERoleOrder::getTitle) // Assuming ERoleOrder has a getTitle method
+                .collect(Collectors.toList());
+
+        // Group players by role
+        Map<String, List<GameStatistics>> roleToPlayersMap = players.stream()
+                .collect(Collectors.groupingBy(player -> player.getRole().getTitle()));
+
+        // Iterate over the ordered roles and display them with their respective players
+        for (String role : orderedRoles) {
+            List<GameStatistics> playersWithRole = roleToPlayersMap.get(role);
+
+            if (playersWithRole != null && !playersWithRole.isEmpty()) {
+                Label roleLabel = new Label(role + ":");
+                roleLabel.setStyle("-fx-text-fill: black; -fx-font-size: 16px; -fx-font-family: 'Arial'; -fx-font-weight: bold;");
+
+                VBox playersList = new VBox();
+                playersList.setSpacing(5);
+
+                for (GameStatistics player : playersWithRole) {
+                    Label playerLabel = new Label(player.getInGameNickname());
+                    playerLabel.setStyle("-fx-text-fill: black; -fx-font-size: 14px; -fx-font-family: 'Arial';");
+                    playersList.getChildren().add(playerLabel);
+                }
+
+                VBox roleBox = new VBox(roleLabel, playersList);
+                roleBox.setSpacing(5);
+                rolesBox.getChildren().add(roleBox);
+            }
+        }
+    }
+
 }
