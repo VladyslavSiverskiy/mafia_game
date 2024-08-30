@@ -102,7 +102,6 @@ public class SelectionController implements Initializable {
 
     private void importDataFromPreviousGame() {
         List<Game> games = gameService.findRecentGames(2);
-        System.out.println(games);
         Game game = null;
         if (games.size() > 1) {
             game = games.get(1);

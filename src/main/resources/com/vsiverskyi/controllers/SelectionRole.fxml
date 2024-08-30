@@ -15,7 +15,7 @@
             </font>
         </Label>
         <Button fx:id="startVoting" layoutX="28.0" layoutY="673.0" mnemonicParsing="false" style="-fx-background-color: #161616; -fx-border-color: #ffffff; -fx-border-radius: 5px;" text="Перейти до обговорення" textFill="WHITE" />
-        <AnchorPane fx:id="selectionRolePane" layoutX="198.0" layoutY="46.0" prefHeight="738.0" prefWidth="878.0" />
+        <AnchorPane fx:id="selectionRolePane" layoutX="181.0" layoutY="46.0" prefHeight="707.0" prefWidth="937.0" />
         <AnchorPane fx:id="selectedRolesAp" layoutX="5.0" layoutY="236.0" prefHeight="410.0" prefWidth="214.0" style="-fx-border-color: #ffffff; -fx-border-radius: 5px; -fx-background-color: #161616;" />
         <AnchorPane layoutX="4.0" layoutY="117.0" prefHeight="103.0" prefWidth="214.0" style="-fx-border-color: #ffffff; -fx-border-radius: 5px;">
             <children>

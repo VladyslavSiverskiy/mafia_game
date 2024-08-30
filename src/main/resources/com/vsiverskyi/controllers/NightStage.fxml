@@ -8,7 +8,7 @@
 <?import javafx.scene.text.Font?>
 
 <AnchorPane fx:id="nightStageAp" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="800.0" prefWidth="1280.0" style="-fx-background-color: #161616;" xmlns="http://javafx.com/javafx/19" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vsiverskyi.controllers.NightStageController">
-    <AnchorPane fx:id="nightStagePlayersPane" layoutX="175.0" layoutY="36.0" prefHeight="700.0" prefWidth="878.0">
+    <AnchorPane fx:id="nightStagePlayersPane" layoutX="151.0" layoutY="36.0" prefHeight="719.0" prefWidth="937.0">
       <children>
          <Button fx:id="confirmButton" layoutX="425.0" layoutY="337.0" mnemonicParsing="false" text="Підтвердити" />
          <Button fx:id="confirmButtonMafia" layoutX="425.0" layoutY="362.0" mnemonicParsing="false" text="Підтвердити" />
@@ -60,5 +60,6 @@
          <Font name="System Bold" size="12.0" />
       </font>
    </Button>
+   <Label fx:id="startDay" layoutX="1135.0" layoutY="727.0" text="Перейти до дня" textFill="#dfff00" />
 
 </AnchorPane>

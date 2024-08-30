@@ -25,7 +25,7 @@
             </children>
         </AnchorPane>
         <Button fx:id="fullScreen" layoutX="1115.0" layoutY="23.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="124.0" text="Повний екран" />
-        <AnchorPane fx:id="votingPlayersPane" layoutX="169.0" layoutY="73.0" prefHeight="674.0" prefWidth="878.0">
+        <AnchorPane fx:id="votingPlayersPane" layoutX="169.0" layoutY="54.0" prefHeight="715.0" prefWidth="931.0">
          <children>
             <Button fx:id="goAheadButton" layoutX="411.0" layoutY="354.0" mnemonicParsing="false" style="-fx-background-color: #244224;" text="Вперед!" textFill="WHITE" wrapText="true" />
             <Button fx:id="discussionButton" layoutX="391.0" layoutY="391.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="103.0" text="Обговорення" />
@@ -52,5 +52,6 @@
          </font>
       </Label>
       <AnchorPane fx:id="playersLeft" layoutX="25.0" layoutY="639.0" prefHeight="86.0" prefWidth="200.0" />
+      <Label fx:id="startNight" layoutX="1133.0" layoutY="723.0" text="Перейти до ночі" textFill="#fff200" />
     </children>
 </AnchorPane>

@@ -14,7 +14,7 @@
       <Button layoutX="636.0" layoutY="682.0" mnemonicParsing="false" onAction="#startGame" style="-fx-background-color: #161616; -fx-border-color: #ffffff; -fx-border-radius: 5px;" text="Розпочати гру!" textFill="WHITE" />
       <Rectangle arcHeight="5.0" arcWidth="5.0" fill="#293037" height="6.0" layoutX="419.0" layoutY="64.0" stroke="BLACK" strokeType="INSIDE" width="509.0" />
       <Rectangle arcHeight="5.0" arcWidth="5.0" fill="#293037" height="6.0" layoutX="420.0" layoutY="109.0" stroke="BLACK" strokeType="INSIDE" width="509.0" />
-      <Label layoutX="687.0" layoutY="81.0" prefHeight="17.0" prefWidth="84.0" text="Кількість мафії:" textFill="WHITE" />
+      <Label layoutX="664.0" layoutY="81.0" prefHeight="17.0" prefWidth="115.0" text="К-сть корупціонерів:" textFill="WHITE" />
       <Spinner fx:id="mafiaAmountSpinner" layoutX="780.0" layoutY="77.0" />
       <Label layoutX="418.0" layoutY="23.0" text="Основні налаштування гри" textFill="WHITE">
          <font>

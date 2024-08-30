@@ -48,8 +48,13 @@ public class PenaltyController {
                 giveRedCard(playerNumber, yellowButton, redButton, stage);
             } else if (yellowCards >= 3) {
                 gameStatisticsService.setSkipNextVoting(gs);
+                GameStatistics gameStatistics = gameStatisticsService.findByInGameNumberAndGameId(playerNumber, SelectionController.currentGameId);
+                Alert alert = new Alert(Alert.AlertType.INFORMATION, gameStatistics.getInGameNickname() + " отримує жовту картку");
+                alert.initOwner(stage);
+                alert.show();
             } else {
-                Alert alert = new Alert(Alert.AlertType.INFORMATION, "Гравець " + playerNumber + " отримав жовту картку");
+                GameStatistics gameStatistics = gameStatisticsService.findByInGameNumberAndGameId(playerNumber, SelectionController.currentGameId);
+                Alert alert = new Alert(Alert.AlertType.INFORMATION, gameStatistics.getInGameNickname() + " отримує жовту картку");
                 alert.initOwner(stage);
                 alert.show();
             }
@@ -61,7 +66,8 @@ public class PenaltyController {
         redButton.setDisable(true);
         gameStatisticsService.resetYellowCardsAmountAndGiveRedOne(SelectionController.currentGameId, playerNumber);
         gameStatisticsService.removePlayerFromGame(SelectionController.currentGameId, playerNumber);
-        Alert alert = new Alert(Alert.AlertType.INFORMATION, "Гравець " + playerNumber + " отримав червону картку");
+        GameStatistics gameStatistics = gameStatisticsService.findByInGameNumberAndGameId(playerNumber, SelectionController.currentGameId);
+        Alert alert = new Alert(Alert.AlertType.INFORMATION, gameStatistics.getInGameNickname() + " отримує червону картку");
         alert.initOwner(stage);
         alert.show();
         if (gameService.checkIfGameIsOver(SelectionController.currentGameId)) {

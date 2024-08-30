@@ -253,14 +253,14 @@ public class GameEndingController implements Initializable {
 
             if (playersWithRole != null && !playersWithRole.isEmpty()) {
                 Label roleLabel = new Label(role + ":");
-                roleLabel.setStyle("-fx-text-fill: black; -fx-font-size: 16px; -fx-font-family: 'Arial'; -fx-font-weight: bold;");
+                roleLabel.setStyle("-fx-text-fill: black; -fx-font-size: 12px; -fx-font-family: 'Arial'; -fx-font-weight: bold;");
 
                 VBox playersList = new VBox();
-                playersList.setSpacing(5);
+                playersList.setSpacing(2);
 
                 for (GameStatistics player : playersWithRole) {
                     Label playerLabel = new Label(player.getInGameNickname());
-                    playerLabel.setStyle("-fx-text-fill: black; -fx-font-size: 14px; -fx-font-family: 'Arial';");
+                    playerLabel.setStyle("-fx-text-fill: black; -fx-font-size: 12; -fx-font-family: 'Arial';");
                     playersList.getChildren().add(playerLabel);
                 }
 

@@ -10,7 +10,7 @@ import com.vsiverskyi.service.GameStatisticsService;
 import com.vsiverskyi.service.PointsService;
 import com.vsiverskyi.service.RoleService;
 import com.vsiverskyi.utils.Action;
-import javafx.beans.binding.Bindings;
+import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -22,14 +22,13 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.ImagePattern;
 import javafx.scene.shape.Circle;
+import javafx.scene.shape.Rectangle;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import lombok.RequiredArgsConstructor;
@@ -38,7 +37,6 @@ import net.rgielen.fxweaver.core.FxmlView;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.io.File;
 import java.net.URL;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -50,6 +48,7 @@ import static com.vsiverskyi.utils.StyleConstants.*;
 @RequiredArgsConstructor
 @FxmlView("NightStage.fxml")
 public class NightStageController implements Initializable, DisplayedPlayersController {
+
     private Stage stage;
     private Scene scene;
     private Parent root;
@@ -82,6 +81,8 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
     @FXML
     private Label selectedPlayerLabel;
     @FXML
+    private Label startDay;
+    @FXML
     private Button technicalDefeatPeaceful;
     @FXML
     private Button technicalDefeatMafia;
@@ -99,7 +100,6 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
     private Button pauseButton;
     @FXML
     private Button nextButton;
-
     @FXML
     private AnchorPane playersLeft;
     @FXML
@@ -115,6 +115,7 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
     private Map<Integer, Button> selectedByBombPlayerButtonsMap; // Map to store buttons
     private Map<Integer, Label> playerRoleLabelsMap; // Map to store labels
     private Map<Integer, HBox> playerNumberNicknameHbox;
+    private Map<Integer, HBox> playerAvatarHbox;
     private Queue<Action> actionsQueue = new LinkedList<>();
     private Role currentRole;
     private int currentRoleIndex;
@@ -185,13 +186,15 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
         playerRoleLabelsMap = new HashMap<>();
         selectedByBombPlayerButtonsMap = new HashMap<>();
         playerNumberNicknameHbox = new HashMap<>();
+        playerAvatarHbox = new HashMap<>();
+        mafiaCopy = new ArrayList<>();
         lastGamersCopy = new ArrayList<>();
         lastPlayerNumbers = new ArrayList<>();
         strilochnykPlayerNumbers = new ArrayList<>();
         mafiaPlayerNumbers = new ArrayList<>();
         skippedRolesActions = 0;
         strilochnykCopy = new ArrayList<>();
-        mafiaCopy = new ArrayList<>();
+
         updatePlayersList();
         initPlayerRoleMap();
         gameService.resetKillingAttempts(SelectionController.currentGameId);
@@ -201,7 +204,7 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
         // Initialize player card list view
         technicalDefeatPeaceful.setOnMouseClicked(e -> penaltyController.assignTechnicalDefeat("PEACE"));
         technicalDefeatMafia.setOnMouseClicked(e -> penaltyController.assignTechnicalDefeat("MAFIA"));
-        penaltyController.initializePlayerCardList(gameStatisticsListSortedByInGameNumber, stage, this, playerCardListView);
+        initializePlayerCardList(gameStatisticsListSortedByInGameNumber, stage, this, playerCardListView);
         fullScreen.setOnMouseClicked(ev -> stage.setFullScreen(true));
         ImageView imageView = new ImageView(getClass().getResource("/images/fullscreen.png").toExternalForm());
         fullScreen.setGraphic(imageView);
@@ -232,6 +235,19 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
         previousButton.setOnMouseClicked(ev -> musicController.playPreviousTrack());
         nextButton.setOnMouseClicked(ev -> musicController.playNextTrack());
         pauseButton.setOnMouseClicked(ev -> musicController.pausePlayback());
+        startDay.setOnMouseClicked(ev -> {
+            if (musicController != null) {
+                musicController.pausePlayback();
+            }
+            if (gameService.checkIfGameIsOver(SelectionController.currentGameId)) {
+                fxWeaver.loadController(GameEndingController.class).show();
+                if (musicController != null) {
+                    musicController.stopPlayback();
+                }
+            } else {
+                fxWeaver.loadController(VotingController.class).show();
+            }
+        });
     }
 
     private String queueToString(Queue<Action> actions) {
@@ -371,14 +387,7 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
         Scene scene = new Scene(content, 800, 600);  // Increase the size of the window
         scene.getStylesheets().add(getClass().getResource("/style/myDialogs.css").toExternalForm());
         modalStage.setScene(scene);
-//        headerLabel.styleProperty().bind(
-//                Bindings.concat("-fx-font-size: ", content.widthProperty().divide(25).asString(), "px;"));
-//        resultLabel.styleProperty().bind(
-//                Bindings.concat("-fx-font-size: ", content.widthProperty().divide(30).asString(), "px;"));
-
-        // Show the modal window and wait for it to be closed
         modalStage.showAndWait();
-
         pointsService.countOnePointAfterDayAndNight(SelectionController.currentGameId);
         if (gameService.checkIfGameIsOver(SelectionController.currentGameId)) {
             fxWeaver.loadController(GameEndingController.class).show();
@@ -510,9 +519,6 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
                         selectedToKillPlayerNumber = chosenPlayerNumber;
                         setLastVote(chosenPlayerNumber);
                         mafiaMoveLogger = gameService.doMafiaKillMove(SelectionController.currentGameId, chosenPlayerNumber);
-//                    Alert alert = new Alert(Alert.AlertType.INFORMATION, mafiaMoveLogger.getActionText());
-//                    alert.initOwner(stage);
-//                    alert.show();
 
                         setBulletMarker(chosenPlayerNumber);
                         pointsService.countPointsInOrderToNightAction(
@@ -544,11 +550,7 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
                                 currentRole,
                                 chosenPlayerNumber
                         );
-                        actionsQueue.add(perevertenMoveLogger);
-//                    Alert alert = new Alert(Alert.AlertType.INFORMATION, perevertenMoveLogger.getActionText());
-//                    alert.initOwner(stage);
-//                    alert.showAndWait();
-//                    setNextRole();
+
                     }
                     break;
                 case DOCTOR:
@@ -1050,6 +1052,9 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
                 roleLabel.setText(role.getTitle());
             }
             avatarContainer.getChildren().add(roleLabel);
+            if (gameStatistics != null) {
+                playerAvatarHbox.put(gameStatistics.getInGameNumber(), avatarContainer);
+            }
 
             int yellowCardsIterator = Objects.isNull(gameStatistics) ? 0 : gameStatistics.getYellowCards();
             int redCardsIterator = Objects.isNull(gameStatistics) ? 0 : gameStatistics.getRedCards();
@@ -1142,5 +1147,163 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
 
     public void show() {
         stage.show();
+    }
+
+    private void initializePlayerCardList(
+            List<GameStatistics> gameStatisticsList,
+            Stage stage,
+            DisplayedPlayersController controller,
+            ListView<HBox> playerCardListView
+    ) {
+        ObservableList<HBox> playerCards = FXCollections.observableArrayList();
+
+        for (GameStatistics gs : gameStatisticsList) {
+            HBox playerCardRow = new HBox(5); // Reduced spacing between elements
+            playerCardRow.setAlignment(Pos.CENTER_LEFT); // Align items to center-left
+            playerCardRow.setPadding(new Insets(2, 5, 2, 5)); // Minimal padding for compactness
+
+            String nickname = gs.getInGameNickname() != null ? gs.getInGameNickname() : "Незнайомець";
+            String displayNickname = nickname;
+            if (nickname.length() > 15) {
+                displayNickname = nickname.substring(0, 12) + "...";
+            }
+
+            Label playerLabel = new Label(gs.getInGameNumber() + ". " + displayNickname.toUpperCase());
+            playerLabel.setStyle("-fx-font-size: 10px; -fx-text-fill: #ffffff;"); // Reduced font size and set text color
+
+            // Tooltip with full nickname
+            Tooltip fullNicknameTooltip = new Tooltip(nickname);
+            Tooltip.install(playerLabel, fullNicknameTooltip);
+
+            // Create smaller yellow card button
+            Button yellowCardButton = new Button();
+            yellowCardButton.setStyle("-fx-background-color: yellow; -fx-min-width: 10px; -fx-min-height: 10px; -fx-max-width: 10px; -fx-max-height: 10px; -fx-cursor: hand;");
+            yellowCardButton.setTooltip(new Tooltip("Додати жовту картку")); // Tooltip for clarity
+
+            // Create smaller red card button
+            Button redCardButton = new Button();
+            redCardButton.setStyle("-fx-background-color: red; -fx-min-width: 10px; -fx-min-height: 10px; -fx-max-width: 10px; -fx-max-height: 10px; -fx-cursor: hand;");
+            redCardButton.setTooltip(new Tooltip("Додати червону картку")); // Tooltip for clarity
+
+            // Create a larger pause button with an image
+            int playerNumber = gs.getInGameNumber();
+            yellowCardButton.setOnMouseClicked(e -> {
+                giveYellowCard(playerNumber, yellowCardButton, redCardButton, stage);
+//                controller.displayRolePlayers(gameStatisticsList.size());
+            });
+            redCardButton.setOnMouseClicked(e -> {
+                giveRedCard(playerNumber, yellowCardButton, redCardButton, stage);
+//                controller.displayRolePlayers(gameStatisticsList.size());
+            });
+
+            Button pauseButton = new Button();
+
+            // Disable buttons if the player is not in the game
+            if (!gs.isInGame()) {
+                yellowCardButton.setDisable(true);
+                redCardButton.setDisable(true);
+                pauseButton.setDisable(true);
+                playerLabel.setStyle(playerLabel.getStyle() + "-fx-opacity: 0.5;"); // Dim label to indicate inactivity
+            } else {
+                yellowCardButton.setDisable(false);
+                pauseButton.setDisable(false);
+                redCardButton.setDisable(false);
+            }
+
+            // Create a Region to act as a spacer
+            Region spacer = new Region();
+            HBox.setHgrow(spacer, Priority.ALWAYS);
+
+            if (controller instanceof VotingController) {
+                playerCardRow.getChildren().addAll(playerLabel, spacer, yellowCardButton, redCardButton, pauseButton);
+            } else {
+                playerCardRow.getChildren().addAll(playerLabel, spacer, yellowCardButton, redCardButton);
+            }
+            playerCardRow.setStyle("-fx-background-color: #2b2b2b; -fx-background-radius: 5;"); // Optional: Set background color and rounded corners for better aesthetics
+
+            playerCards.add(playerCardRow);
+        }
+
+        // Optional: Set a minimal height for the ListView rows
+        playerCardListView.setFixedCellSize(30);
+        playerCardListView.setItems(playerCards);
+    }
+
+    public void giveYellowCard(int playerNumber, Button yellowButton, Button redButton, Stage stage) {
+        // Get the current number of yellow cards from the database
+        GameStatistics gs = gameStatisticsService.getGameStatisticsByGameIdSortedByInGameNumber(SelectionController.currentGameId)
+                .stream()
+                .filter(stat -> stat.getInGameNumber() == playerNumber)
+                .findFirst()
+                .orElse(null);
+
+        if (gs != null) {
+            int yellowCards = gs.getYellowCards();
+            yellowCards++;
+            gs.setYellowCards(yellowCards);
+
+            // Save the updated yellow card count back to the database
+            gameStatisticsService.updateYellowCards(gs.getGame().getId(), gs.getInGameNumber(), yellowCards);
+
+            if (yellowCards >= 4) {
+                giveRedCard(playerNumber, yellowButton, redButton, stage);
+            } else if (yellowCards >= 3) {
+                HBox avatarContainer = playerAvatarHbox.get(playerNumber);
+                Rectangle yellowCard = new Rectangle(8, 12, Color.YELLOW);
+                VotingController.blockedDueToThirdNightYellowCard.add(playerNumber);
+                yellowCard.setOnMouseClicked(mouseEvent -> {
+                    gameStatisticsService.removeYellowCard(SelectionController.currentGameId, playerNumber);
+                    avatarContainer.getChildren().remove(yellowCard);
+//                    controller.displayRolePlayers(amountOfPlayers);
+                });
+                yellowCard.setStyle("-fx-border-radius: 1px; -fx-background-color: yellow");
+                avatarContainer.getChildren().add(yellowCard);
+                gameStatisticsService.setSkipNextVoting(gs);
+                GameStatistics gameStatistics = gameStatisticsService.findByInGameNumberAndGameId(playerNumber, SelectionController.currentGameId);
+                Alert alert = new Alert(Alert.AlertType.INFORMATION, gameStatistics.getInGameNickname() + " отримує жовту картку");
+                alert.initOwner(stage);
+                alert.show();
+            } else {
+                HBox avatarContainer = playerAvatarHbox.get(playerNumber);
+                Rectangle yellowCard = new Rectangle(8, 12, Color.YELLOW);
+                yellowCard.setOnMouseClicked(mouseEvent -> {
+                    gameStatisticsService.removeYellowCard(SelectionController.currentGameId, playerNumber);
+                    avatarContainer.getChildren().remove(yellowCard);
+//                    controller.displayRolePlayers(amountOfPlayers);
+                });
+                yellowCard.setStyle("-fx-border-radius: 1px; -fx-background-color: yellow");
+                avatarContainer.getChildren().add(yellowCard);
+                GameStatistics gameStatistics = gameStatisticsService.findByInGameNumberAndGameId(playerNumber, SelectionController.currentGameId);
+                Alert alert = new Alert(Alert.AlertType.INFORMATION, gameStatistics.getInGameNickname() + " отримує жовту картку");
+                alert.initOwner(stage);
+                alert.show();
+            }
+        }
+    }
+
+    public void giveRedCard(int playerNumber, Button yellowButton, Button redButton, Stage stage) {
+        yellowButton.setDisable(true);
+        redButton.setDisable(true);
+        gameStatisticsService.resetYellowCardsAmountAndGiveRedOne(SelectionController.currentGameId, playerNumber);
+        gameStatisticsService.removePlayerFromGame(SelectionController.currentGameId, playerNumber);
+
+        HBox avatarContainer = playerAvatarHbox.get(playerNumber);
+        // Remove all rectangles from the avatar container
+        avatarContainer.getChildren().removeIf(node -> node instanceof Rectangle);
+        // Create and add the red card rectangle
+        Rectangle redCard = new Rectangle(8, 12, Color.RED);
+        redCard.setOnMouseClicked(mouseEvent -> {
+            gameStatisticsService.removeRedCard(SelectionController.currentGameId, playerNumber);
+            avatarContainer.getChildren().remove(redCard);
+//                    controller.displayRolePlayers(amountOfPlayers);
+        });
+        avatarContainer.getChildren().add(redCard);
+        GameStatistics gameStatistics = gameStatisticsService.findByInGameNumberAndGameId(playerNumber, SelectionController.currentGameId);
+        Alert alert = new Alert(Alert.AlertType.INFORMATION, gameStatistics.getInGameNickname() + " отримує червону картку");
+        alert.initOwner(stage);
+        alert.show();
+        if (gameService.checkIfGameIsOver(SelectionController.currentGameId)) {
+            fxWeaver.loadController(GameEndingController.class);
+        }
     }
 }

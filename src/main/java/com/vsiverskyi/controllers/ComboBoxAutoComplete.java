@@ -45,7 +45,7 @@ public class ComboBoxAutoComplete<T> {
 		ObservableList<T> filteredList = FXCollections.observableArrayList();
 		KeyCode code = e.getCode();
 
-		if (code.isLetterKey()) {
+		if (!code.isDigitKey()) {
 			filter += e.getText();
 		}
 		if (code == KeyCode.BACK_SPACE && filter.length() > 0) {

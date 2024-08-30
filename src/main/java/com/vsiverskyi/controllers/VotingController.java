@@ -1,7 +1,6 @@
 package com.vsiverskyi.controllers;
 
 import com.vsiverskyi.model.GameStatistics;
-import com.vsiverskyi.model.Player;
 import com.vsiverskyi.model.Role;
 import com.vsiverskyi.model.enums.ERoleOrder;
 import com.vsiverskyi.service.GameService;
@@ -20,13 +19,11 @@ import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
-import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.KeyCode;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.ImagePattern;
@@ -53,6 +50,7 @@ import static com.vsiverskyi.utils.StyleConstants.IDLE_BUTTON_STYLE;
 @FxmlView("Voting.fxml")
 public class VotingController implements Initializable, DisplayedPlayersController {
 
+    public static List<Integer> blockedDueToThirdNightYellowCard ;
     @Autowired
     private ViewController viewController;
     @Autowired
@@ -74,6 +72,8 @@ public class VotingController implements Initializable, DisplayedPlayersControll
     private AnchorPane votingAp;
     @FXML
     private Label votingStateLabel;
+    @FXML
+    private Label startNight;
     @FXML
     private AnchorPane votingPlayersPane;
     @FXML
@@ -117,10 +117,8 @@ public class VotingController implements Initializable, DisplayedPlayersControll
     private List<GameStatistics> gameStatisticsList;
     private Timeline excuseTimeLineTextChanger;
     private Deque<Integer> gamersOrder;
-
     private boolean reverse;
     private boolean kradiyHasStolenVoice;
-
     private boolean continueTimer = true;
     private Timeline excuseTimeLine;
     int secondsTillEnd = 10;
@@ -129,6 +127,7 @@ public class VotingController implements Initializable, DisplayedPlayersControll
     int lastVoiceAmount;
     int votesTillEndAmount;
     boolean mainTimerIsGoing;
+    private List<Integer> nextVotingSkipPlayersNumbers = new ArrayList<>();
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
@@ -145,17 +144,18 @@ public class VotingController implements Initializable, DisplayedPlayersControll
         playerInGameNumberGameStatistics = new HashMap<>();
         kradiyHasStolenVoice = false;
 
-        int secondsPerMove = SettingsUtil.getSecondsPerMove();
-
         gameStatisticsList = gameStatisticsService.getGameStatisticsByGameIdSortedByInGameNumber(SelectionController.currentGameId);
         initPlayerInGameNumberGameStatistics();
-  // Initialize player card list view
+        // Initialize player card list view
         // Initialize technical defeat buttons
         technicalDefeatPeaceful.setOnMouseClicked(e -> penaltyController.assignTechnicalDefeat("PEACE"));
         technicalDefeatMafia.setOnMouseClicked(e -> penaltyController.assignTechnicalDefeat("MAFIA"));
 
         initializePlayerCardList(gameStatisticsList, stage, this, playerCardListView);
 
+        setBlocksPerCurrentGame();
+        setVotesDueToThirdNightYellowCard();
+        blockedDueToThirdNightYellowCard = new ArrayList<>();
         displayRolePlayers(gameStatisticsList.size());
 
         fullScreen.setOnMouseClicked(ev -> stage.setFullScreen(true));
@@ -191,6 +191,48 @@ public class VotingController implements Initializable, DisplayedPlayersControll
                                           && gameStatistics.getRedCards() == 0
                 ).count();
         setVotesLeftLabelText(votesTillEndAmount);
+        startNight.setOnMouseClicked(ev -> {
+            if (excuseTimeLine != null) {
+                excuseTimeLine.stop();
+                excuseTimeLine = null;
+            }
+            if (countDownTimeLine != null) {
+                countDownTimeLine.stop();
+                countDownTimeLine = null;
+            }
+            if (gameService.checkIfGameIsOver(SelectionController.currentGameId)) {
+                fxWeaver.loadController(GameEndingController.class);
+            } else {
+                fxWeaver.loadController(NightStageController.class).show();
+            }
+        });
+    }
+
+    private void setBlocksPerCurrentGame() {
+        if (nextVotingSkipPlayersNumbers.size() > 0) {
+            for (Integer playerNumber: nextVotingSkipPlayersNumbers) {
+                GameStatistics gameStatistics = gameStatisticsService
+                        .findByInGameNumberAndGameId(playerNumber, SelectionController.currentGameId);
+                if (!gameStatistics.isSkipNextVoting()) {
+                    gameStatistics.setSkipNextVoting(true);
+                    gameStatisticsService.save(gameStatistics);
+                }
+            }
+            nextVotingSkipPlayersNumbers.clear();
+        }
+    }
+
+    private void setVotesDueToThirdNightYellowCard(){
+        if (blockedDueToThirdNightYellowCard != null) {
+            for (Integer playerNumber:blockedDueToThirdNightYellowCard){
+                Integer votes = playerIdVotesMap.get(playerNumber);
+                if (votes == null) {
+                    votes = 0;
+                }
+                playerIdVotesMap.put(playerNumber, votes + 1);
+                updateVotesDisplay();
+            }
+        }
     }
 
     public void setVotesLeftLabelText(int votesTillEndAmount) {
@@ -393,7 +435,7 @@ public class VotingController implements Initializable, DisplayedPlayersControll
 
             if (gamersOrder != null) {
                 Integer currentVoter = gamersOrder.peek();
-                if (currentVoter != null && currentVoter != 0 && currentVoter != totalPlayers - 1) {
+                if (currentVoter != null && currentVoter != 0) {
                     updateButtonStates(currentVoter - 1);
                     handleButtonsAndWithoutBlock(currentVoter - 1);
 //                    unblockAllButtons();
@@ -593,7 +635,6 @@ public class VotingController implements Initializable, DisplayedPlayersControll
                 secondsLeft.setText(String.valueOf(secondsTillEnd--));
             } else {
                 Platform.runLater(() -> {
-
                     Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
                     alert.setTitle("Час на голос закінчився");
                     alert.setHeaderText("Час на голос закінчився!");
@@ -981,6 +1022,7 @@ public class VotingController implements Initializable, DisplayedPlayersControll
      */
     private void defineVotingResult() {
         List<Integer> playersIdWithMaxVotes = findPlayersWithMaxVotesAmount(playerIdVotesMap);
+        blockedDueToThirdNightYellowCard.clear();
         Integer playerInGameNumberToDelete;
         if (playersIdWithMaxVotes.size() > 1) {
             showRouletteWindow(playersIdWithMaxVotes, eliminatedPlayer -> {
@@ -1028,6 +1070,7 @@ public class VotingController implements Initializable, DisplayedPlayersControll
         dialogPane.getStyleClass().add("myDialog");
         alert.setTitle("Підсумки дня");
         alert.setHeaderText("Результат голосування");
+        alert.setResizable(true);
         String res = gameStatistics.isDefendedPerNextVoting() ? " не вибуває, бо отримав захист на день."
                 : " вибуває. Його роль " + gameStatistics.getRole().getTitle();
         if (!gameStatistics.isDefendedPerNextVoting() && gameStatistics.getRole().getRoleNameConstant().equals(ERoleOrder.BOMBA.name())) {
@@ -1227,7 +1270,7 @@ public class VotingController implements Initializable, DisplayedPlayersControll
         stage.show();
     }
 
-    public void initializePlayerCardList(
+    private void initializePlayerCardList(
             List<GameStatistics> gameStatisticsList,
             Stage stage,
             DisplayedPlayersController controller,
@@ -1357,12 +1400,36 @@ public class VotingController implements Initializable, DisplayedPlayersControll
 
             if (yellowCards >= 4) {
                 giveRedCard(playerNumber, yellowButton, redButton, stage);
-            } else if (yellowCards >= 3) {
-                votesTillEndAmount--;
-                setVotesLeftLabelText(votesTillEndAmount);
-                gameStatisticsService.setSkipNextVoting(gs);
+            } else if (yellowCards >= 3) { // якщо третя жовта на етапі голосування
+
+                if (gamersOrder != null && gamersOrder.contains(playerNumber) && gamersOrder.peek() != playerNumber) { // якщо гравець є в списку, тобто
+                    // ще не голосував
+                    if (!gs.isSkipNextVoting()) {
+                        gameStatisticsService.setSkipNextVoting(gs);
+                        votesTillEndAmount--;
+                        setVotesLeftLabelText(votesTillEndAmount);
+                    }
+                } else {
+                    if (!gs.isSkipNextVoting()) {
+                        gameStatisticsService.setSkipNextVoting(gs);
+                    }
+                    nextVotingSkipPlayersNumbers.add(playerNumber);
+                    // і додати в List
+                    // в List новостворений додавати гравців
+                }
+                Integer votes = playerIdVotesMap.get(playerNumber);
+                if (votes == null) {
+                    votes = 0;
+                }
+                playerIdVotesMap.put(playerNumber, votes + 1);
+                updateVotesDisplay();
+                GameStatistics gameStatistics = gameStatisticsService.findByInGameNumberAndGameId(playerNumber, SelectionController.currentGameId);
+                Alert alert = new Alert(Alert.AlertType.INFORMATION, gameStatistics.getInGameNickname() + " отримує жовту картку");
+                alert.initOwner(stage);
+                alert.show();
             } else {
-                Alert alert = new Alert(Alert.AlertType.INFORMATION, "Гравець " + playerNumber + " отримав жовту картку");
+                GameStatistics gameStatistics = gameStatisticsService.findByInGameNumberAndGameId(playerNumber, SelectionController.currentGameId);
+                Alert alert = new Alert(Alert.AlertType.INFORMATION, gameStatistics.getInGameNickname() + " отримує жовту картку");
                 alert.initOwner(stage);
                 alert.show();
             }
@@ -1370,13 +1437,13 @@ public class VotingController implements Initializable, DisplayedPlayersControll
     }
 
     public void giveRedCard(int playerNumber, Button yellowButton, Button redButton, Stage stage) {
-//        votesTillEndAmount--;
-//        setVotesLeftLabelText(votesTillEndAmount);
+
         yellowButton.setDisable(true);
         redButton.setDisable(true);
         gameStatisticsService.resetYellowCardsAmountAndGiveRedOne(SelectionController.currentGameId, playerNumber);
         gameStatisticsService.removePlayerFromGame(SelectionController.currentGameId, playerNumber);
-        Alert alert = new Alert(Alert.AlertType.INFORMATION, "Гравець " + playerNumber + " отримав червону картку");
+        GameStatistics gameStatistics = gameStatisticsService.findByInGameNumberAndGameId(playerNumber, SelectionController.currentGameId);
+        Alert alert = new Alert(Alert.AlertType.INFORMATION, gameStatistics.getInGameNickname() + " отримує червону картку");
         alert.initOwner(stage);
         alert.show();
         if (gameService.checkIfGameIsOver(SelectionController.currentGameId)) {

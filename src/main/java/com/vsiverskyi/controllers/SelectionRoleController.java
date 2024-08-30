@@ -4,9 +4,11 @@ import com.vsiverskyi.exception.ExceptionConstants;
 import com.vsiverskyi.exception.NoGameWithSuchIdException;
 import com.vsiverskyi.exception.NoRoleWithSuchTitleException;
 import com.vsiverskyi.model.GameStatistics;
+import com.vsiverskyi.model.Nickname;
 import com.vsiverskyi.model.Player;
 import com.vsiverskyi.model.Role;
 import com.vsiverskyi.model.enums.ERoleOrder;
+import com.vsiverskyi.repository.NicknameRepository;
 import com.vsiverskyi.service.GameService;
 import com.vsiverskyi.service.GameStatisticsService;
 import com.vsiverskyi.service.RoleService;
@@ -40,7 +42,7 @@ import static com.vsiverskyi.utils.StyleConstants.IDLE_BUTTON_STYLE;
 
 @Component
 @FxmlView("SelectionRole.fxml")
-public class SelectionRoleController implements Initializable,DisplayedPlayersController {
+public class SelectionRoleController implements Initializable, DisplayedPlayersController {
 
     @Autowired
     private ViewController viewController;
@@ -56,6 +58,8 @@ public class SelectionRoleController implements Initializable,DisplayedPlayersCo
     private FxWeaver fxWeaver;
     @Autowired
     private MusicController musicController;
+    @Autowired
+    private NicknameRepository nicknameRepository;
     private Stage stage;
     private Scene scene;
     private Parent root;
@@ -96,7 +100,7 @@ public class SelectionRoleController implements Initializable,DisplayedPlayersCo
     private Map<Integer, Button> playerButtonsMap = new HashMap<>(); // Map to store buttons
     private Map<Integer, Label> playerRoleLabelsMap = new HashMap<>(); // Map to store labels
     private Map<Integer, Integer> yellowCardsMap = new HashMap<>(); // Map to store yellow cards count
-//    private Set<Integer> redCardedPlayers = new HashSet<>(); // Set to store players with red cards
+    //    private Set<Integer> redCardedPlayers = new HashSet<>(); // Set to store players with red cards
     private Role currentRole;
     private int roleSelectionIndex = 0;
     private boolean wasStartedPlayer;
@@ -124,7 +128,7 @@ public class SelectionRoleController implements Initializable,DisplayedPlayersCo
         }
         this.stage = StarterController.primaryStage;
         scene = new Scene(selectionRoleAP);
-        scene.getStylesheets().add(getClass().getResource("/style/style.css").toExternalForm());
+        scene.getStylesheets().add(getClass().getResource("/style/selection.css").toExternalForm());
         stage.setScene(scene);
         stage.setMaximized(true);
         stage.setFullScreen(true);
@@ -139,7 +143,7 @@ public class SelectionRoleController implements Initializable,DisplayedPlayersCo
         nextButton.setOnMouseClicked(ev -> musicController.playNextTrack());
         pauseButton.setOnMouseClicked(ev -> musicController.pausePlayback());
 
-        roleSelectionIndex=0;
+        roleSelectionIndex = 0;
 
         playerButtonsMap = new HashMap<>();
         playerIdRoleMap = new HashMap<>();
@@ -180,7 +184,7 @@ public class SelectionRoleController implements Initializable,DisplayedPlayersCo
             technicalDefeatMafia.setDisable(true);
 
             // Initialize player card list view
-            penaltyController.initializePlayerCardList(gameStatisticsList, stage,this, playerCardListView);
+            penaltyController.initializePlayerCardList(gameStatisticsList, stage, this, playerCardListView);
 
             // Create ListView for roles
             ListView<String> roleListView = new ListView<>();
@@ -347,8 +351,11 @@ public class SelectionRoleController implements Initializable,DisplayedPlayersCo
                 hbox.setStyle("-fx-background-color: rgba(31,31,31,0.5); -fx-border-radius: 5px; ");
                 hbox.setPadding(new Insets(0, 0, 0, 10));
 //                hbox.getChildren().addAll(createNicknameLabel(i), roleLabel);
-                hbox.getChildren().addAll(viewController.createNicknameLabel(i,gameStatisticsList));
-                playerPanel.getChildren().add(hbox);
+//                hbox.getChildren().addAll(viewController.createNicknameLabel(i,gameStatisticsList));
+                if (gameStatistics != null) {
+                    hbox.getChildren().addAll(createPlayerComboBoxNickname(i, gameStatisticsList.size(), x, y, gameStatistics.getInGameNickname()));
+                    playerPanel.getChildren().add(hbox);
+                }
                 playerRoleLabelsMap.put(i, roleLabel);
             }
 
@@ -369,6 +376,40 @@ public class SelectionRoleController implements Initializable,DisplayedPlayersCo
         }
     }
 
+    private ComboBox<String> createPlayerComboBoxNickname(int i, int totalPlayers, double x, double y, String currentNickname) {
+        ComboBox<String> nicknameComboBox = new ComboBox<>();
+        nicknameComboBox.setMaxHeight(50);
+        // Add nicknames to the ComboBox
+        List<Nickname> nicknames = nicknameRepository.findAll();
+        nicknameComboBox.getItems().addAll(nicknames.stream().map(nickname -> nickname.getNickname().toUpperCase()).toList());
+
+        // Set the current nickname
+        nicknameComboBox.getSelectionModel().select(currentNickname);
+
+        // Apply custom styling
+        nicknameComboBox.setStyle(
+//                "-fx-font-size: 10px;" +  // Decrease font size
+                "-fx-text-fill: yellow;" // Set text color to yellow
+//                "-fx-pref-width: 150px;" +
+//                "-fx-max-height: 50px;" +  // Increase width
+//                "-fx-padding: 2px 2px;" +  // Adjust padding to reduce height
+//                "-fx-background-color: #333333;" + // Background color for better visibility
+//                "-fx-background-radius: 5px;"  // Rounded corners
+        );
+
+        // Enable auto-complete
+        new ComboBoxAutoComplete<>(nicknameComboBox, x, y);
+
+        int finalI = i;
+        nicknameComboBox.getSelectionModel().selectedItemProperty().addListener((options, oldValue, newValue) -> {
+            if (finalI > 0 && finalI < totalPlayers + 1) {
+                gameStatisticsService.setInGameNickname(SelectionController.currentGameId, finalI, newValue);
+            }
+        });
+
+        return nicknameComboBox;
+    }
+
     private VBox createPlayerPanel(double x, double y) {
         VBox playerPanel = new VBox();
         playerPanel.setAlignment(Pos.CENTER);
@@ -387,8 +428,6 @@ public class SelectionRoleController implements Initializable,DisplayedPlayersCo
         button.setOnMouseExited(e -> button.setStyle(IDLE_BUTTON_STYLE));
         return button;
     }
-
-
 
     private void assignRoleToPlayer(int playerNumber) {
         if (currentRole != null) {
