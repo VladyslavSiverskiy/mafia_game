@@ -1078,6 +1078,7 @@ public class VotingController implements Initializable, DisplayedPlayersControll
                 res += "\nТакож вибувають: ";
                 for (String nickname : markedByBombNicknames) {
                     res += nickname + "; ";
+
                 }
             }
         }
