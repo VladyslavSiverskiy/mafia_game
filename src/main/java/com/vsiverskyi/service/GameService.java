@@ -52,7 +52,7 @@ public class GameService {
     public List<Game> findRecentGames(int limit) {
         LocalDateTime todayStart = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0).withNano(0);
 //        return gameRepository.findRecentGames(todayStart, limit);
-        return gameRepository.findRecentGamesNoDate(limit);
+        return gameRepository.findRecentCompletedGames(limit);
     }
 
     public Game getGameInfo(Long id) {

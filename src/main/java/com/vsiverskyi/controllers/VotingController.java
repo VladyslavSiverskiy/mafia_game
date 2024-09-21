@@ -110,6 +110,8 @@ public class VotingController implements Initializable, DisplayedPlayersControll
     private Button goAheadButton;
     @FXML
     private Button finishButton;
+    @FXML
+    private Label nextVoter;
     private Timeline countDownTimeLine;
     private Map<Integer, Integer> playerIdVotesMap;
     private Map<Integer, GameStatistics> playerInGameNumberGameStatistics;
@@ -303,6 +305,7 @@ public class VotingController implements Initializable, DisplayedPlayersControll
         votingPlayersPane.getChildren().add(secondsLeft);
         votingPlayersPane.getChildren().add(dayLbl);
         votingPlayersPane.getChildren().add(startLabel);
+        votingPlayersPane.getChildren().add(nextVoter);
         votingPlayersPane.getChildren().add(goAheadButton);
         votingPlayersPane.getChildren().add(finishButton);
         votingPlayersPane.getChildren().add(votesTillEnd);
@@ -557,7 +560,13 @@ public class VotingController implements Initializable, DisplayedPlayersControll
 
     private void giveVoiceForward(Integer currentVoterIndex) {
         startLabel.setText("");
-        startLabel.setText("Голосує: " + playerInGameNumberGameStatistics.get(currentVoterIndex + 1).getInGameNickname());
+        startLabel.setText(playerInGameNumberGameStatistics.get(currentVoterIndex + 1).getInGameNickname());
+        Integer nextPlayerInGameNumber = showSecondElement(gamersOrder);
+        if (nextPlayerInGameNumber > 0) {
+            nextVoter.setText("Наступний: " + playerInGameNumberGameStatistics.get(nextPlayerInGameNumber).getInGameNickname());
+        }else {
+            nextVoter.setText("-");
+        }
         if (!checkIfAlive(currentVoterIndex + 1, gameStatisticsList.size()) ||
             checkIfSkipVoting(currentVoterIndex + 1, gameStatisticsList.size()) ||
             checkIfMarkedByKradiy(currentVoterIndex + 1, gameStatisticsList.size())
@@ -694,7 +703,13 @@ public class VotingController implements Initializable, DisplayedPlayersControll
 
     private void giveVoiceReverse(Integer reverseCurrentVoterIndex) {
         startLabel.setText("");
-        startLabel.setText("Голосує: " + playerInGameNumberGameStatistics.get(reverseCurrentVoterIndex + 1).getInGameNickname());
+        startLabel.setText(playerInGameNumberGameStatistics.get(reverseCurrentVoterIndex + 1).getInGameNickname());
+        Integer nextPlayerInGameNumber = showSecondElement(gamersOrder);
+        if (nextPlayerInGameNumber > 0) {
+            nextVoter.setText("Наступний: " + playerInGameNumberGameStatistics.get(nextPlayerInGameNumber).getInGameNickname());
+        }else {
+            nextVoter.setText("-");
+        }
         if (!checkIfAlive(reverseCurrentVoterIndex + 1, gameStatisticsList.size()) ||
             checkIfSkipVoting(reverseCurrentVoterIndex + 1, gameStatisticsList.size()) ||
             checkIfMarkedByKradiy(reverseCurrentVoterIndex + 1, gameStatisticsList.size()
@@ -1256,6 +1271,19 @@ public class VotingController implements Initializable, DisplayedPlayersControll
         playerPanel.setLayoutY(y - 50); // Offset to center panel
         playerPanel.setSpacing(5); // Adjust spacing as needed
         return playerPanel;
+    }
+
+    // will return inGameNumberOfNexPlayer or -1
+    public Integer showSecondElement(Queue<Integer> gamersOrder) {
+        // Create a copy of the queue
+        Queue<Integer> queueCopy = new LinkedList<>(gamersOrder);
+        if (queueCopy.size() < 2) {
+            return -1;
+        }
+        // Remove the first element to get to the second
+        queueCopy.poll();  // Remove the first element
+        // Check if the second element is an Integer
+        return  queueCopy.peek(); // Peek at the second element without removing it
     }
 
     private Button createPlayerButton(double x, double y, int i) {

@@ -8,20 +8,32 @@
 <?import javafx.scene.text.Font?>
 
 <AnchorPane fx:id="nightStageAp" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="800.0" prefWidth="1280.0" style="-fx-background-color: #161616;" xmlns="http://javafx.com/javafx/19" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vsiverskyi.controllers.NightStageController">
-    <AnchorPane fx:id="nightStagePlayersPane" layoutX="151.0" layoutY="36.0" prefHeight="719.0" prefWidth="937.0">
+    <AnchorPane fx:id="nightStagePlayersPane" layoutY="36.0" prefHeight="764.0" prefWidth="1129.0">
       <children>
-         <Button fx:id="confirmButton" layoutX="425.0" layoutY="337.0" mnemonicParsing="false" text="Підтвердити" />
-         <Button fx:id="confirmButtonMafia" layoutX="425.0" layoutY="362.0" mnemonicParsing="false" text="Підтвердити" />
-      </children></AnchorPane>
-   <AnchorPane layoutX="13.0" layoutY="82.0" prefHeight="72.0" prefWidth="166.0" style="-fx-border-color: #ffffff; -fx-border-radius: 5px;">
-      <children>
-         <Label fx:id="currentRoleTitle" alignment="CENTER" layoutX="1.0" prefHeight="81.0" prefWidth="162.0" textAlignment="CENTER" textFill="WHITE">
+         <Button fx:id="confirmButton" layoutX="545.0" layoutY="598.0" mnemonicParsing="false" text="Підтвердити" />
+         <Button fx:id="confirmButtonMafia" layoutX="545.0" layoutY="624.0" mnemonicParsing="false" text="Підтвердити" />
+         <Button fx:id="confirmButtonManiak" layoutX="545.0" layoutY="650.0" mnemonicParsing="false" text="Підтвердити" />
+         <Label fx:id="nightLabel" layoutX="562.0" layoutY="69.0" text="НІЧ" textFill="WHITE">
             <font>
-               <Font size="24.0" />
+               <Font size="31.0" />
             </font>
          </Label>
-      </children>
-   </AnchorPane>
+         <AnchorPane fx:id="rolePlacer" layoutX="504.0" layoutY="106.0" prefHeight="72.0" prefWidth="166.0" style="-fx-border-color: #ffffff; -fx-border-radius: 5px;">
+            <children>
+               <Label fx:id="currentRoleTitle" alignment="CENTER" layoutX="1.0" prefHeight="81.0" prefWidth="162.0" textAlignment="CENTER" textFill="WHITE">
+                  <font>
+                     <Font size="24.0" />
+                  </font>
+               </Label>
+            </children>
+         </AnchorPane>
+         <Button fx:id="cancelButton" layoutX="541.0" layoutY="194.0" mnemonicParsing="false" text="Відмінити дію" />
+         <AnchorPane fx:id="allRolesAp" layoutX="503.0" layoutY="224.0" prefHeight="351.0" prefWidth="167.0" style="-fx-border-color: #ffffff; -fx-border-radius: 5px;">
+            <children>
+               <ListView fx:id="allRolesPerGameList" layoutX="2.0" layoutY="4.0" prefHeight="362.0" prefWidth="163.0" />
+            </children>
+         </AnchorPane>
+      </children></AnchorPane>
    <!-- Admin Menu for assigning cards -->
    <AnchorPane layoutX="1081.0" layoutY="66.0" prefHeight="624.0" prefWidth="194.0" style="-fx-border-color: #ffffff; -fx-border-radius: 5px; -fx-background-color: #161616;">
       <children>
@@ -33,18 +45,7 @@
       </children>
    </AnchorPane>
    <Button fx:id="fullScreen" layoutX="1081.0" layoutY="24.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="106.0" text="Повний екран" />
-   <AnchorPane layoutX="10.0" layoutY="222.0" prefHeight="395.0" prefWidth="167.0" style="-fx-border-color: #ffffff; -fx-border-radius: 5px;">
-      <children>
-         <ListView fx:id="allRolesPerGameList" layoutX="2.0" layoutY="4.0" prefHeight="403.0" prefWidth="163.0" />
-      </children>
-   </AnchorPane>
-   <Label layoutX="68.0" layoutY="25.0" text="НІЧ" textFill="WHITE">
-      <font>
-         <Font size="31.0" />
-      </font>
-   </Label>
    <AnchorPane fx:id="playersLeft" layoutX="11.0" layoutY="642.0" prefHeight="118.0" prefWidth="167.0" />
-   <Button fx:id="cancelButton" layoutX="49.0" layoutY="182.0" mnemonicParsing="false" text="Відмінити дію" />
    <Button fx:id="previousButton" layoutX="1197.0" layoutY="24.0" mnemonicParsing="false" text="&lt;">
       <font>
          <Font name="System Bold" size="12.0" />

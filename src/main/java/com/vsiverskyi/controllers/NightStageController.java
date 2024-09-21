@@ -75,6 +75,8 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
     @FXML
     private AnchorPane nightStagePlayersPane;
     @FXML
+    private AnchorPane rolePlacer;
+    @FXML
     private Label currentRoleTitle;
     @FXML
     private VBox adminMenu;
@@ -95,6 +97,8 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
     @FXML
     private Button confirmButtonMafia;
     @FXML
+    private Button confirmButtonManiak;
+    @FXML
     private Button previousButton;
     @FXML
     private Button pauseButton;
@@ -106,6 +110,10 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
     private ListView<HBox> playerCardListView;
     @FXML
     private ListView<String> allRolesPerGameList;
+    @FXML
+    private Label nightLabel;
+    @FXML
+    private AnchorPane allRolesAp;
     private List<GameStatistics> gameStatisticsListSortedByRoleOrder;
     private List<GameStatistics> gameStatisticsListSortedByInGameNumber;
     private List<GameStatistics> firstInputCopy;
@@ -132,6 +140,7 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
     private int alivePlayersAtTheBeggining;
     private int strilochnykShoots;
     private int alivePlayersAtTheEnd;
+    private int maniakShotsAmount;
     private List<GameStatistics> lastGamersCopy;
     private List<Integer> lastPlayerNumbers;
     private List<Integer> strilochnykPlayerNumbers;
@@ -231,6 +240,11 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
             cancelButton.setDisable(false);
         });
         confirmButtonMafia.setStyle(IDLE_BUTTON_STYLE);
+        confirmButtonManiak.setOnMouseClicked(ev -> {
+            setNextRole();
+            confirmButtonManiak.setVisible(false);
+            cancelButton.setDisable(false);
+        });
 
         previousButton.setOnMouseClicked(ev -> musicController.playPreviousTrack());
         nextButton.setOnMouseClicked(ev -> musicController.playNextTrack());
@@ -597,6 +611,10 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
                     }
                     break;
                 case MANIAK:
+                    if (maniakShotsAmount == 0) {
+                        mafiaPlayerNumbers.clear();
+                    }
+                    confirmButtonManiak.setVisible(true);
                     if (playerIdRoleMap.get(chosenPlayerNumber).getRoleNameConstant().equals(ERoleOrder.MANIAK.name())) {
                         Alert maniakCantChooseHimselfAlert =
                                 new Alert(Alert.AlertType.INFORMATION, ERoleOrder.MANIAK.getTitle() + " не може голосувати за себе");
@@ -611,7 +629,7 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
                                 currentRole,
                                 chosenPlayerNumber
                         );
-                        setNextRole();
+//                        setNextRole();
                     }
                     break;
                 case STRILOCHNYK:
@@ -762,6 +780,7 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
             }
         } else if (currentRole.getRoleNameConstant().equals(ERoleOrder.MAFIA.name())
                    || currentRole.getRoleNameConstant().equals(ERoleOrder.DON.name())
+                   || currentRole.getRoleNameConstant().equals(ERoleOrder.MANIAK.name())
                    || currentRole.getRoleNameConstant().equals(ERoleOrder.PEREVERTEN_MAFIA.name())) {
             mafiaPlayerNumbers.add(chosenPlayerNumber);
             if (mafiaCopy.isEmpty()) {
@@ -802,7 +821,9 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
             gameStatisticsService.updateGameStatistics(strilochnykCopy);
         } else if (currentRole.getRoleNameConstant().equals(ERoleOrder.MAFIA.name())
                    || currentRole.getRoleNameConstant().equals(ERoleOrder.DON.name())
+                   || currentRole.getRoleNameConstant().equals(ERoleOrder.MANIAK.name())
                    || currentRole.getRoleNameConstant().equals(ERoleOrder.PEREVERTEN_MAFIA.name())) {
+            maniakShotsAmount = 0;
             for (Integer lastPlayerNumber : mafiaPlayerNumbers) {
                 ObservableList<Node> children = playerNumberNicknameHbox.get(lastPlayerNumber).getChildren();
                 if (!children.isEmpty()) {
@@ -954,6 +975,7 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
 //        alert.initOwner(stage);
 //        alert.showAndWait();
         actionsQueue.add(maniakMoveLogger);
+        maniakShotsAmount++;
     }
 
     private void doSheryfMove(int chosenPlayerNumber) {
@@ -999,9 +1021,17 @@ public class NightStageController implements Initializable, DisplayedPlayersCont
         nightStagePlayersPane.getChildren().clear();
         nightStagePlayersPane.getChildren().add(confirmButton);
         nightStagePlayersPane.getChildren().add(confirmButtonMafia);
+        nightStagePlayersPane.getChildren().add(confirmButtonManiak);
+        nightStagePlayersPane.getChildren().add(rolePlacer);
+//        rolePlacer.getChildren().add(currentRoleTitle);
+        nightStagePlayersPane.getChildren().add(nightLabel);
+        nightStagePlayersPane.getChildren().add(cancelButton);
+        nightStagePlayersPane.getChildren().add(allRolesAp);
+//        nightStagePlayersPane.getChildren().add(currentRoleTitle);
 
         confirmButton.setVisible(false);
         confirmButtonMafia.setVisible(false);
+        confirmButtonManiak.setVisible(false);
 
         double centerX = nightStagePlayersPane.getWidth() / 2;
         double centerY = nightStagePlayersPane.getHeight() / 2;

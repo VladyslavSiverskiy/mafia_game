@@ -20,6 +20,6 @@ public interface GameRepository extends JpaRepository<Game, Long> {
     @Query(value = "SELECT * FROM games g WHERE g.last_update >= :startOfDay ORDER BY g.last_update DESC LIMIT :limit", nativeQuery = true)
     List<Game> findRecentGames(@Param("startOfDay") LocalDateTime startOfDay, @Param("limit") int limit);
 
-    @Query(value = "SELECT * FROM games g ORDER BY g.last_update DESC LIMIT :limit", nativeQuery = true)
-    List<Game> findRecentGamesNoDate(@Param("limit") int limit);
+    @Query(value = "SELECT * FROM games g WHERE g.game_status = 'WAS_COMPLETED' ORDER BY g.last_update DESC LIMIT :limit", nativeQuery = true)
+    List<Game> findRecentCompletedGames(@Param("limit") int limit);
 }
